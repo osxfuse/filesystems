@@ -1,0 +1,294 @@
+// !$*UTF8*$!
+{
+	089C1669FE841209C02AAC07 /* Project object */ = {
+		activeBuildConfigurationName = Debug;
+		activeExecutable = 5494A9430ACA5BF10020068B /* mount_fusefs */;
+		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
+		addToTargets = (
+			5494A9410ACA5BF10020068B /* mount_fusefs */,
+		);
+		breakpoints = (
+			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
+		);
+		breakpointsGroup = 5403C7EC0ACA9BB300CD9322 /* XCBreakpointsBucket */;
+		codeSenseManager = 5494A9290ACA12160020068B /* Code sense */;
+		executables = (
+			5494A9430ACA5BF10020068B /* mount_fusefs */,
+		);
+		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					408,
+					20,
+					48,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXConfiguration.PBXTargetDataSource.PBXTargetDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					200,
+					63,
+					20,
+					48,
+					43,
+					43,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXTargetDataSource_PrimaryAttribute,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+				);
+			};
+			PBXPerProjectTemplateStateSaveDate = 189544297;
+			PBXWorkspaceStateSaveDate = 189544297;
+		};
+		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
+		userBuildSettings = {
+		};
+	};
+	089C167EFE841241C02AAC07 /* English */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
+			sepNavSelRange = "{81, 0}";
+			sepNavVisRect = "{{0, 0}, {904, 627}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	1A224C3CFF42312311CA2CB7 /* fuse_main.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2338}}";
+			sepNavSelRange = "{3497, 0}";
+			sepNavVisRect = "{{0, 615}, {702, 269}}";
+		};
+	};
+	32A4FEB80562C75700D090E7 /* fusefs */ = {
+		activeExec = 0;
+	};
+	32A4FEC30562C75700D090E7 /* Info.plist */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
+			sepNavSelRange = "{778, 0}";
+			sepNavVisRect = "{{0, 0}, {904, 627}}";
+			sepNavWindowFrame = "{{38, 96}, {949, 756}}";
+		};
+	};
+	54008CFD0B2F734700F90F14 /* fuse_version.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRect = "{{0, 0}, {904, 627}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	5403C7940ACA636A00CD9322 /* fuse_kernel.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 5334}}";
+			sepNavSelRange = "{2395, 19}";
+			sepNavVisRect = "{{0, 797}, {702, 269}}";
+		};
+	};
+	5403C7980ACA640B00CD9322 /* fuse_nodehash.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {914, 12012}}";
+			sepNavSelRange = "{10981, 2}";
+			sepNavVisRect = "{{0, 3737}, {702, 269}}";
+		};
+	};
+	5403C7AA0ACA679D00CD9322 /* fuse_device.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 6174}}";
+			sepNavSelRange = "{3694, 27}";
+			sepNavVisRect = "{{0, 2309}, {702, 269}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	5403C7AE0ACA711B00CD9322 /* fuse.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 882}}";
+			sepNavSelRange = "{282, 26}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
+	5403C7B00ACA85EC00CD9322 /* fuse_ipc.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 10318}}";
+			sepNavSelRange = "{18363, 0}";
+			sepNavVisRect = "{{0, 8525}, {702, 269}}";
+		};
+	};
+	5403C7B10ACA85EC00CD9322 /* fuse_ipc.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 4326}}";
+			sepNavSelRange = "{8763, 0}";
+			sepNavVisRect = "{{0, 4057}, {702, 269}}";
+		};
+	};
+	5403C7C20ACA8F5C00CD9322 /* fuse_node.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2016}}";
+			sepNavSelRange = "{3803, 0}";
+			sepNavVisRect = "{{0, 1469}, {702, 269}}";
+		};
+	};
+	5403C7D10ACA949D00CD9322 /* fuse_file.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1232}}";
+			sepNavSelRange = "{1978, 0}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
+	5403C7D20ACA949D00CD9322 /* fuse_vfsops.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 15820}}";
+			sepNavSelRange = "{32253, 0}";
+			sepNavVisRect = "{{0, 14265}, {702, 269}}";
+		};
+	};
+	5403C7D30ACA949D00CD9322 /* fuse_vnops.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 37436}}";
+			sepNavSelRange = "{72799, 0}";
+			sepNavVisRect = "{{0, 36427}, {702, 269}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	5403C7EC0ACA9BB300CD9322 /* XCBreakpointsBucket */ = {
+		isa = XCBreakpointsBucket;
+		name = "Project Breakpoints";
+		objects = (
+			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
+		);
+	};
+	5411E2EC0B2D644F00B8F324 /* fuse_locking.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 4564}}";
+			sepNavSelRange = "{316, 57}";
+			sepNavVisRect = "{{0, 195}, {702, 269}}";
+		};
+	};
+	5411E2ED0B2D644F00B8F324 /* fuse_locking.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 616}}";
+			sepNavSelRange = "{1276, 0}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
+	548908390ACC7D1B00D891F8 /* fuse_sysctl.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1106}}";
+			sepNavSelRange = "{2678, 0}";
+			sepNavVisRect = "{{0, 209}, {702, 269}}";
+		};
+	};
+	548FDFF30B3202A80008D620 /* fuse_file.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1792}}";
+			sepNavSelRange = "{3117, 0}";
+			sepNavVisRect = "{{0, 209}, {702, 269}}";
+		};
+	};
+	548FDFF40B3202A80008D620 /* fuse_internal.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 15526}}";
+			sepNavSelRange = "{11503, 0}";
+			sepNavVisRect = "{{0, 6355}, {702, 269}}";
+		};
+	};
+	548FDFF50B3202A80008D620 /* fuse_internal.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 3402}}";
+			sepNavSelRange = "{7575, 0}";
+			sepNavVisRect = "{{0, 3119}, {702, 269}}";
+		};
+	};
+	548FDFF70B3202A80008D620 /* fuse_vnops.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 840}}";
+			sepNavSelRange = "{2693, 0}";
+			sepNavVisRect = "{{0, 571}, {702, 269}}";
+		};
+	};
+	548FE03F0B322A540008D620 /* fuse_node.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2534}}";
+			sepNavSelRange = "{5048, 0}";
+			sepNavVisRect = "{{0, 1203}, {702, 269}}";
+		};
+	};
+	5494A9280ACA12160020068B /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
+		};
+		scmType = "";
+	};
+	5494A9290ACA12160020068B /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
+	};
+	5494A9410ACA5BF10020068B /* mount_fusefs */ = {
+		activeExec = 0;
+		executables = (
+			5494A9430ACA5BF10020068B /* mount_fusefs */,
+		);
+	};
+	5494A9430ACA5BF10020068B /* mount_fusefs */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = mount_fusefs;
+		sourceDirectories = (
+		);
+	};
+	54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */ = {
+		isa = PBXFileBreakpoint;
+		actions = (
+		);
+		breakpointStyle = 0;
+		continueAfterActions = 0;
+		delayBeforeContinue = 0;
+		fileReference = 1A224C3CFF42312311CA2CB7 /* fuse_main.c */;
+		functionName = "init_stuff()";
+		hitCount = 0;
+		lineNumber = 86;
+		modificationTime = 181382721.07612;
+		state = 1;
+	};
+}

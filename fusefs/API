@@ -1,0 +1,8 @@
+Of the 38 FUSE methods in FUSE API version 7.8, the following  methods are
+currently not supported:
+
+FUSE_FLUSH	No relevant system call on Mac OS X.
+FUSE_GETLK	We can use VFS-provided locking instead.
+FUSE_SETLK	We can use VFS-provided locking instead.
+FUSE_INTERRUPT	TBD (for communicating request interruption to user space).
+FUSE_BMAP	TBD (fuse_vnop_blockmap -> one or more calls to FUSE_BMAP).

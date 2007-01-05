@@ -1,0 +1,130 @@
+diff -Naur old/Makefile.in new/Makefile.in
+--- old/Makefile.in	2006-08-17 03:07:05.000000000 -0700
++++ new/Makefile.in	2007-01-04 00:31:59.000000000 -0800
+@@ -588,7 +588,11 @@
+ 	uninstall-local
+ 
+ 
++ifeq "$(shell uname)" "Darwin"
++all-local:
++else
+ all-local: sshnodelay.so
++endif
+ 
+ install-exec-local: sshnodelay.so
+ 	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
+diff -Naur old/sshfs.c new/sshfs.c
+--- old/sshfs.c	2006-08-18 03:34:08.000000000 -0700
++++ new/sshfs.c	2007-01-04 00:08:07.000000000 -0800
+@@ -18,7 +18,9 @@
+ #include <string.h>
+ #include <stdint.h>
+ #include <errno.h>
++#if !(__FreeBSD__ >= 10)
+ #include <semaphore.h>
++#endif
+ #include <pthread.h>
+ #include <netdb.h>
+ #include <signal.h>
+@@ -100,6 +102,31 @@
+ 
+ #define SSHNODELAY_SO "sshnodelay.so"
+ 
++#if (__FreeBSD__ >= 10)
++
++#undef sem_t
++
++#undef sem_init
++#undef sem_destroy
++#undef sem_post
++#undef sem_wait
++
++#include <mach/mach.h>
++
++typedef semaphore_t sem_t;
++
++#define sem_init(s, a, b) \
++    semaphore_create(mach_task_self(), (s), SYNC_POLICY_FIFO, 0)
++#define sem_destroy(s) semaphore_destroy(mach_task_self(), (semaphore_t)*(s))
++#define sem_post(s)    semaphore_signal((semaphore_t)*(s))
++#define sem_wait(s)    semaphore_wait((semaphore_t)*(s))
++
++#ifndef LIBDIR
++#define LIBDIR "/usr/local/lib"
++#endif
++
++#endif
++
+ struct buffer {
+     uint8_t *p;
+     size_t len;
+@@ -147,6 +174,9 @@
+     int is_seq;
+     int connver;
+     int modifver;
++#if (__FreeBSD__ >= 10)
++    int refs;
++#endif
+ };
+ 
+ struct sshfs {
+@@ -1768,6 +1798,9 @@
+     pthread_cond_init(&sf->write_finished, NULL);
+     /* Assume random read after open */
+     sf->is_seq = 0;
++#if (__FreeBSD__ >= 10)
++    sf->refs = 1;
++#endif
+     sf->next_pos = 0;
+     sf->modifver= sshfs.modifver;
+     sf->connver = sshfs.connver;
+@@ -1851,6 +1884,23 @@
+     return sshfs_flush(path, fi);
+ }
+ 
++#if (__FreeBSD__ >= 10)
++
++static void sshfs_file_put(struct sshfs_file *sf)
++{
++    sf->refs--;
++    if (!sf->refs)
++        g_free(sf);
++}
++
++static struct sshfs_file *sshfs_file_get(struct sshfs_file *sf)
++{
++    sf->refs++;
++    return sf;
++}
++
++#endif
++
+ static int sshfs_release(const char *path, struct fuse_file_info *fi)
+ {
+     struct sshfs_file *sf = get_sshfs_file(fi);
+@@ -2109,8 +2159,13 @@
+     iov[1].iov_base = (void *) wbuf;
+     iov[1].iov_len = size;
+     if (!sshfs.sync_write && !sf->write_error)
++#if (__FreeBSD__ >= 10)
++        err = sftp_request_send(SSH_FXP_WRITE, iov, 2, sshfs_write_begin,
++                                 sshfs_write_end, 0, sshfs_file_get(sf), NULL);
++#else
+         err = sftp_request_send(SSH_FXP_WRITE, iov, 2, sshfs_write_begin,
+                                  sshfs_write_end, 0, sf, NULL);
++#endif
+     else
+         err = sftp_request_iov(SSH_FXP_WRITE, iov, 2, SSH_FXP_STATUS, NULL);
+     buf_free(&buf);
+@@ -2149,6 +2204,11 @@
+ static int sshfs_create(const char *path, mode_t mode,
+                         struct fuse_file_info *fi)
+ {
++#if (__FreeBSD__ >= 10)
++    if (fi) {
++        fi->flags |= O_CREAT;
++    }
++#endif
+     return sshfs_open_common(path, mode, fi);
+ }
+ 

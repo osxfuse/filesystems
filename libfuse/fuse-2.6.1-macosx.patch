@@ -1,0 +1,384 @@
+diff -Naur old/example/fusexmp.c new/example/fusexmp.c
+--- old/example/fusexmp.c	2006-10-01 05:34:47.000000000 -0700
++++ new/example/fusexmp.c	2006-11-28 01:54:30.000000000 -0800
+@@ -314,7 +314,11 @@
+ static int xmp_setxattr(const char *path, const char *name, const char *value,
+                         size_t size, int flags)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = setxattr(path, name, value, size, 0, flags);
++#else
+     int res = lsetxattr(path, name, value, size, flags);
++#endif
+     if (res == -1)
+         return -errno;
+     return 0;
+@@ -323,7 +327,11 @@
+ static int xmp_getxattr(const char *path, const char *name, char *value,
+                     size_t size)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = getxattr(path, name, value, size, 0, 0);
++#else
+     int res = lgetxattr(path, name, value, size);
++#endif
+     if (res == -1)
+         return -errno;
+     return res;
+@@ -331,7 +339,11 @@
+ 
+ static int xmp_listxattr(const char *path, char *list, size_t size)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = listxattr(path, list, size, 0);
++#else
+     int res = llistxattr(path, list, size);
++#endif
+     if (res == -1)
+         return -errno;
+     return res;
+@@ -339,7 +351,11 @@
+ 
+ static int xmp_removexattr(const char *path, const char *name)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = removexattr(path, name, 0);
++#else
+     int res = lremovexattr(path, name);
++#endif
+     if (res == -1)
+         return -errno;
+     return 0;
+diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
+--- old/example/fusexmp_fh.c	2006-10-01 05:35:02.000000000 -0700
++++ new/example/fusexmp_fh.c	2007-01-03 21:37:58.000000000 -0800
+@@ -32,8 +32,9 @@
+     int res;
+ 
+     res = lstat(path, stbuf);
+-    if (res == -1)
++    if (res == -1) {
+         return -errno;
++    }
+ 
+     return 0;
+ }
+@@ -266,7 +267,11 @@
+ {
+     int fd;
+ 
++#if (__FreeBSD__ >= 10)
++    fd = open(path, fi->flags | O_CREAT, mode);
++#else
+     fd = open(path, fi->flags, mode);
++#endif
+     if (fd == -1)
+         return -errno;
+ 
+@@ -373,7 +378,11 @@
+ static int xmp_setxattr(const char *path, const char *name, const char *value,
+                         size_t size, int flags)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = setxattr(path, name, value, size, 0, flags);
++#else
+     int res = lsetxattr(path, name, value, size, flags);
++#endif
+     if (res == -1)
+         return -errno;
+     return 0;
+@@ -382,7 +391,11 @@
+ static int xmp_getxattr(const char *path, const char *name, char *value,
+                     size_t size)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = getxattr(path, name, value, size, 0, 0);
++#else
+     int res = lgetxattr(path, name, value, size);
++#endif
+     if (res == -1)
+         return -errno;
+     return res;
+@@ -390,7 +403,11 @@
+ 
+ static int xmp_listxattr(const char *path, char *list, size_t size)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = listxattr(path, list, size, 0);
++#else
+     int res = llistxattr(path, list, size);
++#endif
+     if (res == -1)
+         return -errno;
+     return res;
+@@ -398,7 +415,11 @@
+ 
+ static int xmp_removexattr(const char *path, const char *name)
+ {
++#if (__FreeBSD__ >= 10)
++    int res = removexattr(path, name, 0);
++#else
+     int res = lremovexattr(path, name);
++#endif
+     if (res == -1)
+         return -errno;
+     return 0;
+@@ -414,7 +435,20 @@
+                        sizeof(fi->lock_owner));
+ }
+ 
++void *
++xmp_init(struct fuse_conn_info *conn)
++{
++    return NULL;
++}
++
++void
++xmp_destroy(void *userdata)
++{
++}
++
+ static struct fuse_operations xmp_oper = {
++    .init       = xmp_init,
++    .destroy    = xmp_destroy,
+     .getattr	= xmp_getattr,
+     .fgetattr	= xmp_fgetattr,
+     .access	= xmp_access,
+diff -Naur old/include/fuse.h new/include/fuse.h
+--- old/include/fuse.h	2006-11-30 03:53:18.000000000 -0800
++++ new/include/fuse.h	2007-01-03 21:54:20.000000000 -0800
+@@ -663,4 +663,8 @@
+ }
+ #endif
+ 
++#if (__FreeBSD__ >= 10)
++#define __asm__(x)
++#endif
++
+ #endif /* _FUSE_H_ */
+diff -Naur old/lib/Makefile.in new/lib/Makefile.in
+--- old/lib/Makefile.in	2007-01-03 22:27:47.000000000 -0800
++++ new/lib/Makefile.in	2007-01-03 23:18:10.000000000 -0800
+@@ -60,8 +60,12 @@
+ 	fuse_loop.c fuse_loop_mt.c fuse_lowlevel.c fuse_misc.h \
+ 	fuse_mt.c fuse_opt.c fuse_session.c fuse_signals.c helper.c \
+ 	mount.c mount_bsd.c
++ifeq (@host_vendor@, apple)
++am__objects_1 = mount_bsd.lo
++else
+ @BSD_FALSE@am__objects_1 = mount.lo
+ @BSD_TRUE@am__objects_1 = mount_bsd.lo
++endif
+ am_libfuse_la_OBJECTS = fuse.lo fuse_kern_chan.lo fuse_loop.lo \
+ 	fuse_loop_mt.lo fuse_lowlevel.lo fuse_mt.lo fuse_opt.lo \
+ 	fuse_session.lo fuse_signals.lo helper.lo $(am__objects_1)
+@@ -202,8 +206,12 @@
+  -D_FILE_OFFSET_BITS=64 -D_REENTRANT -DFUSE_USE_VERSION=26
+ 
+ lib_LTLIBRARIES = libfuse.la libulockmgr.la
++ifeq (@host_vendor@, apple)
++mount_source = mount_bsd.c
++else
+ @BSD_FALSE@mount_source = mount.c
+ @BSD_TRUE@mount_source = mount_bsd.c
++endif
+ libfuse_la_SOURCES = \
+ 	fuse.c			\
+ 	fuse_i.h		\
+@@ -219,8 +227,12 @@
+ 	helper.c		\
+ 	$(mount_source)
+ 
++ifeq ($(host_vendor), apple)
++libfuse_la_LDFLAGS = $(libfuse_libs)
++else
+ libfuse_la_LDFLAGS = $(libfuse_libs) -version-number 2:6:1 \
+ 	-Wl,--version-script,$(srcdir)/fuse_versionscript
++endif
+ 
+ libulockmgr_la_SOURCES = ulockmgr.c
+ libulockmgr_la_LDFLAGS = -version-number 1:0:0
+diff -Naur old/lib/fuse.c new/lib/fuse.c
+--- old/lib/fuse.c	2006-11-06 03:53:12.000000000 -0800
++++ new/lib/fuse.c	2007-01-03 11:38:57.000000000 -0800
+@@ -734,6 +734,11 @@
+ 
+ static void curr_time(struct timespec *now)
+ {
++#if (__FreeBSD__ >= 10)
++    struct timeval tp;
++    gettimeofday(&tp, NULL);
++    TIMEVAL_TO_TIMESPEC(&tp, now); /* We are losing resolution here. */
++#else
+     static clockid_t clockid = CLOCK_MONOTONIC;
+     int res = clock_gettime(clockid, now);
+     if (res == -1 && errno == EINVAL) {
+@@ -744,6 +749,7 @@
+         perror("fuse: clock_gettime");
+         abort();
+     }
++#endif
+ }
+ 
+ static void update_stat(struct node *node, const struct stat *stbuf)
+diff -Naur old/lib/fuse_loop_mt.c new/lib/fuse_loop_mt.c
+--- old/lib/fuse_loop_mt.c	2006-09-06 04:07:20.000000000 -0700
++++ new/lib/fuse_loop_mt.c	2006-11-27 18:04:40.000000000 -0800
+@@ -107,7 +107,11 @@
+     }
+ 
+     pthread_kill(mt->main.thread_id, SIGHUP);
++#if (__FreeBSD__ >= 10)
++    exit(0);
++#else
+     pause();
++#endif
+ 
+     return NULL;
+ }
+diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
+--- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
++++ new/lib/mount_bsd.c	2007-01-03 23:49:21.000000000 -0800
+@@ -109,10 +109,22 @@
+     FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
+     FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
+     /* Linux specific mount options, but let just the mount util handle them */
++
++    /* Mac OS X specific options */
+     FUSE_OPT_KEY("fsname=",             KEY_KERN),
+     FUSE_OPT_KEY("nonempty",            KEY_KERN),
+     FUSE_OPT_KEY("large_read",          KEY_KERN),
+     FUSE_OPT_KEY("max_read=",           KEY_KERN),
++    FUSE_OPT_KEY("volname=",            KEY_KERN),
++    FUSE_OPT_KEY("noauthopaque",        KEY_KERN),
++    FUSE_OPT_KEY("noauthopaqueaccess",  KEY_KERN),
++    FUSE_OPT_KEY("nosyncwrites",        KEY_KERN),
++    FUSE_OPT_KEY("fsid=",               KEY_KERN),
++    FUSE_OPT_KEY("subtype=",            KEY_KERN),
++    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
++    FUSE_OPT_KEY("noreadahead",         KEY_KERN),
++    FUSE_OPT_KEY("noubc",               KEY_KERN),
++    FUSE_OPT_KEY("nobrowse",            KEY_KERN),
+     FUSE_OPT_END
+ };
+ 
+@@ -199,7 +211,11 @@
+     if (rv)
+         return;
+ 
++#if (__FreeBSD__ >= 10)
++    asprintf(&umount_cmd, "/sbin/umount %s", mountpoint);
++#else
+     asprintf(&umount_cmd, "/sbin/umount %s", dev);
++#endif
+     system(umount_cmd);
+ }
+ 
+@@ -222,7 +238,11 @@
+     if (*ep != '\0')
+         return;
+ 
++#if (__FreeBSD__ >= 10)
++    asprintf(&umount_cmd, "/sbin/umount %s", mountpoint);
++#else
+     asprintf(&umount_cmd, "/sbin/umount " _PATH_DEV "%s", dev);
++#endif
+     system(umount_cmd);
+ }
+ 
+@@ -267,12 +287,29 @@
+ 
+     dev = getenv("FUSE_DEV_NAME");
+ 
+-    if (! dev)
+-	dev = FUSE_DEV_TRUNK;
+-
+-    if ((fd = open(dev, O_RDWR)) < 0) {
+-        perror("fuse: failed to open fuse device");
+-        return -1;
++    if (dev) {
++        if ((fd = open(dev, O_RDWR)) < 0) {
++            perror("fuse: failed to open fuse device");
++            return -1;
++        }
++    } else {
++#define NFUSEDEVICE 8
++        int r, devidx = -1;
++        char devpath[MAXPATHLEN];
++
++        for (r = 0; r < NFUSEDEVICE; r++) {
++            snprintf(devpath, MAXPATHLEN - 1, "/dev/fuse%d", r);
++            fd = open(devpath, O_RDWR);
++            if (fd >= 0) {
++                dev = devpath;
++                devidx = r;
++                break;
++            }
++        }
++        if (devidx == -1) {
++            perror("fuse: failed to open fuse device");
++            return -1;
++        }
+     }
+ 
+ mount:
+@@ -322,11 +359,31 @@
+             perror("fuse: failed to exec mount program");
+             exit(1);
+         }
++#if (__FreeBSD__ >= 10)
++        else {
++            int status;
++            waitpid(pid, &status, 0);
++            if (WIFEXITED(status) && (WEXITSTATUS(status) != 0)) {
++                exit(WEXITSTATUS(status));
++            }
++        }
++#endif
+ 
+         exit(0);
+     }
+ 
++#if (__FreeBSD__ >= 10)
++    {
++        int status;
++
++        waitpid(pid, &status, 0);
++        if (WIFEXITED(status) && (WEXITSTATUS(status) != 0)) {
++            exit(WEXITSTATUS(status));
++        }
++    }
++#else
+     waitpid(pid, NULL, 0);
++#endif
+ 
+ out:
+     return fd;
+diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
+--- old/lib/ulockmgr.c	2006-10-08 06:29:08.000000000 -0700
++++ new/lib/ulockmgr.c	2006-11-27 17:09:27.000000000 -0800
+@@ -21,6 +21,10 @@
+ #include <sys/socket.h>
+ #include <sys/wait.h>
+ 
++#if (__FreeBSD__ >= 10)
++#define MSG_NOSIGNAL 0
++#endif
++
+ struct message {
+     unsigned intr : 1;
+     unsigned nofd : 1;
+@@ -125,6 +129,13 @@
+         return -1;
+     }
+     ulockmgr_cfd = sv[1];
++#if (__FreeBSD__ >= 10)
++    {
++        int on = 1;
++        res = setsockopt(ulockmgr_cfd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&on,
++                         sizeof(on));
++    }
++#endif
+     return 0;
+ }
+ 

@@ -1,0 +1,21 @@
+1. One of the highest priority TODO items is to incorporate locking so that
+   the file system can run in thread-safe mode in the kernel. Right now, the
+   file system doesn't claim to be thread-safe, so the kernel does coarse
+   grained locking for us.
+
+   The FUSE node (vnode private data) has a 'nodelock' and a 'truncatelock',
+   which must be held at the right times in the right order for things to work
+   correctly.  Whereas some calls will simply take the nodelock, do their
+   thing, and release the nodelock, other calls (in particular, the ones that
+   invole the file size) will have more complicated locking. I have put in
+   comments tagged with "XXX: Locking" as examples of such calls.
+
+   Moreover, several calls will also need to perform relookups when we go
+   thread safe.
+
+2. To get things working quickly, I used the time-worn /dev node mechanism
+   for user-kernel communication. In fact, much of the code for this IPC
+   comes from the FreeBSD version of FUSE. On Mac OS X, we can do some
+   interesting stuff with things like IODataQueue's and Mach VM in general.
+   It would be a nice sub project to come up with a more optimized user-kernel
+   communication for FUSE's purposes.
