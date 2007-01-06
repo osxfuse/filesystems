@@ -37,6 +37,7 @@
 		5494A95C0ACA5D3D0020068B /* fuse_mount.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95A0ACA5D3D0020068B /* fuse_mount.h */; };
 		5494A95D0ACA5D3D0020068B /* fuse_param.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95B0ACA5D3D0020068B /* fuse_param.h */; };
 		54BBC8F60B4C379500A17C8A /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */; };
+		54D47BC10B4F62A200A8FE1C /* load_fusefs.c in Sources */ = {isa = PBXBuildFile; fileRef = 54D47BC00B4F62A200A8FE1C /* load_fusefs.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,13 +68,18 @@
 		548FDFF60B3202A80008D620 /* fuse_vfsops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vfsops.h; sourceTree = "<group>"; };
 		548FDFF70B3202A80008D620 /* fuse_vnops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vnops.h; sourceTree = "<group>"; };
 		548FE03F0B322A540008D620 /* fuse_node.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_node.c; sourceTree = "<group>"; };
-		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		5494A9490ACA5C220020068B /* getmntopts.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = getmntopts.c; path = mount/getmntopts.c; sourceTree = "<group>"; };
 		5494A94A0ACA5C220020068B /* mntopts.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = mntopts.h; path = mount/mntopts.h; sourceTree = "<group>"; };
 		5494A94B0ACA5C220020068B /* mount_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = mount_fusefs.c; path = mount/mount_fusefs.c; sourceTree = "<group>"; };
 		5494A95A0ACA5D3D0020068B /* fuse_mount.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_mount.h; path = common/fuse_mount.h; sourceTree = "<group>"; };
 		5494A95B0ACA5D3D0020068B /* fuse_param.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_param.h; path = common/fuse_param.h; sourceTree = "<group>"; };
 		54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
+		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D47B930B4F614C00A8FE1C /* load */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = folder; path = load; sourceTree = "<group>"; };
+		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
+		54D47BBC0B4F628200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
+		54D47BC00B4F62A200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = load_fusefs.c; path = load/load_fusefs.c; sourceTree = "<group>"; };
 		D27513B306A6225300ADB3A4 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = /System/Library/Frameworks/Kernel.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -93,16 +99,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		54D47B7E0B4F610000A8FE1C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		089C166AFE841209C02AAC07 /* fusefs */ = {
 			isa = PBXGroup;
 			children = (
+				54D47BC00B4F62A200A8FE1C /* load_fusefs.c */,
+				54D47BBC0B4F628200A8FE1C /* load_fusefs.c */,
+				54D47BB70B4F625000A8FE1C /* load_fusefs.c */,
 				54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */,
 				548FE03F0B322A540008D620 /* fuse_node.c */,
 				548FDFF30B3202A80008D620 /* fuse_file.c */,
 				548FDFF40B3202A80008D620 /* fuse_internal.c */,
+				54D47B930B4F614C00A8FE1C /* load */,
 				548FDFF50B3202A80008D620 /* fuse_internal.h */,
 				548FDFF60B3202A80008D620 /* fuse_vfsops.h */,
 				548FDFF70B3202A80008D620 /* fuse_vnops.h */,
@@ -148,6 +165,7 @@
 			children = (
 				32A4FEC40562C75800D090E7 /* fusefs.kext */,
 				5494A9420ACA5BF10020068B /* mount_fusefs */,
+				54D47B800B4F610000A8FE1C /* load_fusefs */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -227,6 +245,22 @@
 			productReference = 5494A9420ACA5BF10020068B /* mount_fusefs */;
 			productType = "com.apple.product-type.tool";
 		};
+		54D47B7F0B4F610000A8FE1C /* load_fusefs */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 54D47B900B4F614B00A8FE1C /* Build configuration list for PBXNativeTarget "load_fusefs" */;
+			buildPhases = (
+				54D47B7D0B4F610000A8FE1C /* Sources */,
+				54D47B7E0B4F610000A8FE1C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = load_fusefs;
+			productName = load_fusefs;
+			productReference = 54D47B800B4F610000A8FE1C /* load_fusefs */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -239,6 +273,7 @@
 			targets = (
 				32A4FEB80562C75700D090E7 /* fusefs */,
 				5494A9410ACA5BF10020068B /* mount_fusefs */,
+				54D47B7F0B4F610000A8FE1C /* load_fusefs */,
 			);
 		};
 /* End PBXProject section */
@@ -292,6 +327,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		54D47B7D0B4F610000A8FE1C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54D47BC10B4F62A200A8FE1C /* load_fusefs.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -309,6 +352,10 @@
 		1DEB91C408733DAC0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -334,8 +381,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
-					ppc,
 					i386,
+					ppc,
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
@@ -377,6 +424,10 @@
 		5494A9470ACA5C050020068B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -393,6 +444,10 @@
 		5494A9480ACA5C050020068B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
@@ -400,6 +455,44 @@
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = mount_fusefs;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		54D47B910B4F614B00A8FE1C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = load_fusefs;
+				ZERO_LINK = YES;
+			};
+			name = Debug;
+		};
+		54D47B920B4F614B00A8FE1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = "$(HOME)/bin";
+				PREBINDING = NO;
+				PRODUCT_NAME = load_fusefs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -430,6 +523,15 @@
 			buildConfigurations = (
 				5494A9470ACA5C050020068B /* Debug */,
 				5494A9480ACA5C050020068B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		54D47B900B4F614B00A8FE1C /* Build configuration list for PBXNativeTarget "load_fusefs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54D47B910B4F614B00A8FE1C /* Debug */,
+				54D47B920B4F614B00A8FE1C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -28,9 +28,9 @@
 
 #define PROGNAME "mount_fusefs"
 
-void showhelp(void);
-void showversion(int doexit);
 char *getproctitle(pid_t pid, char **title, int *len);
+void  showhelp(void);
+void  showversion(int doexit);
 
 struct mntopt mopts[] = {
     MOPT_STDOPTS,

@@ -1,11 +1,11 @@
 // !$*UTF8*$!
 {
 	089C1669FE841209C02AAC07 /* Project object */ = {
-		activeBuildConfigurationName = Debug;
+		activeBuildConfigurationName = Release;
 		activeExecutable = 5494A9430ACA5BF10020068B /* mount_fusefs */;
 		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
 		addToTargets = (
-			5494A9410ACA5BF10020068B /* mount_fusefs */,
+			54D47B7F0B4F610000A8FE1C /* load_fusefs */,
 		);
 		breakpoints = (
 			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
@@ -14,8 +14,23 @@
 		codeSenseManager = 5494A9290ACA12160020068B /* Code sense */;
 		executables = (
 			5494A9430ACA5BF10020068B /* mount_fusefs */,
+			54D47B810B4F610000A8FE1C /* load_fusefs */,
 		);
 		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXErrorsWarningsDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXErrorsWarningsDataSource_LocationID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					300,
+					298.2085,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXErrorsWarningsDataSource_TypeID,
+					PBXErrorsWarningsDataSource_MessageID,
+					PBXErrorsWarningsDataSource_LocationID,
+				);
+			};
 			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
 				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
@@ -60,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 189544297;
-			PBXWorkspaceStateSaveDate = 189544297;
+			PBXPerProjectTemplateStateSaveDate = 189751646;
+			PBXWorkspaceStateSaveDate = 189751646;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -276,6 +291,51 @@
 		name = mount_fusefs;
 		sourceDirectories = (
 		);
+	};
+	54D47B7F0B4F610000A8FE1C /* load_fusefs */ = {
+		activeExec = 0;
+		executables = (
+			54D47B810B4F610000A8FE1C /* load_fusefs */,
+		);
+	};
+	54D47B810B4F610000A8FE1C /* load_fusefs */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = load_fusefs;
+		sourceDirectories = (
+		);
+	};
+	54D47B930B4F614C00A8FE1C /* load */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRect = "{{0, 0}, {904, 627}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {904, 1050}}";
+			sepNavSelRange = "{0, 0}";
+			sepNavVisRect = "{{0, 0}, {904, 627}}";
+			sepNavWindowFrame = "{{38, 96}, {949, 756}}";
+		};
 	};
 	54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */ = {
 		isa = PBXFileBreakpoint;

@@ -238,18 +238,82 @@ diff -Naur old/lib/fuse_loop_mt.c new/lib/fuse_loop_mt.c
  }
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
-+++ new/lib/mount_bsd.c	2007-01-05 16:06:20.000000000 -0800
-@@ -109,10 +109,24 @@
++++ new/lib/mount_bsd.c	2007-01-05 20:43:06.000000000 -0800
+@@ -24,6 +24,64 @@
+ #define FUSERMOUNT_PROG         "mount_fusefs"
+ #define FUSE_DEV_TRUNK          "/dev/fuse"
+ 
++#if (__FreeBSD__ >= 10)
++
++#define PRIVATE_LOAD_COMMAND    "/System/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs"
++
++#include <sys/param.h>
++#include <sys/mount.h>
++#include <AssertMacros.h>
++
++static int
++checkloadable(void)
++{
++    int ret;
++    struct vfsconf vfc;
++    
++    ret = getvfsbyname("fusefs", &vfc);
++    
++    return ret;
++}   
++
++int
++loadkmod()
++{
++    int result = -1;
++    int pid, terminated_pid;
++    union wait status;
++
++    pid = fork();
++
++    if (pid == 0) {
++        result = execl(PRIVATE_LOAD_COMMAND, PRIVATE_LOAD_COMMAND, NULL);
++        
++        /* exec failed */
++        goto Return;
++    }
++
++    require_action(pid != -1, Return, result = errno);
++
++    while ((terminated_pid = wait4(pid, (int *)&status, 0, NULL)) < 0) {
++        /* retry if EINTR, else break out with error */
++        if ( errno != EINTR ) {
++            break;
++        }
++    }
++
++    if ((terminated_pid == pid) && (WIFEXITED(status))) {
++        result = WEXITSTATUS(status);
++    } else {
++        result = -1;
++    }
++
++Return:
++    check_noerr_string(result, strerror(errno));
++    
++    return result;
++}
++
++#endif
++
+ enum {
+     KEY_ALLOW_ROOT,
+     KEY_RO,
+@@ -108,11 +166,30 @@
+     FUSE_OPT_KEY("noprivate",           KEY_KERN),
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
-     /* Linux specific mount options, but let just the mount util handle them */
-+
++#if (__FreeBSD__ >= 10)
 +    /* Mac OS X specific options */
 +    FUSE_OPT_KEY("fsid=",               KEY_KERN),
-     FUSE_OPT_KEY("fsname=",             KEY_KERN),
--    FUSE_OPT_KEY("nonempty",            KEY_KERN),
-     FUSE_OPT_KEY("large_read",          KEY_KERN),
-     FUSE_OPT_KEY("max_read=",           KEY_KERN),
++    FUSE_OPT_KEY("fsname=",             KEY_KERN),
++    FUSE_OPT_KEY("large_read",          KEY_KERN),
++    FUSE_OPT_KEY("max_read=",           KEY_KERN),
 +    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaque",        KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaqueaccess",  KEY_KERN),
@@ -261,11 +325,17 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +    FUSE_OPT_KEY("ping_diskarb",        KEY_KERN),
 +    FUSE_OPT_KEY("subtype=",            KEY_KERN),
 +    FUSE_OPT_KEY("volname=",            KEY_KERN),
-+
++#else
+     /* Linux specific mount options, but let just the mount util handle them */
+     FUSE_OPT_KEY("fsname=",             KEY_KERN),
+     FUSE_OPT_KEY("nonempty",            KEY_KERN),
+     FUSE_OPT_KEY("large_read",          KEY_KERN),
+     FUSE_OPT_KEY("max_read=",           KEY_KERN),
++#endif
      FUSE_OPT_END
  };
  
-@@ -199,7 +213,11 @@
+@@ -199,7 +276,11 @@
      if (rv)
          return;
  
@@ -277,7 +347,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      system(umount_cmd);
  }
  
-@@ -222,7 +240,11 @@
+@@ -222,7 +303,11 @@
      if (*ep != '\0')
          return;
  
@@ -289,7 +359,23 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      system(umount_cmd);
  }
  
-@@ -267,12 +289,29 @@
+@@ -247,6 +332,15 @@
+     char *fdnam, *dev;
+     int pid;
+ 
++#if (__FreeBSD__ >= 10)
++    if (checkloadable()) {
++        if (loadkmod()) {
++            fprintf(stderr, "fusefs file system is not available");
++            return -1;
++        }
++    }
++#endif
++
+     fdnam = getenv("FUSE_DEV_FD");
+ 
+     if (fdnam) {
+@@ -267,12 +361,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -325,7 +411,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +361,31 @@
+@@ -322,11 +433,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }

@@ -256,23 +256,17 @@
 						<dict>
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
-								<string>089C166AFE841209C02AAC07</string>
-								<string>247142CAFF3F8F9811CA285C</string>
 								<string>1C37FBAC04509CD000000102</string>
-								<string>54BBC8F90B4C37A100A17C8A</string>
-								<string>54BBC8FA0B4C37A100A17C8A</string>
 								<string>1C37FABC05509CD000000102</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>39</integer>
-									<integer>37</integer>
-									<integer>35</integer>
+									<integer>1</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 304}, {186, 461}}</string>
+							<string>{{0, 0}, {186, 461}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -291,7 +285,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>536 287 855 520 0 0 1440 878 </string>
+						<string>65 358 855 520 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -328,7 +322,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {647, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>536 287 855 520 0 0 1440 878 </string>
+								<string>65 358 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -348,7 +342,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {647, 474}}</string>
 								<key>RubberWindowFrame</key>
-								<string>536 287 855 520 0 0 1440 878 </string>
+								<string>65 358 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -372,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54BBC8FB0B4C37A100A17C8A</string>
+				<string>54D47BA00B4F616F00A8FE1C</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54BBC8FC0B4C37A100A17C8A</string>
+				<string>54D47BA10B4F616F00A8FE1C</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -516,10 +510,11 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>/work/fuse/fusefs/fusefs.xcodeproj</string>
+		<string>5403C7EA0ACA9BB300CD9322</string>
+		<string>/work/fuse/release/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>536 287 855 520 0 0 1440 878 </string>
+	<string>65 358 855 520 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
@@ -535,14 +530,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>fuse_vnops.c</string>
+								<string></string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -559,6 +552,8 @@
 							<string>301pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -598,7 +593,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>549646740B4B230E00F881D5</string>
+				<string>54D47BB10B4F61DB00A8FE1C</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
@@ -609,7 +604,7 @@
 			<key>WindowToolGUID</key>
 			<string>5403C7EA0ACA9BB300CD9322</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
