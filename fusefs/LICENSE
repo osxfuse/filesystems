@@ -80,4 +80,6 @@ that I wrote, MacFUSE derives from the following sources.
     ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ================================================================
 
-* Parts of the mount_fusefs
+* Parts of the mount_fusefs command-line program and the load_fusefs program
+  come from Apple's Darwin sources and are covered under the Apple Public
+  Source License (APSL).
