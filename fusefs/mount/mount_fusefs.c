@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <libgen.h>
@@ -50,6 +51,7 @@ struct mntopt mopts[] = {
     { "kernel_cache",        0, FUSE_MOPT_KERNEL_CACHE,          1 },
     { "large_read",          0, FUSE_MOPT_LARGE_READ,            1 },
     { "max_read=",           0, FUSE_MOPT_MAX_READ,              1 },
+    { "ping_diskarb",        0, FUSE_MOPT_PING_DISKARB,          1 }, // used
 
     { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,          1 }, // used
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
@@ -371,13 +373,13 @@ int
 ping_diskarb(char *mntpath)
 {
     int ret;
-    struct statfs fsb;
+    struct statfs sb;
     enum {
         kDiskArbDiskAppearedEjectableMask   = 1 << 1,
         kDiskArbDiskAppearedNetworkDiskMask = 1 << 3
     };
 
-    ret = statfs(mntpath, &fsb);
+    ret = statfs(mntpath, &sb);
     if (ret < 0) {
         return ret;
     }
@@ -387,7 +389,7 @@ ping_diskarb(char *mntpath)
     /* we ignore the return value from DiskArbInit() */
 
     ret = DiskArbDiskAppearedWithMountpointPing_auto(
-              fsb.f_mntfromname,
+              sb.f_mntfromname,
               (kDiskArbDiskAppearedEjectableMask |
                kDiskArbDiskAppearedNetworkDiskMask),
               mntpath);
@@ -559,11 +561,11 @@ main(int argc, char **argv)
         err(EX_OSERR, "fusefs@%d on %s", index, mntpath);
     }
 
-#if 0
-    if (ping_diskarb(mntpath)) {
-        err(EX_OSERR, "fusefs@%d on %s (ping DiskArbitration)", index, mntpath);
+    if (args.altflags & FUSE_MOPT_PING_DISKARB) {
+        if (ping_diskarb(mntpath)) {
+            err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)", index, mntpath);
+        }
     }
-#endif
 
     exit(0);
 }
@@ -588,6 +590,7 @@ showhelp()
       "    -o noreadahead         disable I/O read-ahead behavior for this file system\n"
       "    -o nosyncwrites        disable synchronous-writes behavior (dangerous)\n"
       "    -o noubc               disable the unified buffer cache for this file system\n"
+      "    -o ping_diskarb        ping Disk Arbitration\n"
       "    -o subtype=<num>       set the file system's subtype identifier\n"
       "    -o volname=<name>      set the file system's volume name\n"      
     );

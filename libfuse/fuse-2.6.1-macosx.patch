@@ -146,7 +146,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .access	= xmp_access,
 diff -Naur old/include/fuse.h new/include/fuse.h
 --- old/include/fuse.h	2006-11-30 03:53:18.000000000 -0800
-+++ new/include/fuse.h	2007-01-03 21:54:20.000000000 -0800
++++ new/include/fuse.h	2007-01-03 23:51:54.000000000 -0800
 @@ -663,4 +663,8 @@
  }
  #endif
@@ -238,31 +238,34 @@ diff -Naur old/lib/fuse_loop_mt.c new/lib/fuse_loop_mt.c
  }
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
-+++ new/lib/mount_bsd.c	2007-01-03 23:49:21.000000000 -0800
-@@ -109,10 +109,22 @@
++++ new/lib/mount_bsd.c	2007-01-05 16:06:20.000000000 -0800
+@@ -109,10 +109,24 @@
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
      /* Linux specific mount options, but let just the mount util handle them */
 +
 +    /* Mac OS X specific options */
++    FUSE_OPT_KEY("fsid=",               KEY_KERN),
      FUSE_OPT_KEY("fsname=",             KEY_KERN),
-     FUSE_OPT_KEY("nonempty",            KEY_KERN),
+-    FUSE_OPT_KEY("nonempty",            KEY_KERN),
      FUSE_OPT_KEY("large_read",          KEY_KERN),
      FUSE_OPT_KEY("max_read=",           KEY_KERN),
-+    FUSE_OPT_KEY("volname=",            KEY_KERN),
++    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaque",        KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaqueaccess",  KEY_KERN),
-+    FUSE_OPT_KEY("nosyncwrites",        KEY_KERN),
-+    FUSE_OPT_KEY("fsid=",               KEY_KERN),
-+    FUSE_OPT_KEY("subtype=",            KEY_KERN),
-+    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
-+    FUSE_OPT_KEY("noreadahead",         KEY_KERN),
-+    FUSE_OPT_KEY("noubc",               KEY_KERN),
 +    FUSE_OPT_KEY("nobrowse",            KEY_KERN),
++    FUSE_OPT_KEY("nonempty",            KEY_KERN),
++    FUSE_OPT_KEY("noreadahead",         KEY_KERN),
++    FUSE_OPT_KEY("nosyncwrites",        KEY_KERN),
++    FUSE_OPT_KEY("noubc",               KEY_KERN),
++    FUSE_OPT_KEY("ping_diskarb",        KEY_KERN),
++    FUSE_OPT_KEY("subtype=",            KEY_KERN),
++    FUSE_OPT_KEY("volname=",            KEY_KERN),
++
      FUSE_OPT_END
  };
  
-@@ -199,7 +211,11 @@
+@@ -199,7 +213,11 @@
      if (rv)
          return;
  
@@ -274,7 +277,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      system(umount_cmd);
  }
  
-@@ -222,7 +238,11 @@
+@@ -222,7 +240,11 @@
      if (*ep != '\0')
          return;
  
@@ -286,7 +289,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      system(umount_cmd);
  }
  
-@@ -267,12 +287,29 @@
+@@ -267,12 +289,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -322,7 +325,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +359,31 @@
+@@ -322,11 +361,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }

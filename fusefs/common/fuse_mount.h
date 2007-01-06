@@ -71,13 +71,14 @@ enum {
 #define FUSE_MOPT_NO_READAHEAD          0x00080000
 #define FUSE_MOPT_NO_SYNCWRITES         0x00100000
 #define FUSE_MOPT_NO_UBC                0x00200000
-#define FUSE_MOPT_READDIR_INO           0x00400000
-#define FUSE_MOPT_ROOTMODE              0x00800000
-#define FUSE_MOPT_SUBTYPE               0x01000000
-#define FUSE_MOPT_UID                   0x02000000
-#define FUSE_MOPT_UMASK                 0x04000000
-#define FUSE_MOPT_USE_INO               0x08000000
-#define FUSE_MOPT_VOLNAME               0x10000000
+#define FUSE_MOPT_PING_DISKARB          0x00400000
+#define FUSE_MOPT_READDIR_INO           0x00800000
+#define FUSE_MOPT_ROOTMODE              0x01000000
+#define FUSE_MOPT_SUBTYPE               0x02000000
+#define FUSE_MOPT_UID                   0x04000000
+#define FUSE_MOPT_UMASK                 0x08000000
+#define FUSE_MOPT_USE_INO               0x10000000
+#define FUSE_MOPT_VOLNAME               0x20000000
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF

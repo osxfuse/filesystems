@@ -1,2 +1,1 @@
-
-
+SSHFS_CFLAGS="-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -I/work/macfuse/libfuse/fuse-2.6.1/include -I/usr/local/include/glib-2.0 -I/usr/local/include/glib-2.0/glib" SSHFS_LIBS="/work/macfuse/libfuse/fuse-2.6.1/lib/.libs/libfuse.a -lglib-2.0.0" ./configure --prefix=/usr/local
