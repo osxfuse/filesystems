@@ -1,7 +1,7 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2006-08-17 03:07:05.000000000 -0700
-+++ new/Makefile.in	2007-01-04 00:31:59.000000000 -0800
-@@ -588,7 +588,11 @@
++++ new/Makefile.in	2007-01-05 23:13:17.000000000 -0800
+@@ -588,6 +588,9 @@
  	uninstall-local
  
  
@@ -9,10 +9,16 @@ diff -Naur old/Makefile.in new/Makefile.in
 +all-local:
 +else
  all-local: sshnodelay.so
-+endif
  
  install-exec-local: sshnodelay.so
- 	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
+@@ -599,6 +602,7 @@
+ 
+ sshnodelay.so:
+ 	$(CC) -Wall -W -s --shared -fPIC $(sshnodelay_libs) sshnodelay.c -o sshnodelay.so
++endif
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2006-08-18 03:34:08.000000000 -0700
 +++ new/sshfs.c	2007-01-05 21:07:40.000000000 -0800
