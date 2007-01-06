@@ -1,2 +1,0 @@
-CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc -D__FreeBSD__=10"
-
