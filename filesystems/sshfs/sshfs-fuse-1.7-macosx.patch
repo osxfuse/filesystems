@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2006-08-18 03:34:08.000000000 -0700
-+++ new/sshfs.c	2007-01-04 00:08:07.000000000 -0800
++++ new/sshfs.c	2007-01-05 21:07:40.000000000 -0800
 @@ -18,7 +18,9 @@
  #include <string.h>
  #include <stdint.h>
@@ -68,7 +68,18 @@ diff -Naur old/sshfs.c new/sshfs.c
  };
  
  struct sshfs {
-@@ -1768,6 +1798,9 @@
+@@ -687,8 +717,10 @@
+     } else if (pid == 0) {
+         int devnull;
+ 
++#if !(__FreeBSD__ >= 10)
+         if (sshfs.nodelay_workaround && do_ssh_nodelay_workaround() == -1)
+             fprintf(stderr, "warning: ssh nodelay workaround disabled\n");
++#endif
+ 
+         devnull = open("/dev/null", O_WRONLY);
+ 
+@@ -1768,6 +1800,9 @@
      pthread_cond_init(&sf->write_finished, NULL);
      /* Assume random read after open */
      sf->is_seq = 0;
@@ -78,7 +89,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      sf->next_pos = 0;
      sf->modifver= sshfs.modifver;
      sf->connver = sshfs.connver;
-@@ -1851,6 +1884,23 @@
+@@ -1851,6 +1886,23 @@
      return sshfs_flush(path, fi);
  }
  
@@ -102,7 +113,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  static int sshfs_release(const char *path, struct fuse_file_info *fi)
  {
      struct sshfs_file *sf = get_sshfs_file(fi);
-@@ -2109,8 +2159,13 @@
+@@ -2109,8 +2161,13 @@
      iov[1].iov_base = (void *) wbuf;
      iov[1].iov_len = size;
      if (!sshfs.sync_write && !sf->write_error)
@@ -116,7 +127,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      else
          err = sftp_request_iov(SSH_FXP_WRITE, iov, 2, SSH_FXP_STATUS, NULL);
      buf_free(&buf);
-@@ -2149,6 +2204,11 @@
+@@ -2149,6 +2206,11 @@
  static int sshfs_create(const char *path, mode_t mode,
                          struct fuse_file_info *fi)
  {
