@@ -17,5 +17,7 @@
    for user-kernel communication. In fact, much of the code for this IPC
    comes from the FreeBSD version of FUSE. On Mac OS X, we can do some
    interesting stuff with things like IODataQueue's and Mach VM in general.
-   It would be a nice sub project to come up with a more optimized user-kernel
+   It would be a nice subproject to come up with a more optimized user-kernel
    communication for FUSE's purposes.
+
+3. The interaction/handshaking with the Finder could use some improvement.

@@ -75,7 +75,8 @@ Please read further for specific details.
 
 * fusefs/fuse_nodehash.c is a slightly modified version of HashNode.c from an
   Apple Developer Technical Support (DTS) sample code example. The original
-  source has the following disclaimer:
+  source, which is available on http://developer.apple.com/samplecode/, has
+  the following disclaimer:
 
     ================================================================
     Disclaimer: IMPORTANT: This Apple software is supplied to you by
