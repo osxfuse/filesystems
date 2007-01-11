@@ -2,7 +2,7 @@ Besides Google-written code, MacFUSE uses pieces from multiple code bases.
 The Google code in MacFUSE is covered under the following BSD-style license:
 
     ================================================================
-    Copyright (c) 2006, Google Inc.
+    Copyright (c) 2007, Google Inc.
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
