@@ -1,13 +1,51 @@
-MacFUSE uses pieces from multiple code bases. In particular, besides code
-that I wrote, MacFUSE derives from the following sources.
+Besides Google-written code, MacFUSE uses pieces from multiple code bases.
+The Google code in MacFUSE is covered under the following BSD-style license:
 
-* fuse_kernel.h is an unmodified copy of the interface header from the
-  Linux FUSE distribution (http://fuse.sourceforge.net). fuse_kernel.h
-  can be redistributed either under the GPL or under the BSD license.
+    ================================================================
+    Copyright (c) 2006, Google Inc.
+    All rights reserved.
 
-* Parts of MacFUSE (multiple files) contain code derived from the FreeBSD
-  version of FUSE (http://fuse4bsd.creo.hu), which is covered by the
-  following BSD-style license:
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above
+      copyright notice, this list of conditions and the following disclaimer
+      in the documentation and/or other materials provided with the
+      distribution.
+    * Neither the name of Google Inc. nor the names of its
+      contributors may be used to endorse or promote products derived from
+      this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,           
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    ================================================================
+
+Note that Google's patches to the FUSE library (libfuse/*.patch) (and to
+the SSHFS user-space program (filesystems/sshfs/*.patch) are also released
+under the BSD license.
+
+Besides code that Google wrote, MacFUSE derives from the following sources.
+
+* fusefs/fuse_kernel.h is an unmodified copy of the interface header from
+  the Linux FUSE distribution (http://fuse.sourceforge.net). fuse_kernel.h
+  can be redistributed either under the GPL or under the BSD license. It
+  is being redistributed here under the BSD license.
+
+* Unless otherwise noted, parts of MacFUSE (multiple files in fusefs/) contain
+  code derived from the FreeBSD version of FUSE (http://fuse4bsd.creo.hu),
+  which is covered by the following BSD-style license:
 
     ================================================================
     Copyright (C) 2005 Csaba Henk. All rights reserved.
@@ -34,9 +72,9 @@ that I wrote, MacFUSE derives from the following sources.
     SUCH DAMAGE.
     ================================================================
 
-* fuse_nodehash.c is a slightly modified version of HashNode.c from an Apple
-  Developer Technical Support (DTS) sample code example. The original header
-  has the following disclaimer:
+* fusefs/fuse_nodehash.c is a slightly modified version of HashNode.c from an
+  Apple Developer Technical Support (DTS) sample code example. The original
+  source has the following disclaimer:
 
     ================================================================
     Disclaimer: IMPORTANT: This Apple software is supplied to you by
@@ -80,6 +118,9 @@ that I wrote, MacFUSE derives from the following sources.
     ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ================================================================
 
-* Parts of the mount_fusefs command-line program and the load_fusefs program
+* Parts of the mount_fusefs and the load_fusefs command-line programs
+  (implemented in fusefs/mount_fusefs/ and fusefs/load_fusefs/, respectively)
   come from Apple's Darwin sources and are covered under the Apple Public
-  Source License (APSL).
+  Source License (APSL). You can read the APSL at:
+
+  http://www.publicsource.apple.com/apsl/
