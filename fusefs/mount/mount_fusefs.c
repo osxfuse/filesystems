@@ -561,6 +561,15 @@ main(int argc, char **argv)
         err(EX_OSERR, "fusefs@%d on %s", index, mntpath);
     }
 
+    /*
+     * XXX: There's a race condition here with the Finder. The kernel's
+     * vfs_getattr() won't do the real thing until the daemon has responded
+     * to the FUSE_INIT method. If the Finder does a stat on the file system
+     * too soon, it will get "fake" information (leading to things like
+     * "Zero KB on disk"). A decent solution is to do this pinging not here,
+     * but somewhere else asynchronously, after we've made sure that the
+     * kernel-user handshake is complete.
+     */
     if (args.altflags & FUSE_MOPT_PING_DISKARB) {
         if (ping_diskarb(mntpath)) {
             err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)", index, mntpath);
