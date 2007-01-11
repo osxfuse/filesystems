@@ -1,5 +1,5 @@
-Besides Google-written code, MacFUSE uses pieces from multiple code bases.
-The Google code in MacFUSE is covered under the following BSD-style license:
+MacFUSE is a package developed by Google and is covered under the following
+BSD-style license:
 
     ================================================================
     Copyright (c) 2007, Google Inc.
@@ -36,7 +36,8 @@ Note that Google's patches to the FUSE library (libfuse/*.patch) (and to
 the SSHFS user-space program (filesystems/sshfs/*.patch) are also released
 under the BSD license.
 
-Besides code that Google wrote, MacFUSE derives from the following sources.
+Portions of this package were derived from code developed by other authors.
+Please read further for specific details.
 
 * fusefs/fuse_kernel.h is an unmodified copy of the interface header from
   the Linux FUSE distribution (http://fuse.sourceforge.net). fuse_kernel.h
