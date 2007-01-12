@@ -552,6 +552,14 @@ dostatfs:
     if (faking == 1) {
         bzero(&faked, sizeof(faked));
         fsfo = &faked;
+
+        /*
+         * This is a temporary fix so that the Finder doesn't get unhappy
+         * upon seeing a block size of 0, which is possible if the Finder
+         * causes a vfs_getattr() before the daemon handshake is complete.
+         */
+        faked.st.frsize = FUSE_DEFAULT_BLOCKSIZE;
+
     } else {
         fsfo = fdi.answ;
     }
