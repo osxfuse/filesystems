@@ -106,6 +106,8 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
             HNodeAttachVNodeSucceeded(hn, 0 /* forkIndex */, vn);
             if (markroot == TRUE) {
                 fvdat->parent = vn;
+            } else {
+                fvdat->parent = dvp;
             }
         } else {
             if (HNodeAttachVNodeFailed(hn, 0 /* forkIndex */)) {
