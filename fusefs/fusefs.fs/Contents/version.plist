@@ -5,9 +5,9 @@
 	<key>BuildVersion</key>
 	<string>1</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.1.0b004</string>
+	<string>0.1.0b005</string>
 	<key>CFBundleVersion</key>
-	<string>0.1.0b004</string>
+	<string>0.1.0b005</string>
 	<key>ProjectName</key>
 	<string>fusefs</string>
 	<key>SourceVersion</key>
