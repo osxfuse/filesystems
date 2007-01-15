@@ -240,7 +240,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
 +++ new/lib/mount_bsd.c	2007-01-05 20:43:06.000000000 -0800
 @@ -24,6 +24,64 @@
- #define FUSERMOUNT_PROG         "mount_fusefs"
+ #define FUSERMOUNT_PROG         "/System/Library/Filesystems/fusefs.fs/mount_fusefs"
  #define FUSE_DEV_TRUNK          "/dev/fuse"
  
 +#if (__FreeBSD__ >= 10)
