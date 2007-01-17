@@ -97,18 +97,16 @@ fuse_internal_attr_fat2vat(mount_t            mp,
     t.tv_sec = fat->atime; t.tv_nsec = fat->atimensec;
     VATTR_RETURN(vap, va_access_time, t);
 
-    t.tv_sec = fat->mtime; t.tv_nsec = fat->mtimensec;
-    VATTR_RETURN(vap, va_modify_time, t);
-
     t.tv_sec = fat->ctime; t.tv_nsec = fat->ctimensec;
     VATTR_RETURN(vap, va_change_time, t);
 
+    t.tv_sec = fat->mtime; t.tv_nsec = fat->mtimensec;
+    VATTR_RETURN(vap, va_modify_time, t);
+
     VATTR_RETURN(vap, va_mode, fat->mode & ~S_IFMT);
     VATTR_RETURN(vap, va_nlink, fat->nlink);
-    VATTR_RETURN(vap, va_uid, fat->uid);
-    VATTR_RETURN(vap, va_gid, fat->gid);
-    //VATTR_RETURN(vap, va_uid, 99);
-    //VATTR_RETURN(vap, va_gid, 99);
+    VATTR_RETURN(vap, va_uid, fat->uid); // or 99 for experiments
+    VATTR_RETURN(vap, va_gid, fat->gid); // or 99 for experiments
     VATTR_RETURN(vap, va_rdev, fat->rdev);
 
     VATTR_RETURN(vap, va_type, IFTOVT(fat->mode));

@@ -2276,21 +2276,45 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
     }
     VATTR_SET_SUPPORTED(vap, va_data_size);
 
-    if (VATTR_IS_ACTIVE(vap, va_access_time) ||
-        VATTR_IS_ACTIVE(vap, va_modify_time)) {
-        if (VATTR_IS_ACTIVE(vap, va_access_time)) {
-            fsai->FUSEATTR(atime) = vap->va_access_time.tv_sec;
-            fsai->FUSEATTR(atimensec) = vap->va_access_time.tv_nsec;
-            fsai->valid |=  FATTR_ATIME;
-        }
-        if (VATTR_IS_ACTIVE(vap, va_modify_time)) {
+    /*
+     * Possible timestamps:
+     *
+     * Mac OS X                                          Linux
+     *  
+     * va_access_time    last access time                atime
+     * va_backup_time    last backup time                -
+     * va_change_time    last metadata change time       ctime*
+     * va_create_time    creation time                   ctime*
+     * va_modify_time    last data modification time     mtime
+     *
+     * FUSE has knowledge of atime, ctime, and mtime. A setattr call to
+     * the daemon can take atime and mtime.
+     */
+
+    if (VATTR_IS_ACTIVE(vap, va_access_time)) {
+        fsai->FUSEATTR(atime) = vap->va_access_time.tv_sec;
+        fsai->FUSEATTR(atimensec) = vap->va_access_time.tv_nsec;
+        fsai->valid |=  FATTR_ATIME;
+    }
+
+    if (VATTR_IS_ACTIVE(vap, va_modify_time)) {
+        /*
+         * What a kludge! Hear, hear! OK, but for the time being, this is
+         * better than having your mtimes clobbered to the Summer of '69.
+         */
+        if (vap->va_modify_time.tv_sec > 0) {
             fsai->FUSEATTR(mtime) = vap->va_modify_time.tv_sec;
             fsai->FUSEATTR(mtimensec) = vap->va_modify_time.tv_nsec;
             fsai->valid |=  FATTR_MTIME;
         }
     }
+
     VATTR_SET_SUPPORTED(vap, va_access_time);
     VATTR_SET_SUPPORTED(vap, va_modify_time);
+
+    /* Don't support va_{backup, change, create}_time */
+
+    /* XXX: What about VA_UTIMES_NULL? */
 
     if (VATTR_IS_ACTIVE(vap, va_mode)) {
         //if (vap->va_mode & S_IFMT) {
