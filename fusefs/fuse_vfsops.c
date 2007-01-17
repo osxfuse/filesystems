@@ -440,7 +440,7 @@ handle_capabilities_and_attributes(struct vfs_attr *attr)
         | ATTR_CMN_PAROBJID
 //      | ATTR_CMN_SCRIPT
 //      | ATTR_CMN_CRTIME
-        | ATTR_CMN_MODTIME
+//      | ATTR_CMN_MODTIME
 //      | ATTR_CMN_CHGTIME
 //      | ATTR_CMN_ACCTIME
 //      | ATTR_CMN_BKUPTIME

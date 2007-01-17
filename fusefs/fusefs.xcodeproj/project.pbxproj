@@ -6,6 +6,33 @@
 	objectVersion = 42;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		54C6DD290B5EE606002D9FD9 /* All */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 54C6DD330B5EE623002D9FD9 /* Build configuration list for PBXAggregateTarget "All" */;
+			buildPhases = (
+			);
+			dependencies = (
+				54C6DD310B5EE61A002D9FD9 /* PBXTargetDependency */,
+				54C6DD2F0B5EE61A002D9FD9 /* PBXTargetDependency */,
+				54C6DD2D0B5EE61A002D9FD9 /* PBXTargetDependency */,
+			);
+			name = All;
+			productName = All;
+		};
+		54C6DE650B5EED9E002D9FD9 /* fusefs.fs */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 54C6DE680B5EEDBC002D9FD9 /* Build configuration list for PBXAggregateTarget "fusefs.fs" */;
+			buildPhases = (
+				54C6DE640B5EED9E002D9FD9 /* CopyFiles */,
+			);
+			dependencies = (
+			);
+			name = fusefs.fs;
+			productName = fusefs.fs;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		32A4FEBC0562C75700D090E7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C167DFE841241C02AAC07 /* InfoPlist.strings */; };
 		32A4FEBE0562C75700D090E7 /* fuse_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 1A224C3CFF42312311CA2CB7 /* fuse_main.c */; settings = {ATTRIBUTES = (); }; };
@@ -37,8 +64,46 @@
 		5494A95C0ACA5D3D0020068B /* fuse_mount.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95A0ACA5D3D0020068B /* fuse_mount.h */; };
 		5494A95D0ACA5D3D0020068B /* fuse_param.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95B0ACA5D3D0020068B /* fuse_param.h */; };
 		54BBC8F60B4C379500A17C8A /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */; };
+		54C6DE6C0B5EEDD1002D9FD9 /* Contents in CopyFiles */ = {isa = PBXBuildFile; fileRef = 54C6DE6B0B5EEDD1002D9FD9 /* Contents */; };
 		54D47BC10B4F62A200A8FE1C /* load_fusefs.c in Sources */ = {isa = PBXBuildFile; fileRef = 54D47BC00B4F62A200A8FE1C /* load_fusefs.c */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		54C6DD2C0B5EE61A002D9FD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 54D47B7F0B4F610000A8FE1C /* load_fusefs */;
+			remoteInfo = load_fusefs;
+		};
+		54C6DD2E0B5EE61A002D9FD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5494A9410ACA5BF10020068B /* mount_fusefs */;
+			remoteInfo = mount_fusefs;
+		};
+		54C6DD300B5EE61A002D9FD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 32A4FEB80562C75700D090E7 /* fusefs */;
+			remoteInfo = fusefs;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		54C6DE640B5EED9E002D9FD9 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = fusefs.fs;
+			dstSubfolderSpec = 16;
+			files = (
+				54C6DE6C0B5EEDD1002D9FD9 /* Contents in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		089C167EFE841241C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -75,6 +140,97 @@
 		5494A95A0ACA5D3D0020068B /* fuse_mount.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_mount.h; path = common/fuse_mount.h; sourceTree = "<group>"; };
 		5494A95B0ACA5D3D0020068B /* fuse_param.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_param.h; path = common/fuse_param.h; sourceTree = "<group>"; };
 		54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
+		54C6DD210B5EE5EF002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		54C6DD240B5EE5EF002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		54C6DD250B5EE5EF002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
+		54C6DD790B5EEB44002D9FD9 /* API */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = API; sourceTree = "<group>"; };
+		54C6DD7D0B5EEB44002D9FD9 /* categories.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = categories.pbxbtree; sourceTree = "<group>"; };
+		54C6DD7E0B5EEB44002D9FD9 /* cdecls.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = cdecls.pbxbtree; sourceTree = "<group>"; };
+		54C6DD7F0B5EEB44002D9FD9 /* decls.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = decls.pbxbtree; sourceTree = "<group>"; };
+		54C6DD800B5EEB44002D9FD9 /* files.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = files.pbxbtree; sourceTree = "<group>"; };
+		54C6DD810B5EEB44002D9FD9 /* imports.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = imports.pbxbtree; sourceTree = "<group>"; };
+		54C6DD820B5EEB44002D9FD9 /* pbxindex.header */ = {isa = PBXFileReference; lastKnownFileType = file; path = pbxindex.header; sourceTree = "<group>"; };
+		54C6DD830B5EEB44002D9FD9 /* protocols.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = protocols.pbxbtree; sourceTree = "<group>"; };
+		54C6DD840B5EEB44002D9FD9 /* refs.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = refs.pbxbtree; sourceTree = "<group>"; };
+		54C6DD860B5EEB44002D9FD9 /* control */ = {isa = PBXFileReference; lastKnownFileType = file; path = control; sourceTree = "<group>"; };
+		54C6DD870B5EEB44002D9FD9 /* strings */ = {isa = PBXFileReference; lastKnownFileType = file; path = strings; sourceTree = "<group>"; };
+		54C6DD880B5EEB44002D9FD9 /* subclasses.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = subclasses.pbxbtree; sourceTree = "<group>"; };
+		54C6DD890B5EEB44002D9FD9 /* symbols0.pbxsymbols */ = {isa = PBXFileReference; lastKnownFileType = file; path = symbols0.pbxsymbols; sourceTree = "<group>"; };
+		54C6DD8D0B5EEB44002D9FD9 /* fusefs_info.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fusefs_info.c; sourceTree = "<group>"; };
+		54C6DD8E0B5EEB44002D9FD9 /* fusefs.hmap */ = {isa = PBXFileReference; lastKnownFileType = file; path = fusefs.hmap; sourceTree = "<group>"; };
+		54C6DD910B5EEB44002D9FD9 /* fuse_device.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_device.o; sourceTree = "<group>"; };
+		54C6DD920B5EEB44002D9FD9 /* fuse_file.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_file.o; sourceTree = "<group>"; };
+		54C6DD930B5EEB44002D9FD9 /* fuse_internal.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_internal.o; sourceTree = "<group>"; };
+		54C6DD940B5EEB44002D9FD9 /* fuse_ipc.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_ipc.o; sourceTree = "<group>"; };
+		54C6DD950B5EEB44002D9FD9 /* fuse_locking.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_locking.o; sourceTree = "<group>"; };
+		54C6DD960B5EEB44002D9FD9 /* fuse_main.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_main.o; sourceTree = "<group>"; };
+		54C6DD970B5EEB44002D9FD9 /* fuse_node.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_node.o; sourceTree = "<group>"; };
+		54C6DD980B5EEB44002D9FD9 /* fuse_nodehash.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_nodehash.o; sourceTree = "<group>"; };
+		54C6DD990B5EEB44002D9FD9 /* fuse_sysctl.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_sysctl.o; sourceTree = "<group>"; };
+		54C6DD9A0B5EEB44002D9FD9 /* fuse_vfsops.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_vfsops.o; sourceTree = "<group>"; };
+		54C6DD9B0B5EEB44002D9FD9 /* fuse_vnops.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_vnops.o; sourceTree = "<group>"; };
+		54C6DD9C0B5EEB44002D9FD9 /* fusefs */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fusefs; sourceTree = "<group>"; };
+		54C6DD9D0B5EEB44002D9FD9 /* fusefs.LinkFileList */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = fusefs.LinkFileList; sourceTree = "<group>"; };
+		54C6DD9E0B5EEB44002D9FD9 /* fusefs_info.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fusefs_info.o; sourceTree = "<group>"; };
+		54C6DDA00B5EEB44002D9FD9 /* fuse_device.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_device.o; sourceTree = "<group>"; };
+		54C6DDA10B5EEB44002D9FD9 /* fuse_file.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_file.o; sourceTree = "<group>"; };
+		54C6DDA20B5EEB44002D9FD9 /* fuse_internal.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_internal.o; sourceTree = "<group>"; };
+		54C6DDA30B5EEB44002D9FD9 /* fuse_ipc.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_ipc.o; sourceTree = "<group>"; };
+		54C6DDA40B5EEB44002D9FD9 /* fuse_locking.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_locking.o; sourceTree = "<group>"; };
+		54C6DDA50B5EEB44002D9FD9 /* fuse_main.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_main.o; sourceTree = "<group>"; };
+		54C6DDA60B5EEB44002D9FD9 /* fuse_node.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_node.o; sourceTree = "<group>"; };
+		54C6DDA70B5EEB44002D9FD9 /* fuse_nodehash.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_nodehash.o; sourceTree = "<group>"; };
+		54C6DDA80B5EEB44002D9FD9 /* fuse_sysctl.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_sysctl.o; sourceTree = "<group>"; };
+		54C6DDA90B5EEB44002D9FD9 /* fuse_vfsops.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_vfsops.o; sourceTree = "<group>"; };
+		54C6DDAA0B5EEB44002D9FD9 /* fuse_vnops.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fuse_vnops.o; sourceTree = "<group>"; };
+		54C6DDAB0B5EEB44002D9FD9 /* fusefs */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fusefs; sourceTree = "<group>"; };
+		54C6DDAC0B5EEB44002D9FD9 /* fusefs.LinkFileList */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = fusefs.LinkFileList; sourceTree = "<group>"; };
+		54C6DDAD0B5EEB44002D9FD9 /* fusefs_info.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; path = fusefs_info.o; sourceTree = "<group>"; };
+		54C6DDAE0B5EEB44002D9FD9 /* Preprocessed-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist; path = "Preprocessed-Info.plist"; sourceTree = "<group>"; };
+		54C6DDB00B5EEB44002D9FD9 /* fusefs.kext */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.kernel-extension"; path = fusefs.kext; sourceTree = "<group>"; };
+		54C6DDB20B5EEB44002D9FD9 /* fuse_mount.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_mount.h; sourceTree = "<group>"; };
+		54C6DDB30B5EEB44002D9FD9 /* fuse_param.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_param.h; sourceTree = "<group>"; };
+		54C6DDB40B5EEB44002D9FD9 /* fuse_version.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_version.h; sourceTree = "<group>"; };
+		54C6DDB60B5EEB44002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		54C6DDB70B5EEB44002D9FD9 /* fuse.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse.h; sourceTree = "<group>"; };
+		54C6DDB80B5EEB44002D9FD9 /* fuse_device.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_device.c; sourceTree = "<group>"; };
+		54C6DDB90B5EEB44002D9FD9 /* fuse_device.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_device.h; sourceTree = "<group>"; };
+		54C6DDBA0B5EEB44002D9FD9 /* fuse_file.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_file.c; sourceTree = "<group>"; };
+		54C6DDBB0B5EEB44002D9FD9 /* fuse_file.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_file.h; sourceTree = "<group>"; };
+		54C6DDBC0B5EEB44002D9FD9 /* fuse_internal.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_internal.c; sourceTree = "<group>"; };
+		54C6DDBD0B5EEB44002D9FD9 /* fuse_internal.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_internal.h; sourceTree = "<group>"; };
+		54C6DDBE0B5EEB44002D9FD9 /* fuse_ipc.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_ipc.c; sourceTree = "<group>"; };
+		54C6DDBF0B5EEB44002D9FD9 /* fuse_ipc.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_ipc.h; sourceTree = "<group>"; };
+		54C6DDC00B5EEB44002D9FD9 /* fuse_kernel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_kernel.h; sourceTree = "<group>"; };
+		54C6DDC10B5EEB44002D9FD9 /* fuse_locking.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_locking.c; sourceTree = "<group>"; };
+		54C6DDC20B5EEB44002D9FD9 /* fuse_locking.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_locking.h; sourceTree = "<group>"; };
+		54C6DDC30B5EEB44002D9FD9 /* fuse_main.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_main.c; sourceTree = "<group>"; };
+		54C6DDC40B5EEB44002D9FD9 /* fuse_node.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_node.c; sourceTree = "<group>"; };
+		54C6DDC50B5EEB44002D9FD9 /* fuse_node.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_node.h; sourceTree = "<group>"; };
+		54C6DDC60B5EEB44002D9FD9 /* fuse_nodehash.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_nodehash.c; sourceTree = "<group>"; };
+		54C6DDC70B5EEB44002D9FD9 /* fuse_nodehash.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_nodehash.h; sourceTree = "<group>"; };
+		54C6DDC80B5EEB44002D9FD9 /* fuse_sysctl.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_sysctl.c; sourceTree = "<group>"; };
+		54C6DDC90B5EEB44002D9FD9 /* fuse_sysctl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_sysctl.h; sourceTree = "<group>"; };
+		54C6DDCA0B5EEB44002D9FD9 /* fuse_vfsops.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_vfsops.c; sourceTree = "<group>"; };
+		54C6DDCB0B5EEB44002D9FD9 /* fuse_vfsops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vfsops.h; sourceTree = "<group>"; };
+		54C6DDCC0B5EEB44002D9FD9 /* fuse_vnops.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_vnops.c; sourceTree = "<group>"; };
+		54C6DDCD0B5EEB44002D9FD9 /* fuse_vnops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vnops.h; sourceTree = "<group>"; };
+		54C6DDD00B5EEB44002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		54C6DDD30B5EEB44002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		54C6DDD40B5EEB44002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
+		54C6DDD50B5EEB44002D9FD9 /* fusefs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = fusefs.xcodeproj; sourceTree = "<group>"; };
+		54C6DDD80B5EEB44002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		54C6DDDA0B5EEB44002D9FD9 /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
+		54C6DDDC0B5EEB44002D9FD9 /* getmntopts.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = getmntopts.c; sourceTree = "<group>"; };
+		54C6DDDD0B5EEB44002D9FD9 /* getproctitle.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = getproctitle.c; sourceTree = "<group>"; };
+		54C6DDDE0B5EEB44002D9FD9 /* mntopts.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mntopts.h; sourceTree = "<group>"; };
+		54C6DDDF0B5EEB44002D9FD9 /* mount_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mount_fusefs.c; sourceTree = "<group>"; };
+		54C6DDE00B5EEB44002D9FD9 /* TODO */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO; sourceTree = "<group>"; };
+		54C6DE390B5EEB75002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		54C6DE3C0B5EEB75002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		54C6DE3D0B5EEB75002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
+		54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fusefs.fs; sourceTree = "<group>"; };
+		54C6DE6B0B5EEDD1002D9FD9 /* Contents */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Contents; path = fusefs.fs/Contents; sourceTree = "<group>"; };
 		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		54D47B930B4F614C00A8FE1C /* load */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = folder; path = load; sourceTree = "<group>"; };
 		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
@@ -112,6 +268,11 @@
 		089C166AFE841209C02AAC07 /* fusefs */ = {
 			isa = PBXGroup;
 			children = (
+				54C6DE6B0B5EEDD1002D9FD9 /* Contents */,
+				54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */,
+				54C6DE370B5EEB75002D9FD9 /* fusefs.fs */,
+				54C6DD780B5EEB44002D9FD9 /* fusefs */,
+				54C6DD1F0B5EE5EF002D9FD9 /* fusefs.fs */,
 				54D47BC00B4F62A200A8FE1C /* load_fusefs.c */,
 				54D47BBC0B4F628200A8FE1C /* load_fusefs.c */,
 				54D47BB70B4F625000A8FE1C /* load_fusefs.c */,
@@ -180,6 +341,289 @@
 			name = Source;
 			sourceTree = "<group>";
 		};
+		54C6DD1F0B5EE5EF002D9FD9 /* fusefs.fs */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD200B5EE5EF002D9FD9 /* Contents */,
+			);
+			path = fusefs.fs;
+			sourceTree = "<group>";
+		};
+		54C6DD200B5EE5EF002D9FD9 /* Contents */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD210B5EE5EF002D9FD9 /* Info.plist */,
+				54C6DD220B5EE5EF002D9FD9 /* Resources */,
+				54C6DD250B5EE5EF002D9FD9 /* version.plist */,
+			);
+			path = Contents;
+			sourceTree = "<group>";
+		};
+		54C6DD220B5EE5EF002D9FD9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD230B5EE5EF002D9FD9 /* InfoPlist.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		54C6DD780B5EEB44002D9FD9 /* fusefs */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD790B5EEB44002D9FD9 /* API */,
+				54C6DD7A0B5EEB44002D9FD9 /* build */,
+				54C6DDB10B5EEB44002D9FD9 /* common */,
+				54C6DDB50B5EEB44002D9FD9 /* InfoPlist.strings */,
+				54C6DDB70B5EEB44002D9FD9 /* fuse.h */,
+				54C6DDB80B5EEB44002D9FD9 /* fuse_device.c */,
+				54C6DDB90B5EEB44002D9FD9 /* fuse_device.h */,
+				54C6DDBA0B5EEB44002D9FD9 /* fuse_file.c */,
+				54C6DDBB0B5EEB44002D9FD9 /* fuse_file.h */,
+				54C6DDBC0B5EEB44002D9FD9 /* fuse_internal.c */,
+				54C6DDBD0B5EEB44002D9FD9 /* fuse_internal.h */,
+				54C6DDBE0B5EEB44002D9FD9 /* fuse_ipc.c */,
+				54C6DDBF0B5EEB44002D9FD9 /* fuse_ipc.h */,
+				54C6DDC00B5EEB44002D9FD9 /* fuse_kernel.h */,
+				54C6DDC10B5EEB44002D9FD9 /* fuse_locking.c */,
+				54C6DDC20B5EEB44002D9FD9 /* fuse_locking.h */,
+				54C6DDC30B5EEB44002D9FD9 /* fuse_main.c */,
+				54C6DDC40B5EEB44002D9FD9 /* fuse_node.c */,
+				54C6DDC50B5EEB44002D9FD9 /* fuse_node.h */,
+				54C6DDC60B5EEB44002D9FD9 /* fuse_nodehash.c */,
+				54C6DDC70B5EEB44002D9FD9 /* fuse_nodehash.h */,
+				54C6DDC80B5EEB44002D9FD9 /* fuse_sysctl.c */,
+				54C6DDC90B5EEB44002D9FD9 /* fuse_sysctl.h */,
+				54C6DDCA0B5EEB44002D9FD9 /* fuse_vfsops.c */,
+				54C6DDCB0B5EEB44002D9FD9 /* fuse_vfsops.h */,
+				54C6DDCC0B5EEB44002D9FD9 /* fuse_vnops.c */,
+				54C6DDCD0B5EEB44002D9FD9 /* fuse_vnops.h */,
+				54C6DDCE0B5EEB44002D9FD9 /* fusefs.fs */,
+				54C6DDD50B5EEB44002D9FD9 /* fusefs.xcodeproj */,
+				54C6DDD80B5EEB44002D9FD9 /* Info.plist */,
+				54C6DDD90B5EEB44002D9FD9 /* load */,
+				54C6DDDB0B5EEB44002D9FD9 /* mount */,
+				54C6DDE00B5EEB44002D9FD9 /* TODO */,
+			);
+			name = fusefs;
+			sourceTree = "<group>";
+		};
+		54C6DD7A0B5EEB44002D9FD9 /* build */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD7B0B5EEB44002D9FD9 /* fusefs.build */,
+				54C6DDAF0B5EEB44002D9FD9 /* Release */,
+			);
+			path = build;
+			sourceTree = "<group>";
+		};
+		54C6DD7B0B5EEB44002D9FD9 /* fusefs.build */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD7C0B5EEB44002D9FD9 /* fusefs.pbxindex */,
+				54C6DD8A0B5EEB44002D9FD9 /* Release */,
+			);
+			path = fusefs.build;
+			sourceTree = "<group>";
+		};
+		54C6DD7C0B5EEB44002D9FD9 /* fusefs.pbxindex */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD7D0B5EEB44002D9FD9 /* categories.pbxbtree */,
+				54C6DD7E0B5EEB44002D9FD9 /* cdecls.pbxbtree */,
+				54C6DD7F0B5EEB44002D9FD9 /* decls.pbxbtree */,
+				54C6DD800B5EEB44002D9FD9 /* files.pbxbtree */,
+				54C6DD810B5EEB44002D9FD9 /* imports.pbxbtree */,
+				54C6DD820B5EEB44002D9FD9 /* pbxindex.header */,
+				54C6DD830B5EEB44002D9FD9 /* protocols.pbxbtree */,
+				54C6DD840B5EEB44002D9FD9 /* refs.pbxbtree */,
+				54C6DD850B5EEB44002D9FD9 /* strings.pbxstrings */,
+				54C6DD880B5EEB44002D9FD9 /* subclasses.pbxbtree */,
+				54C6DD890B5EEB44002D9FD9 /* symbols0.pbxsymbols */,
+			);
+			path = fusefs.pbxindex;
+			sourceTree = "<group>";
+		};
+		54C6DD850B5EEB44002D9FD9 /* strings.pbxstrings */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD860B5EEB44002D9FD9 /* control */,
+				54C6DD870B5EEB44002D9FD9 /* strings */,
+			);
+			path = strings.pbxstrings;
+			sourceTree = "<group>";
+		};
+		54C6DD8A0B5EEB44002D9FD9 /* Release */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD8B0B5EEB44002D9FD9 /* fusefs.build */,
+			);
+			path = Release;
+			sourceTree = "<group>";
+		};
+		54C6DD8B0B5EEB44002D9FD9 /* fusefs.build */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD8C0B5EEB44002D9FD9 /* DerivedSources */,
+				54C6DD8E0B5EEB44002D9FD9 /* fusefs.hmap */,
+				54C6DD8F0B5EEB44002D9FD9 /* Objects-normal */,
+				54C6DDAE0B5EEB44002D9FD9 /* Preprocessed-Info.plist */,
+			);
+			path = fusefs.build;
+			sourceTree = "<group>";
+		};
+		54C6DD8C0B5EEB44002D9FD9 /* DerivedSources */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD8D0B5EEB44002D9FD9 /* fusefs_info.c */,
+			);
+			path = DerivedSources;
+			sourceTree = "<group>";
+		};
+		54C6DD8F0B5EEB44002D9FD9 /* Objects-normal */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD900B5EEB44002D9FD9 /* i386 */,
+				54C6DD9F0B5EEB44002D9FD9 /* ppc */,
+			);
+			path = "Objects-normal";
+			sourceTree = "<group>";
+		};
+		54C6DD900B5EEB44002D9FD9 /* i386 */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DD910B5EEB44002D9FD9 /* fuse_device.o */,
+				54C6DD920B5EEB44002D9FD9 /* fuse_file.o */,
+				54C6DD930B5EEB44002D9FD9 /* fuse_internal.o */,
+				54C6DD940B5EEB44002D9FD9 /* fuse_ipc.o */,
+				54C6DD950B5EEB44002D9FD9 /* fuse_locking.o */,
+				54C6DD960B5EEB44002D9FD9 /* fuse_main.o */,
+				54C6DD970B5EEB44002D9FD9 /* fuse_node.o */,
+				54C6DD980B5EEB44002D9FD9 /* fuse_nodehash.o */,
+				54C6DD990B5EEB44002D9FD9 /* fuse_sysctl.o */,
+				54C6DD9A0B5EEB44002D9FD9 /* fuse_vfsops.o */,
+				54C6DD9B0B5EEB44002D9FD9 /* fuse_vnops.o */,
+				54C6DD9C0B5EEB44002D9FD9 /* fusefs */,
+				54C6DD9D0B5EEB44002D9FD9 /* fusefs.LinkFileList */,
+				54C6DD9E0B5EEB44002D9FD9 /* fusefs_info.o */,
+			);
+			path = i386;
+			sourceTree = "<group>";
+		};
+		54C6DD9F0B5EEB44002D9FD9 /* ppc */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDA00B5EEB44002D9FD9 /* fuse_device.o */,
+				54C6DDA10B5EEB44002D9FD9 /* fuse_file.o */,
+				54C6DDA20B5EEB44002D9FD9 /* fuse_internal.o */,
+				54C6DDA30B5EEB44002D9FD9 /* fuse_ipc.o */,
+				54C6DDA40B5EEB44002D9FD9 /* fuse_locking.o */,
+				54C6DDA50B5EEB44002D9FD9 /* fuse_main.o */,
+				54C6DDA60B5EEB44002D9FD9 /* fuse_node.o */,
+				54C6DDA70B5EEB44002D9FD9 /* fuse_nodehash.o */,
+				54C6DDA80B5EEB44002D9FD9 /* fuse_sysctl.o */,
+				54C6DDA90B5EEB44002D9FD9 /* fuse_vfsops.o */,
+				54C6DDAA0B5EEB44002D9FD9 /* fuse_vnops.o */,
+				54C6DDAB0B5EEB44002D9FD9 /* fusefs */,
+				54C6DDAC0B5EEB44002D9FD9 /* fusefs.LinkFileList */,
+				54C6DDAD0B5EEB44002D9FD9 /* fusefs_info.o */,
+			);
+			path = ppc;
+			sourceTree = "<group>";
+		};
+		54C6DDAF0B5EEB44002D9FD9 /* Release */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDB00B5EEB44002D9FD9 /* fusefs.kext */,
+			);
+			path = Release;
+			sourceTree = "<group>";
+		};
+		54C6DDB10B5EEB44002D9FD9 /* common */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDB20B5EEB44002D9FD9 /* fuse_mount.h */,
+				54C6DDB30B5EEB44002D9FD9 /* fuse_param.h */,
+				54C6DDB40B5EEB44002D9FD9 /* fuse_version.h */,
+			);
+			path = common;
+			sourceTree = "<group>";
+		};
+		54C6DDCE0B5EEB44002D9FD9 /* fusefs.fs */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDCF0B5EEB44002D9FD9 /* Contents */,
+			);
+			path = fusefs.fs;
+			sourceTree = "<group>";
+		};
+		54C6DDCF0B5EEB44002D9FD9 /* Contents */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDD00B5EEB44002D9FD9 /* Info.plist */,
+				54C6DDD10B5EEB44002D9FD9 /* Resources */,
+				54C6DDD40B5EEB44002D9FD9 /* version.plist */,
+			);
+			path = Contents;
+			sourceTree = "<group>";
+		};
+		54C6DDD10B5EEB44002D9FD9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDD20B5EEB44002D9FD9 /* InfoPlist.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		54C6DDD60B5EEB44002D9FD9 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		54C6DDD90B5EEB44002D9FD9 /* load */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDDA0B5EEB44002D9FD9 /* load_fusefs.c */,
+			);
+			path = load;
+			sourceTree = "<group>";
+		};
+		54C6DDDB0B5EEB44002D9FD9 /* mount */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DDDC0B5EEB44002D9FD9 /* getmntopts.c */,
+				54C6DDDD0B5EEB44002D9FD9 /* getproctitle.c */,
+				54C6DDDE0B5EEB44002D9FD9 /* mntopts.h */,
+				54C6DDDF0B5EEB44002D9FD9 /* mount_fusefs.c */,
+			);
+			path = mount;
+			sourceTree = "<group>";
+		};
+		54C6DE370B5EEB75002D9FD9 /* fusefs.fs */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DE380B5EEB75002D9FD9 /* Contents */,
+			);
+			path = fusefs.fs;
+			sourceTree = "<group>";
+		};
+		54C6DE380B5EEB75002D9FD9 /* Contents */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DE390B5EEB75002D9FD9 /* Info.plist */,
+				54C6DE3A0B5EEB75002D9FD9 /* Resources */,
+				54C6DE3D0B5EEB75002D9FD9 /* version.plist */,
+			);
+			path = Contents;
+			sourceTree = "<group>";
+		};
+		54C6DE3A0B5EEB75002D9FD9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				54C6DE3B0B5EEB75002D9FD9 /* InfoPlist.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -217,6 +661,7 @@
 				32A4FEBD0562C75700D090E7 /* Sources */,
 				32A4FEBF0562C75700D090E7 /* Frameworks */,
 				32A4FEC00562C75700D090E7 /* Rez */,
+				54C6DE750B5EEEB1002D9FD9 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -270,10 +715,18 @@
 			hasScannedForEncodings = 1;
 			mainGroup = 089C166AFE841209C02AAC07 /* fusefs */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 54C6DDD60B5EEB44002D9FD9 /* Products */;
+					ProjectRef = 54C6DDD50B5EEB44002D9FD9 /* fusefs.xcodeproj */;
+				},
+			);
 			targets = (
+				54C6DD290B5EE606002D9FD9 /* All */,
 				32A4FEB80562C75700D090E7 /* fusefs */,
 				5494A9410ACA5BF10020068B /* mount_fusefs */,
 				54D47B7F0B4F610000A8FE1C /* load_fusefs */,
+				54C6DE650B5EED9E002D9FD9 /* fusefs.fs */,
 			);
 		};
 /* End PBXProject section */
@@ -298,6 +751,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXRezBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		54C6DE750B5EEEB1002D9FD9 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		32A4FEBD0562C75700D090E7 /* Sources */ = {
@@ -337,11 +806,61 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		54C6DD2D0B5EE61A002D9FD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 54D47B7F0B4F610000A8FE1C /* load_fusefs */;
+			targetProxy = 54C6DD2C0B5EE61A002D9FD9 /* PBXContainerItemProxy */;
+		};
+		54C6DD2F0B5EE61A002D9FD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5494A9410ACA5BF10020068B /* mount_fusefs */;
+			targetProxy = 54C6DD2E0B5EE61A002D9FD9 /* PBXContainerItemProxy */;
+		};
+		54C6DD310B5EE61A002D9FD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 32A4FEB80562C75700D090E7 /* fusefs */;
+			targetProxy = 54C6DD300B5EE61A002D9FD9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		089C167DFE841241C02AAC07 /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
 				089C167EFE841241C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		54C6DD230B5EE5EF002D9FD9 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				54C6DD240B5EE5EF002D9FD9 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		54C6DDB50B5EEB44002D9FD9 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				54C6DDB60B5EEB44002D9FD9 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		54C6DDD20B5EEB44002D9FD9 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				54C6DDD30B5EEB44002D9FD9 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		54C6DE3B0B5EEB75002D9FD9 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				54C6DE3C0B5EEB75002D9FD9 /* English */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -361,9 +880,12 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
 				INSTALL_PATH = "$(SYSTEM_LIBRARY_DIR)/Extensions";
-				MODULE_NAME = com.yourcompany.kext.fusefs;
+				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
 				MODULE_VERSION = 1.0.0d1;
@@ -386,9 +908,12 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
+				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
 				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
 				INSTALL_PATH = "$(SYSTEM_LIBRARY_DIR)/Extensions";
-				MODULE_NAME = com.yourcompany.kext.fusefs;
+				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
 				MODULE_VERSION = 1.0.0d1;
@@ -406,6 +931,9 @@
 			buildSettings = {
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
 				PREBINDING = NO;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
@@ -416,6 +944,9 @@
 			buildSettings = {
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = "";
 				PREBINDING = NO;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
@@ -455,6 +986,50 @@
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = mount_fusefs;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		54C6DD340B5EE623002D9FD9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = All;
+			};
+			name = Debug;
+		};
+		54C6DD350B5EE623002D9FD9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				PRODUCT_NAME = All;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		54C6DE690B5EEDBC002D9FD9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = fusefs.fs;
+			};
+			name = Debug;
+		};
+		54C6DE6A0B5EEDBC002D9FD9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				PRODUCT_NAME = fusefs.fs;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -523,6 +1098,24 @@
 			buildConfigurations = (
 				5494A9470ACA5C050020068B /* Debug */,
 				5494A9480ACA5C050020068B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		54C6DD330B5EE623002D9FD9 /* Build configuration list for PBXAggregateTarget "All" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54C6DD340B5EE623002D9FD9 /* Debug */,
+				54C6DD350B5EE623002D9FD9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		54C6DE680B5EEDBC002D9FD9 /* Build configuration list for PBXAggregateTarget "fusefs.fs" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				54C6DE690B5EEDBC002D9FD9 /* Debug */,
+				54C6DE6A0B5EEDBC002D9FD9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

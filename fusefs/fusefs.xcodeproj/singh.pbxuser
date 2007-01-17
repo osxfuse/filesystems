@@ -5,7 +5,7 @@
 		activeExecutable = 5494A9430ACA5BF10020068B /* mount_fusefs */;
 		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
 		addToTargets = (
-			54D47B7F0B4F610000A8FE1C /* load_fusefs */,
+			54C6DE650B5EED9E002D9FD9 /* fusefs.fs */,
 		);
 		breakpoints = (
 			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
@@ -59,7 +59,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
 					200,
-					63,
+					228,
 					20,
 					48,
 					43,
@@ -75,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 189751646;
-			PBXWorkspaceStateSaveDate = 189751646;
+			PBXPerProjectTemplateStateSaveDate = 190769560;
+			PBXWorkspaceStateSaveDate = 190769560;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -291,6 +291,12 @@
 		name = mount_fusefs;
 		sourceDirectories = (
 		);
+	};
+	54C6DD290B5EE606002D9FD9 /* All */ = {
+		activeExec = 0;
+	};
+	54C6DE650B5EED9E002D9FD9 /* fusefs.fs */ = {
+		activeExec = 0;
 	};
 	54D47B7F0B4F610000A8FE1C /* load_fusefs */ = {
 		activeExec = 0;

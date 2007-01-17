@@ -25,8 +25,7 @@ uint64_t fuse_fh_reuse_count       = 0;                                   // r
 
 SYSCTL_DECL(_fuse);
 SYSCTL_NODE(, OID_AUTO, fuse, CTLFLAG_RW, 0, "");
-SYSCTL_STRING(_fuse, OID_AUTO, version, CTLFLAG_RD, FUSE_MACOSX_VERSION,
-              0, "");
+SYSCTL_STRING(_fuse, OID_AUTO, version, CTLFLAG_RD, MACFUSE_VERSION, 0, "");
 SYSCTL_INT(_fuse, OID_AUTO, api_major, CTLFLAG_RD, &fuse_api_major, 0, "");
 SYSCTL_INT(_fuse, OID_AUTO, api_minor, CTLFLAG_RD, &fuse_api_minor, 0, "");
 SYSCTL_INT(_fuse, OID_AUTO, max_freetickets, CTLFLAG_RW,

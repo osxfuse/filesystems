@@ -2298,15 +2298,9 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
     }
 
     if (VATTR_IS_ACTIVE(vap, va_modify_time)) {
-        /*
-         * What a kludge! Hear, hear! OK, but for the time being, this is
-         * better than having your mtimes clobbered to the Summer of '69.
-         */
-        if (vap->va_modify_time.tv_sec > 0) {
-            fsai->FUSEATTR(mtime) = vap->va_modify_time.tv_sec;
-            fsai->FUSEATTR(mtimensec) = vap->va_modify_time.tv_nsec;
-            fsai->valid |=  FATTR_MTIME;
-        }
+        fsai->FUSEATTR(mtime) = vap->va_modify_time.tv_sec;
+        fsai->FUSEATTR(mtimensec) = vap->va_modify_time.tv_nsec;
+        fsai->valid |=  FATTR_MTIME;
     }
 
     VATTR_SET_SUPPORTED(vap, va_access_time);

@@ -609,7 +609,7 @@ showhelp()
 void
 showversion(int doexit)
 {
-    fprintf(stderr, "Mac OS X FUSE version %s\n", FUSE_MACOSX_VERSION);
+    fprintf(stderr, "Mac OS X FUSE version %s\n", MACFUSE_VERSION);
     if (doexit) {
         exit(EX_USAGE);
     }
