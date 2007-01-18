@@ -11,11 +11,13 @@
 			isa = PBXAggregateTarget;
 			buildConfigurationList = 54C6DD330B5EE623002D9FD9 /* Build configuration list for PBXAggregateTarget "All" */;
 			buildPhases = (
+				54C6DE950B5F7755002D9FD9 /* ShellScript */,
 			);
 			dependencies = (
 				54C6DD310B5EE61A002D9FD9 /* PBXTargetDependency */,
 				54C6DD2F0B5EE61A002D9FD9 /* PBXTargetDependency */,
 				54C6DD2D0B5EE61A002D9FD9 /* PBXTargetDependency */,
+				54C6DE900B5F7732002D9FD9 /* PBXTargetDependency */,
 			);
 			name = All;
 			productName = All;
@@ -25,6 +27,7 @@
 			buildConfigurationList = 54C6DE680B5EEDBC002D9FD9 /* Build configuration list for PBXAggregateTarget "fusefs.fs" */;
 			buildPhases = (
 				54C6DE640B5EED9E002D9FD9 /* CopyFiles */,
+				54C6DE890B5F7315002D9FD9 /* ShellScript */,
 			);
 			dependencies = (
 			);
@@ -89,6 +92,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 32A4FEB80562C75700D090E7 /* fusefs */;
 			remoteInfo = fusefs;
+		};
+		54C6DE8F0B5F7732002D9FD9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 54C6DE650B5EED9E002D9FD9 /* fusefs.fs */;
+			remoteInfo = fusefs.fs;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -576,6 +586,8 @@
 		};
 		54C6DDD60B5EEB44002D9FD9 /* Products */ = {
 			isa = PBXGroup;
+			children = (
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -661,7 +673,6 @@
 				32A4FEBD0562C75700D090E7 /* Sources */,
 				32A4FEBF0562C75700D090E7 /* Frameworks */,
 				32A4FEC00562C75700D090E7 /* Rez */,
-				54C6DE750B5EEEB1002D9FD9 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -753,7 +764,7 @@
 /* End PBXRezBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		54C6DE750B5EEEB1002D9FD9 /* ShellScript */ = {
+		54C6DE890B5F7315002D9FD9 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -764,7 +775,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "";
+			shellScript = "/usr/bin/cpp -I$SRCROOT -P $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist | $SED -e '/^$/d' > $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new\n/bin/mv $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist";
+		};
+		54C6DE950B5F7755002D9FD9 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "MACFUSE_OUT=/tmp/macfuse_out\n/bin/rm -rf $MACFUSE_OUT\nmkdir $MACFUSE_OUT\ncp -pR $BUILT_PRODUCTS_DIR/* $MACFUSE_OUT\nmv $MACFUSE_OUT/mount_fusefs $MACFUSE_OUT/fusefs.fs/mount_fusefs\nmv $MACFUSE_OUT/load_fusefs $MACFUSE_OUT/fusefs.kext/Contents/Resources/load_fusefs";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -821,6 +845,11 @@
 			isa = PBXTargetDependency;
 			target = 32A4FEB80562C75700D090E7 /* fusefs */;
 			targetProxy = 54C6DD300B5EE61A002D9FD9 /* PBXContainerItemProxy */;
+		};
+		54C6DE900B5F7732002D9FD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 54C6DE650B5EED9E002D9FD9 /* fusefs.fs */;
+			targetProxy = 54C6DE8F0B5F7732002D9FD9 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

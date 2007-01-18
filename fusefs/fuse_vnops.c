@@ -2297,6 +2297,12 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
         fsai->valid |=  FATTR_ATIME;
     }
 
+    if (VATTR_IS_ACTIVE(vap, va_change_time)) {
+        fsai->FUSEATTR(mtime) = vap->va_change_time.tv_sec;
+        fsai->FUSEATTR(mtimensec) = vap->va_change_time.tv_nsec;
+        fsai->valid |=  FATTR_MTIME;
+    }
+
     if (VATTR_IS_ACTIVE(vap, va_modify_time)) {
         fsai->FUSEATTR(mtime) = vap->va_modify_time.tv_sec;
         fsai->FUSEATTR(mtimensec) = vap->va_modify_time.tv_nsec;
@@ -2304,6 +2310,7 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
     }
 
     VATTR_SET_SUPPORTED(vap, va_access_time);
+    VATTR_SET_SUPPORTED(vap, va_change_time);
     VATTR_SET_SUPPORTED(vap, va_modify_time);
 
     /* Don't support va_{backup, change, create}_time */
