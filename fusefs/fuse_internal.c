@@ -948,7 +948,7 @@ fuse_internal_newentry_core(vnode_t                 dvp,
     }
 
     err = fuse_vget_i(mp, feo->nodeid, context, dvp, vpp, cnp,
-                      vtyp, 0, VG_FORCENEW, VTOI(dvp));
+                      vtyp, 0 /* size */, VG_FORCENEW, VTOI(dvp));
     if (err) {
         fuse_internal_forget_send(mp, context, feo->nodeid, 1, fdip);
         return err;

@@ -506,6 +506,15 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
         memcpy(vap, VTOVA(vp), sizeof(*vap));
     }
 
+    if (vnode_isreg(vp)) {
+        /*
+         * This is for those cases when the file size changed without us
+         * knowing, and we want to catch up.
+         */
+        struct fuse_vnode_data *fvdat = VTOFUD(vp);
+        fvdat->filesize = ((struct fuse_attr_out *)fdi.answ)->attr.size;
+    }
+
     fuse_ticket_drop(fdi.tick);
 
     if (vnode_vtype(vp) != vap->va_type) {
