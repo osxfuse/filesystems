@@ -71,13 +71,14 @@ d_open_t  fuse_device_open;
 d_close_t fuse_device_close;
 d_read_t  fuse_device_read;
 d_write_t fuse_device_write;
+d_ioctl_t fuse_device_ioctl;
 
 static struct cdevsw fuse_device_cdevsw = {
     /* open     */ fuse_device_open,
     /* close    */ fuse_device_close,
     /* read     */ fuse_device_read,
     /* write    */ fuse_device_write,
-    /* ioctl    */ (d_ioctl_t *)&fuse_device_enodev,
+    /* ioctl    */ fuse_device_ioctl,
     /* stop     */ (d_stop_t *)&fuse_device_enodev,
     /* reset    */ (d_reset_t *)&fuse_device_enodev,
     /* ttys     */ 0,
@@ -290,6 +291,29 @@ again:
     fuse_ticket_drop_invalid(tick);
 
     return (err);
+}
+
+int
+fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
+{
+    struct fuse_softc  *fdev;
+    struct fuse_data   *data;
+
+    fdev = FUSE_SOFTC_FROM_UNIT_FAST(minor(dev));
+    if (!fdev) {
+        return ENXIO;
+    }
+
+    data = fdev->data;
+    if (!data) {
+        return ENXIO;
+    }
+
+    if (data->dataflag & FSESS_INITED) {
+        return 0;
+    }
+
+    return ENXIO;
 }
 
 static __inline__ int

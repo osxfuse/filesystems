@@ -31,7 +31,7 @@
 /* Local Definitions */
 
 #define LOAD_COMMAND "/sbin/kextload"
-#define FUSE_MODULE_PATH "/System/Library/Extensions/fusefs.kext"
+#define FUSE_MODULE_PATH "/Library/Extensions/fusefs.kext"
 
 /*****************************************************************************/
 

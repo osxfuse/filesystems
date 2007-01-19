@@ -21,12 +21,14 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <libgen.h>
+#include <signal.h>
 
 #include "mntopts.h"
 #include <fuse_mount.h>
 #include <fuse_version.h>
 
 #define PROGNAME "mount_fusefs"
+#define FUSE_INIT_WAIT_INTERVAL 100000 /* us */
 
 char *getproctitle(pid_t pid, char **title, int *len);
 void  showhelp(void);
@@ -548,7 +550,7 @@ main(int argc, char **argv)
     if (!fsname) {
         snprintf(args.fsname, MAXPATHLEN, "instance@fuse%d", index);
     } else {
-        snprintf(args.fsname, MAXPATHLEN, "%s@%d", fsname, index);
+        snprintf(args.fsname, MAXPATHLEN, "%s", fsname);
     }
 
     if (!volname) {
@@ -571,8 +573,31 @@ main(int argc, char **argv)
      * kernel-user handshake is complete.
      */
     if (args.altflags & FUSE_MOPT_PING_DISKARB) {
-        if (ping_diskarb(mntpath)) {
-            err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)", index, mntpath);
+        pid_t pid;
+        int wait_iterations = 50;
+
+        signal(SIGCHLD, SIG_IGN);
+
+        if ((pid = fork()) < 0) {
+            err(EX_OSERR, "fusefs@%d on %s (fork failed)", index, mntpath);
+        }
+
+        setbuf(stderr, NULL);
+
+        if (pid == 0) { /* child */
+            for (; wait_iterations > 0; wait_iterations--) { 
+                int ret = ioctl(fd, 0, NULL);
+                if (ret == 0) {
+                    if (ping_diskarb(mntpath)) {
+                        err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
+                            index, mntpath);
+                    }
+                    exit(0);
+                }
+                usleep(FUSE_INIT_WAIT_INTERVAL);
+            }
+            err(EX_OSERR, "fusefs@%d on %s (gave up on init handshake)",
+                index, mntpath);
         }
     }
 
