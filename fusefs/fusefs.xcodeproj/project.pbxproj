@@ -66,6 +66,7 @@
 		5494A94D0ACA5C220020068B /* mount_fusefs.c in Sources */ = {isa = PBXBuildFile; fileRef = 5494A94B0ACA5C220020068B /* mount_fusefs.c */; };
 		5494A95C0ACA5D3D0020068B /* fuse_mount.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95A0ACA5D3D0020068B /* fuse_mount.h */; };
 		5494A95D0ACA5D3D0020068B /* fuse_param.h in Headers */ = {isa = PBXBuildFile; fileRef = 5494A95B0ACA5D3D0020068B /* fuse_param.h */; };
+		54B69E750B62B34400C44B25 /* fuse_ioctl.h in Headers */ = {isa = PBXBuildFile; fileRef = 54B69E740B62B34400C44B25 /* fuse_ioctl.h */; };
 		54BBC8F60B4C379500A17C8A /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */; };
 		54C6DE6C0B5EEDD1002D9FD9 /* Contents in CopyFiles */ = {isa = PBXBuildFile; fileRef = 54C6DE6B0B5EEDD1002D9FD9 /* Contents */; };
 		54D47BC10B4F62A200A8FE1C /* load_fusefs.c in Sources */ = {isa = PBXBuildFile; fileRef = 54D47BC00B4F62A200A8FE1C /* load_fusefs.c */; };
@@ -76,28 +77,28 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 54D47B7F0B4F610000A8FE1C /* load_fusefs */;
+			remoteGlobalIDString = 54D47B7F0B4F610000A8FE1C;
 			remoteInfo = load_fusefs;
 		};
 		54C6DD2E0B5EE61A002D9FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 5494A9410ACA5BF10020068B /* mount_fusefs */;
+			remoteGlobalIDString = 5494A9410ACA5BF10020068B;
 			remoteInfo = mount_fusefs;
 		};
 		54C6DD300B5EE61A002D9FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 32A4FEB80562C75700D090E7 /* fusefs */;
+			remoteGlobalIDString = 32A4FEB80562C75700D090E7;
 			remoteInfo = fusefs;
 		};
 		54C6DE8F0B5F7732002D9FD9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 089C1669FE841209C02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 54C6DE650B5EED9E002D9FD9 /* fusefs.fs */;
+			remoteGlobalIDString = 54C6DE650B5EED9E002D9FD9;
 			remoteInfo = fusefs.fs;
 		};
 /* End PBXContainerItemProxy section */
@@ -143,12 +144,13 @@
 		548FDFF60B3202A80008D620 /* fuse_vfsops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vfsops.h; sourceTree = "<group>"; };
 		548FDFF70B3202A80008D620 /* fuse_vnops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vnops.h; sourceTree = "<group>"; };
 		548FE03F0B322A540008D620 /* fuse_node.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_node.c; sourceTree = "<group>"; };
-		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		5494A9490ACA5C220020068B /* getmntopts.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = getmntopts.c; path = mount/getmntopts.c; sourceTree = "<group>"; };
 		5494A94A0ACA5C220020068B /* mntopts.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = mntopts.h; path = mount/mntopts.h; sourceTree = "<group>"; };
 		5494A94B0ACA5C220020068B /* mount_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = mount_fusefs.c; path = mount/mount_fusefs.c; sourceTree = "<group>"; };
 		5494A95A0ACA5D3D0020068B /* fuse_mount.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_mount.h; path = common/fuse_mount.h; sourceTree = "<group>"; };
 		5494A95B0ACA5D3D0020068B /* fuse_param.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_param.h; path = common/fuse_param.h; sourceTree = "<group>"; };
+		54B69E740B62B34400C44B25 /* fuse_ioctl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = fuse_ioctl.h; path = common/fuse_ioctl.h; sourceTree = "<group>"; };
 		54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
 		54C6DD210B5EE5EF002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
 		54C6DD240B5EE5EF002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -278,6 +280,7 @@
 		089C166AFE841209C02AAC07 /* fusefs */ = {
 			isa = PBXGroup;
 			children = (
+				54B69E740B62B34400C44B25 /* fuse_ioctl.h */,
 				54C6DE6B0B5EEDD1002D9FD9 /* Contents */,
 				54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */,
 				54C6DE370B5EEB75002D9FD9 /* fusefs.fs */,
@@ -658,6 +661,7 @@
 				548FDFFA0B3202A80008D620 /* fuse_internal.h in Headers */,
 				548FDFFB0B3202A80008D620 /* fuse_vfsops.h in Headers */,
 				548FDFFC0B3202A80008D620 /* fuse_vnops.h in Headers */,
+				54B69E750B62B34400C44B25 /* fuse_ioctl.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

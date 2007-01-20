@@ -24,6 +24,7 @@
 #include <signal.h>
 
 #include "mntopts.h"
+#include <fuse_ioctl.h>
 #include <fuse_mount.h>
 #include <fuse_version.h>
 
@@ -586,8 +587,10 @@ main(int argc, char **argv)
 
         if (pid == 0) { /* child */
             for (; wait_iterations > 0; wait_iterations--) { 
-                int ret = ioctl(fd, 0, NULL);
-                if (ret == 0) {
+                u_int32_t hs_complete = 0;
+                int ret = ioctl(fd, FUSEDEVIOCISHANDSHAKECOMPLETE,
+                                &hs_complete);
+                if ((ret == 0) && hs_complete) {
                     if (ping_diskarb(mntpath)) {
                         err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
                             index, mntpath);

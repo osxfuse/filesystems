@@ -8,6 +8,8 @@
 #include "fuse_device.h"
 #include "fuse_locking.h"
 
+#include <fuse_ioctl.h>
+
 #define TAILQ_FOREACH_SAFE(var, head, field, tvar)           \
         for ((var) = TAILQ_FIRST((head));                    \
             (var) && ((tvar) = TAILQ_NEXT((var), field), 1); \
@@ -296,6 +298,7 @@ again:
 int
 fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
 {
+    int ret = EINVAL;
     struct fuse_softc  *fdev;
     struct fuse_data   *data;
 
@@ -309,11 +312,19 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
         return ENXIO;
     }
 
-    if (data->dataflag & FSESS_INITED) {
-        return 0;
+    switch (cmd) {
+
+    case FUSEDEVIOCISHANDSHAKECOMPLETE:
+        *(u_int32_t *)udata = (data->dataflag & FSESS_INITED);
+        ret = 0;
+        break;
+
+    default:
+        break;
+        
     }
 
-    return ENXIO;
+    return ret;
 }
 
 static __inline__ int
