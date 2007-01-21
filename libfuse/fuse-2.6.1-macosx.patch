@@ -391,7 +391,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +            return -1;
 +        }
 +    } else {
-+#define NFUSEDEVICE 8
++#define NFUSEDEVICE 16
 +        int r, devidx = -1;
 +        char devpath[MAXPATHLEN];
 +
