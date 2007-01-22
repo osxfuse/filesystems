@@ -637,7 +637,7 @@ main(int argc, char **argv)
             }
             err(EX_OSERR, "fusefs@%d on %s (gave up on init handshake)",
                 index, mntpath);
-        }
+        } /* parent: just fall through and exit */
     }
 
     exit(0);
