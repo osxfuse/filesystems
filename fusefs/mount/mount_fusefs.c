@@ -575,7 +575,7 @@ main(int argc, char **argv)
      * but somewhere else asynchronously, after we've made sure that the
      * kernel-user handshake is complete.
      */
-    if (args.altflags & FUSE_MOPT_PING_DISKARB) {
+    {
         pid_t pid;
         int wait_iterations = 60;
 
@@ -594,10 +594,12 @@ main(int argc, char **argv)
                                 &hs_complete);
                 if ((ret == 0) && hs_complete) {
 
-                    /* Let Disk Arbitration know. */
-                    if (ping_diskarb(mntpath)) {
-                        err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
-                            index, mntpath);
+                    if (args.altflags & FUSE_MOPT_PING_DISKARB) {
+                        /* Let Disk Arbitration know. */
+                        if (ping_diskarb(mntpath)) {
+                            err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
+                                index, mntpath);
+                        }
                     }
 
                     /* Let any notification listeners know. */
