@@ -5,7 +5,6 @@
 		activeExecutable = 5494A9430ACA5BF10020068B /* mount_fusefs */;
 		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
 		addToTargets = (
-			32A4FEB80562C75700D090E7 /* fusefs */,
 			5494A9410ACA5BF10020068B /* mount_fusefs */,
 		);
 		breakpoints = (
@@ -76,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 191017749;
-			PBXWorkspaceStateSaveDate = 191017749;
+			PBXPerProjectTemplateStateSaveDate = 191107996;
+			PBXWorkspaceStateSaveDate = 191107996;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {

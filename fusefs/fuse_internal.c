@@ -469,7 +469,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
     caddr_t  bufdat;
     int32_t  bflags = buf_flags(bp);
-    uint32_t left;
+    off_t    left;
     off_t    offset;
 
     fufh_type_t             fufh_type;
@@ -641,7 +641,8 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
         struct fuse_write_in  *fwi;
         struct fuse_write_out *fwo;
-        int diff, merr = 0;
+        int merr = 0;
+        off_t diff;
 
 #if 0
         /*

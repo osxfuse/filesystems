@@ -85,4 +85,7 @@ enum {
 #define FUSE_CUSTOM_FSID_DEVICE_MAJOR   255
 #define FUSE_CUSTOM_FSID_VAL1           0x55464553
 
+#define FUSE_UNOTIFICATIONS_MOUNTED     \
+    "com.google.filesystems.fusefs.unotifications.mounted"
+
 #endif /* _FUSE_MOUNT_H_ */

@@ -98,7 +98,7 @@ fuse_vnop_blktooff(struct vnop_blktooff_args *ap)
         return EIO;
     }
 
-    *offsetPtr = lblkno * FUSE_DEFAULT_BLOCKSIZE;
+    *offsetPtr = lblkno * (off_t)FUSE_DEFAULT_BLOCKSIZE;
 
     return 0;
 }
@@ -127,7 +127,7 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
     int          *poffPtr;
     int           flags;
     vfs_context_t context;
-    uint32_t      contiguousPhysicalBytes;
+    off_t         contiguousPhysicalBytes;
     struct fuse_vnode_data *fvdat;
 
     vp      = ap->a_vp;
@@ -151,17 +151,17 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
 
     if (fvdat->newfilesize > fvdat->filesize) {
        contiguousPhysicalBytes = \
-           fvdat->newfilesize - (*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
+           fvdat->newfilesize - (off_t)(*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
     } else {
        contiguousPhysicalBytes = \
-           fvdat->filesize - (*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
+           fvdat->filesize - (off_t)(*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
     }
 
     if (contiguousPhysicalBytes > size) {
-        contiguousPhysicalBytes = size;
+        contiguousPhysicalBytes = (off_t)size;
     }
 
-    *runPtr = contiguousPhysicalBytes;
+    *runPtr = (size_t)contiguousPhysicalBytes;
 
     if (poffPtr != NULL) {
         *poffPtr = 0;
@@ -2558,9 +2558,9 @@ fuse_vnop_write(struct vnop_write_args *ap)
     int          lflag;
     off_t        offset;
     off_t        zero_off;
-    u_int32_t    filesize;
+    off_t        filesize;
     off_t        original_offset;
-    u_int32_t    original_size;
+    off_t        original_size;
     user_ssize_t original_resid;
 
     /*
@@ -2629,8 +2629,9 @@ fuse_vnop_write(struct vnop_write_args *ap)
         offset = fvdat->filesize;
     }
 
-    if (offset < 0)
+    if (offset < 0) {
         return EFBIG;
+    }
 
 #if 0
     if (original_resid == 0) {

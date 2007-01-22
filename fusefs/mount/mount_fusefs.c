@@ -28,6 +28,8 @@
 #include <fuse_mount.h>
 #include <fuse_version.h>
 
+#include <CoreFoundation/CoreFoundation.h>
+
 #define PROGNAME "mount_fusefs"
 #define FUSE_INIT_WAIT_INTERVAL 100000 /* us */
 
@@ -575,7 +577,7 @@ main(int argc, char **argv)
      */
     if (args.altflags & FUSE_MOPT_PING_DISKARB) {
         pid_t pid;
-        int wait_iterations = 50;
+        int wait_iterations = 60;
 
         signal(SIGCHLD, SIG_IGN);
 
@@ -591,10 +593,42 @@ main(int argc, char **argv)
                 int ret = ioctl(fd, FUSEDEVIOCISHANDSHAKECOMPLETE,
                                 &hs_complete);
                 if ((ret == 0) && hs_complete) {
+
+                    /* Let Disk Arbitration know. */
                     if (ping_diskarb(mntpath)) {
                         err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
                             index, mntpath);
                     }
+
+                    /* Let any notification listeners know. */
+                    do {
+                        CFStringRef nf_name, nf_object;
+                        CFNotificationCenterRef distributedCenter;
+                        CFStringEncoding encoding = kCFStringEncodingASCII;
+                        
+                        distributedCenter =
+                            CFNotificationCenterGetDistributedCenter();
+ 
+                        if (!distributedCenter) {
+                            break;
+                        }
+
+                        nf_name = CFStringCreateWithCString(
+                                     kCFAllocatorDefault,
+                                     FUSE_UNOTIFICATIONS_MOUNTED, encoding);
+
+                        nf_object = CFStringCreateWithCString(
+                                        kCFAllocatorDefault,
+                                        mntpath, encoding);
+
+                        CFNotificationCenterPostNotification(
+                            distributedCenter, nf_name, nf_object, NULL, false);
+
+                        CFRelease(nf_name);
+                        CFRelease(nf_object);
+
+                    } while (0);
+                    
                     exit(0);
                 }
                 usleep(FUSE_INIT_WAIT_INTERVAL);
