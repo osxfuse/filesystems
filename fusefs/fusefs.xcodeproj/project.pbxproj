@@ -783,7 +783,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/usr/bin/cpp -I$SRCROOT -P $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist | $SED -e '/^$/d' > $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new\n/bin/mv $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist";
+			shellScript = "/usr/bin/cpp -I$SRCROOT -P $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist | $SED -e '/^$/d' > $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new\n/bin/mv $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist.new $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/Info.plist\n/usr/bin/cpp -I$SRCROOT -P $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/version.plist | $SED -e '/^$/d' > $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/version.plist.new\n/bin/mv $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/version.plist.new $BUILT_PRODUCTS_DIR/$TARGET_NAME/Contents/version.plist";
 		};
 		54C6DE950B5F7755002D9FD9 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
