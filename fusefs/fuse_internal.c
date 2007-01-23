@@ -225,6 +225,7 @@ fuse_internal_readdir(vnode_t                 vp,
     int err = 0;
     struct fuse_dispatcher fdi;
     struct fuse_read_in   *fri;
+    struct fuse_data      *data;
 
     if (uio_resid(uio) == 0) {
         return (0);
@@ -242,7 +243,8 @@ fuse_internal_readdir(vnode_t                 vp,
         fri = fdi.indata;
         fri->fh = fufh->fh_id;
         fri->offset = uio_offset(uio);
-        fri->size = min(uio_resid(uio), FUSE_DEFAULT_IOSIZE); // mp->max_read
+        data = fusefs_get_data(vnode_mount(vp));
+        fri->size = min(uio_resid(uio), data->iosize); // mp->max_read
 
         if ((err = fdisp_wait_answ(&fdi))) {
             goto out;
@@ -474,11 +476,20 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
     fufh_type_t             fufh_type;
     struct fuse_dispatcher  fdi;
+    struct fuse_data       *data;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
 
-    // TODO: this is configurable; use it configurably too.
-    biosize = FUSE_DEFAULT_IOSIZE;
+    data = fusefs_get_data(vnode_mount(vp));
+
+    /*
+     * XXX
+     * XXX: Wait, what happened here?
+     * XXX
+     */
+    //biosize = data->iosize;
+    //biosize = data->blocksize;
+    biosize = data->blocksize;
 
     if (!(vtype == VREG || vtype == VDIR)) {
         debug_printf("STRATEGY: unsupported vnode type\n");
@@ -581,7 +592,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         while (buf_resid(bp) > 0) {
 
             // TODO: this is configurable; use it configurably.
-            chunksize = min(buf_resid(bp), FUSE_DEFAULT_IOSIZE);
+            chunksize = min(buf_resid(bp), data->iosize);
 
             fdi.iosize = sizeof(*fri);
 
@@ -681,7 +692,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
             op = FUSE_WRITE;
 
             fdisp_make_vp(&fdi, op, vp, (vfs_context_t)0);
-            chunksize = min(left, FUSE_DEFAULT_IOSIZE);
+            chunksize = min(left, data->iosize);
 
             fwi = fdi.indata;
             fwi->fh = fufh->fh_id;
@@ -728,7 +739,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
             debug_printf("WRITE: taking a shot\n");
             chunksize = min(buf_dirtyend(bp) - buf_dirtyoff(bp),
-                            FUSE_DEFAULT_IOSIZE); // get v_mount's max w 
+                            data->iosize); // get v_mount's max w 
     
             fdi.iosize = sizeof(*fwi);
             op = op ?: FUSE_WRITE;
@@ -817,6 +828,8 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
     vnode_t   vp    = buf_vnode(bp);
     int       vtype = vnode_vtype(vp);
 
+    struct fuse_data *data;
+
     if (!vp || vtype == VCHR || vtype == VBLK) {
         panic("buf_strategy: b_vp == NULL || vtype == VCHR | VBLK\n");
     }
@@ -843,9 +856,11 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
             off_t  f_offset;
             size_t contig_bytes;
 
+            data = fusefs_get_data(vnode_mount(vp));
+
             // Still think this is a kludge?
-            f_offset = lblkno * FUSE_DEFAULT_BLOCKSIZE;
-            blkno = f_offset / FUSE_DEFAULT_BLOCKSIZE;
+            f_offset = lblkno * data->blocksize;
+            blkno = f_offset / data->blocksize;
 
             buf_setblkno(bp, blkno);
 
@@ -854,10 +869,11 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
 #if 0 /// TESTING: WHAT_IS_THIS_ANYWAY?
             // afilesize = fvdat->newfilesize;
             afilesize = fvdat->filesize;
-            if (fvdat->newfilesize > fvdat->filesize)
+            if (fvdat->newfilesize > fvdat->filesize) {
                 afilesize = fvdat->newfilesize;
+            }
 
-            contig_bytes = afilesize - (blkno * FUSE_DEFAULT_BLOCKSIZE);
+            contig_bytes = afilesize - (blkno * data->blocksize);
             if (contig_bytes > afilesize) {
                 contig_bytes = afilesize;
             }
@@ -1102,7 +1118,7 @@ fuse_internal_send_init(struct fuse_data *data, vfs_context_t context)
     fiii = fdi.indata;
     fiii->major = FUSE_KERNEL_VERSION;
     fiii->minor = FUSE_KERNEL_MINOR_VERSION;
-    fiii->max_readahead = FUSE_DEFAULT_IOSIZE * 16;
+    fiii->max_readahead = data->iosize * 16;
     fiii->flags = 0;
 
     fuse_insert_callback(fdi.tick, fuse_internal_init_callback);

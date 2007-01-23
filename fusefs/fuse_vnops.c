@@ -87,6 +87,7 @@ fuse_vnop_blktooff(struct vnop_blktooff_args *ap)
     vnode_t    vp;
     daddr64_t  lblkno;
     off_t     *offsetPtr;
+    struct fuse_data *data; 
         
     fuse_trace_printf_vnop();
 
@@ -98,7 +99,9 @@ fuse_vnop_blktooff(struct vnop_blktooff_args *ap)
         return EIO;
     }
 
-    *offsetPtr = lblkno * (off_t)FUSE_DEFAULT_BLOCKSIZE;
+    data = fusefs_get_data(vnode_mount(vp));
+
+    *offsetPtr = lblkno * (off_t)(data->blocksize);
 
     return 0;
 }
@@ -129,6 +132,7 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
     vfs_context_t context;
     off_t         contiguousPhysicalBytes;
     struct fuse_vnode_data *fvdat;
+    struct fuse_data *data;
 
     vp      = ap->a_vp;
     foffset = ap->a_foffset;
@@ -146,15 +150,16 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
     }
 
     fvdat = VTOFUD(vp);
+    data = fusefs_get_data(vnode_mount(vp));
 
-    *bpnPtr = foffset / FUSE_DEFAULT_BLOCKSIZE;
+    *bpnPtr = foffset / data->blocksize;
 
     if (fvdat->newfilesize > fvdat->filesize) {
        contiguousPhysicalBytes = \
-           fvdat->newfilesize - (off_t)(*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
+           fvdat->newfilesize - (off_t)(*bpnPtr * data->blocksize);
     } else {
        contiguousPhysicalBytes = \
-           fvdat->filesize - (off_t)(*bpnPtr * FUSE_DEFAULT_BLOCKSIZE);
+           fvdat->filesize - (off_t)(*bpnPtr * data->blocksize);
     }
 
     if (contiguousPhysicalBytes > size) {
@@ -1376,6 +1381,7 @@ fuse_vnop_offtoblk(struct vnop_offtoblk_args *ap)
     vnode_t    vp;
     off_t      offset;
     daddr64_t *lblknoPtr;
+    struct fuse_data *data;
 
     fuse_trace_printf_vnop();
 
@@ -1387,7 +1393,9 @@ fuse_vnop_offtoblk(struct vnop_offtoblk_args *ap)
         return EIO;
     }
 
-    *lblknoPtr = offset / FUSE_DEFAULT_BLOCKSIZE;
+    data = fusefs_get_data(vnode_mount(vp));
+
+    *lblknoPtr = offset / data->blocksize;
 
     return 0;
 }

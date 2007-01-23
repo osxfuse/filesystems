@@ -27,11 +27,17 @@
  */
 #define FUSE_DEFAULT_BLOCKSIZE             4096
 
+#define FUSE_MIN_BLOCKSIZE                 4096
+#define FUSE_MAX_BLOCKSIZE                 4096
+
 /*
  * This is default I/O size used while accessing the virtual storage devices.
  * This can be changed on a per-mount basis.
  */
 #define FUSE_DEFAULT_IOSIZE                4096
+
+#define FUSE_MIN_IOSIZE                    4096
+#define FUSE_MAX_IOSIZE                    4096
 
 #ifdef KERNEL
 

@@ -82,6 +82,7 @@ fuse_internal_attr_fat2vat(mount_t            mp,
                            struct vnode_attr *vap)
 {
     struct timespec t;
+    struct fuse_data *data;
 
     debug_printf("mp=%p, fat=%p, vap=%p\n", mp, fat, vap);
 
@@ -111,7 +112,8 @@ fuse_internal_attr_fat2vat(mount_t            mp,
 
     VATTR_RETURN(vap, va_type, IFTOVT(fat->mode));
 
-    VATTR_RETURN(vap, va_iosize, FUSE_DEFAULT_IOSIZE);
+    data = fusefs_get_data(mp);
+    VATTR_RETURN(vap, va_iosize, data->iosize);
 
     VATTR_RETURN(vap, va_flags, 0);
 }

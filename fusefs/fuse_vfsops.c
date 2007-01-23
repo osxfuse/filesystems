@@ -250,6 +250,26 @@ fuse_vfs_mount(mount_t       mp,
     data->max_read = max_read;
     data->subtype = fusefs_args.subtype;
 
+    data->blocksize = fusefs_args.blocksize;
+    if (data->blocksize < FUSE_MIN_BLOCKSIZE) {
+        data->blocksize = FUSE_MIN_BLOCKSIZE;
+    }
+    if (data->blocksize > FUSE_MAX_BLOCKSIZE) {
+        data->blocksize = FUSE_MAX_BLOCKSIZE;
+    }
+
+    data->iosize = fusefs_args.iosize;
+    if (data->iosize < FUSE_MIN_IOSIZE) {
+        data->iosize = FUSE_MIN_IOSIZE;
+    }
+    if (data->iosize > FUSE_MAX_IOSIZE) {
+        data->iosize = FUSE_MAX_IOSIZE;
+    }
+ 
+    if (data->iosize < data->blocksize) {
+        data->iosize = data->blocksize;
+    }
+
     vfs_setfsprivate(mp, data);
     
     /*
