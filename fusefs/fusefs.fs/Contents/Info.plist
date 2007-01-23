@@ -70,10 +70,10 @@
 			<key>FSSubType</key>
 			<integer>7</integer>
 		</dict>
-		<key>NTFS</key>
+		<key>NTFS-3g</key>
 		<dict>
 			<key>FSName</key>
-			<string>NTFS 3g (MacFUSE)</string>
+			<string>NTFS-3g (MacFUSE)</string>
 			<key>FSSubType</key>
 			<integer>8</integer>
 		</dict>
