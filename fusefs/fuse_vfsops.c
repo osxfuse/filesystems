@@ -677,36 +677,49 @@ struct fuse_sync_cargs {
 static int
 fuse_sync_callback(vnode_t vp, void *cargs)
 {
-#if 0
-    int error = 0;
-    struct fuse_vnode_data *fvdat;
-#endif
+    int type, error = 0;
     struct fuse_sync_cargs *args;
+    struct fuse_vnode_data *fvdat;
+    struct fuse_dispatcher  fdi;
+    struct fuse_filehandle *fufh;
+
+    if (!vnode_hasdirtyblks(vp)) {
+        return VNODE_RETURNED;
+    }
+
+    if (fuse_isdeadfs_nop(vp)) {
+        return VNODE_RETURNED_DONE;
+    }
 
     if (fdata_kick_get(fusefs_get_data(vnode_mount(vp)))) {
+        return VNODE_RETURNED_DONE;
+    }
+
+    if (!(fusefs_get_data(vnode_mount(vp))->dataflag &
+        vnode_vtype(vp) == VDIR ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
         return VNODE_RETURNED;
     }
 
     args = (struct fuse_sync_cargs *)cargs;
-
-#if 0
-    if (fuse_lock(..., /* exclusive lock) != 0) {
-        return VNODE_RETURNED;
-    }
-#endif
-
     fvdat = VTOFUD(vp);
 
-#if 0
-    if (/* fvdat-> something that says vnode was modified || */
-        vnode_hasdirtyblks(vp)) {
-        error = VNOP_FSYNC(vp, args->waitfor, args->context);
-        if (error) {
-            args->error = error;
+    cluster_push(vp, 0);
+
+    fdisp_init(&fdi, 0);
+    for (type = 0; type < FUFH_MAXTYPE; type++) {
+        fufh = &(fvdat->fufh[type]);
+        if (fufh->fufh_flags & FUFH_VALID) {
+            fuse_internal_fsync(vp, args->context, fufh, &fdi);
         }
     }
-    fuse_unlock(...);
-#endif
+
+    /*
+     * In general:
+     *
+     * - can use vnode_isinuse() if the need be
+     * - vnode and UBC are in lock-step
+     * - note that umount will call ubc_sync_range()
+     */
 
     return VNODE_RETURNED;
 }
@@ -749,6 +762,7 @@ fuse_vfs_sync(mount_t mp, int waitfor, vfs_context_t context)
 
     /*
      * For other types of stale file system information, such as:
+     *
      * - fs control info
      * - quota information
      * - modified superblock

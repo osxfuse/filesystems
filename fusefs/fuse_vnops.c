@@ -154,13 +154,8 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
 
     *bpnPtr = foffset / data->blocksize;
 
-    if (fvdat->newfilesize > fvdat->filesize) {
-       contiguousPhysicalBytes = \
-           fvdat->newfilesize - (off_t)(*bpnPtr * data->blocksize);
-    } else {
-       contiguousPhysicalBytes = \
-           fvdat->filesize - (off_t)(*bpnPtr * data->blocksize);
-    }
+    contiguousPhysicalBytes = \
+        fvdat->filesize - (off_t)(*bpnPtr * data->blocksize);
 
     if (contiguousPhysicalBytes > size) {
         contiguousPhysicalBytes = (off_t)size;
@@ -511,13 +506,19 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
         memcpy(vap, VTOVA(vp), sizeof(*vap));
     }
 
-    if (vnode_isreg(vp)) {
+    if (vnode_isreg(vp) && vfs_issynchronous(vnode_mount(vp))) {
         /*
          * This is for those cases when the file size changed without us
          * knowing, and we want to catch up.
+         *
+         * We don't want to do it when we have asynchronous writes
+         * enabled because we might have pending writes on *our* side.
+         *
+         * *Why* do you have asynchronous writes enabled anyway?
          */
         struct fuse_vnode_data *fvdat = VTOFUD(vp);
         fvdat->filesize = ((struct fuse_attr_out *)fdi.answ)->attr.size;
+        ubc_setsize(vp, (off_t)fvdat->filesize);
     }
 
     fuse_ticket_drop(fdi.tick);
@@ -2400,7 +2401,6 @@ out:
     fuse_ticket_drop(fdi.tick);
     if (!err && sizechanged) {
         VTOFUD(vp)->filesize = newsize;
-        VTOFUD(vp)->newfilesize = newsize;
         ubc_setsize(vp, (off_t)newsize);
     }
 
@@ -2655,32 +2655,33 @@ fuse_vnop_write(struct vnop_write_args *ap)
         /* Need to extend the file. */
         debug_printf("WRITE: need to extend the file\n");
         filesize = offset + original_resid;
-        fvdat->newfilesize = filesize;
+        fvdat->filesize = filesize;
     } else {
         debug_printf("WRITE: original size OK\n");
         filesize = original_size;
-        fvdat->newfilesize = filesize;
     }
         
     lflag = (ioflag & IO_SYNC);
 
     if (offset > original_size) {
         zero_off = original_size;
-        lflag   |= IO_HEADZEROFILL;
+        lflag |= IO_HEADZEROFILL;
         debug_printf("WRITE: zero filling enabled\n");
-    } else
+    } else {
         zero_off = 0;
+    }
 
     error = cluster_write(vp, uio, (off_t)original_size, (off_t)filesize,
                           (off_t)zero_off, (off_t)0, lflag);
         
-    if (uio_offset(uio) > fvdat->filesize) {
+    if (uio_offset(uio) > original_size) {
         debug_printf("WRITE: updating to new size\n");
         fvdat->filesize = uio_offset(uio);
         ubc_setsize(vp, (off_t)fvdat->filesize);
         fuse_invalidate_attr(vp);
+    } else {
+        fvdat->filesize = original_size;
     }
-    fvdat->newfilesize = fvdat->filesize;
 
 #if 0
      if (original_resid > uio_resid(uio)) {

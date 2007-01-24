@@ -77,12 +77,13 @@ fuse_vfs_context_issuser(vfs_context_t context)
 
 static __inline__
 void
-fuse_internal_attr_fat2vat(mount_t            mp,
+fuse_internal_attr_fat2vat(vnode_t            vp,
                            struct fuse_attr  *fat,
                            struct vnode_attr *vap)
 {
     struct timespec t;
     struct fuse_data *data;
+    mount_t mp = vnode_mount(vp);
 
     debug_printf("mp=%p, fat=%p, vap=%p\n", mp, fat, vap);
 
@@ -92,7 +93,17 @@ fuse_internal_attr_fat2vat(mount_t            mp,
 
     VATTR_RETURN(vap, va_fileid, fat->ino);
     VATTR_RETURN(vap, va_linkid, fat->ino);
+
+    /*
+     * If we have asynchronous writes enabled, our local in-kernel size
+     * takes precedence over what the daemon thinks.
+     */
+    if (!vfs_issynchronous(mp)) {
+        struct fuse_vnode_data *fvdat = VTOFUD(vp);
+        fat->size = fvdat->filesize;    
+    }
     VATTR_RETURN(vap, va_data_size, fat->size);
+
     VATTR_RETURN(vap, va_total_alloc, fat->blocks * S_BLKSIZE);
 
     t.tv_sec = fat->atime; t.tv_nsec = fat->atimensec;
@@ -137,7 +148,7 @@ fuse_internal_attr_fat2vat(mount_t            mp,
                                                                                \
     timespecadd(&VTOFUD(vp)->cached_attrs_valid, &uptsp_ ## __func__);         \
                                                                                \
-    fuse_internal_attr_fat2vat(vnode_mount(vp), &(fuse_out)->attr, VTOVA(vp)); \
+    fuse_internal_attr_fat2vat(vp, &(fuse_out)->attr, VTOVA(vp));              \
 } while (0)
 
 /* fsync */

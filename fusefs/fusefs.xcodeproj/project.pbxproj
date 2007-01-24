@@ -146,7 +146,7 @@
 		548FDFF60B3202A80008D620 /* fuse_vfsops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vfsops.h; sourceTree = "<group>"; };
 		548FDFF70B3202A80008D620 /* fuse_vnops.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_vnops.h; sourceTree = "<group>"; };
 		548FE03F0B322A540008D620 /* fuse_node.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_node.c; sourceTree = "<group>"; };
-		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		5494A9420ACA5BF10020068B /* mount_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = mount_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		5494A9490ACA5C220020068B /* getmntopts.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = getmntopts.c; path = mount/getmntopts.c; sourceTree = "<group>"; };
 		5494A94A0ACA5C220020068B /* mntopts.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = mntopts.h; path = mount/mntopts.h; sourceTree = "<group>"; };
 		5494A94B0ACA5C220020068B /* mount_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = mount_fusefs.c; path = mount/mount_fusefs.c; sourceTree = "<group>"; };

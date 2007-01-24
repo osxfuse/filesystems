@@ -67,7 +67,6 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
             fvdat->vtype = vtyp;
             fvdat->parent = NULL;
             fvdat->filesize = size;
-            fvdat->newfilesize = 0;
             fvdat->nlookup = 0;
             if (dvp) {
                 fvdat->parent_nid = VTOFUD(dvp)->nid;

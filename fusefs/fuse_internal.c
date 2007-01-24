@@ -532,12 +532,28 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
        debug_printf("STRATEGY: using existing fufh of type %d\n", fufh_type);
     }
     if (err) {
+
+         /* A more typical error case. */
          if ((err == ENOTCONN) || fuse_isdeadfs(vp)) {
              buf_seterror(bp, EIO);
              buf_biodone(bp);
              return EIO;
          }
-         panic("failed to get fh from strategy (err=%d)", err);
+
+         /*
+          * Thinking about this more, I don't think we should panic here.
+          * But then, I don't have time to think right now.
+          *
+          * panic()?
+          */
+         printf("*** MacFUSE: failed to get fh from strategy (err=%d)\n", err);
+         if (!vfs_issynchronous(vnode_mount(vp))) {
+             printf("*** MacFUSE: asynchronous write failed!\n");
+         }
+
+         buf_seterror(bp, EIO);
+         buf_biodone(bp);
+         return EIO;
     }
 
     fufh = &(fvdat->fufh[fufh_type]);
@@ -865,19 +881,6 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
             buf_setblkno(bp, blkno);
 
             contig_bytes = buf_count(bp);
-
-#if 0 /// TESTING: WHAT_IS_THIS_ANYWAY?
-            // afilesize = fvdat->newfilesize;
-            afilesize = fvdat->filesize;
-            if (fvdat->newfilesize > fvdat->filesize) {
-                afilesize = fvdat->newfilesize;
-            }
-
-            contig_bytes = afilesize - (blkno * data->blocksize);
-            if (contig_bytes > afilesize) {
-                contig_bytes = afilesize;
-            }
-#endif /// TESTING: WHAT_IS_THIS_ANYWAY?
 
             if (blkno == -1) {
                 buf_clear(bp);

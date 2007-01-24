@@ -51,7 +51,6 @@ struct fuse_vnode_data {
     vnode_t    c_vp;
     vnode_t    parent;
     off_t      filesize; 
-    off_t      newfilesize;
 
     struct     fuse_filehandle fufh[3];
 
