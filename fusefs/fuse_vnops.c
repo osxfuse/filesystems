@@ -507,6 +507,7 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
     }
 
     if (vnode_isreg(vp) && vfs_issynchronous(vnode_mount(vp))) {
+
         /*
          * This is for those cases when the file size changed without us
          * knowing, and we want to catch up.
@@ -514,11 +515,15 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
          * We don't want to do it when we have asynchronous writes
          * enabled because we might have pending writes on *our* side.
          *
-         * *Why* do you have asynchronous writes enabled anyway?
          */
+
         struct fuse_vnode_data *fvdat = VTOFUD(vp);
-        fvdat->filesize = ((struct fuse_attr_out *)fdi.answ)->attr.size;
-        ubc_setsize(vp, (off_t)fvdat->filesize);
+        off_t new_filesize = ((struct fuse_attr_out *)fdi.answ)->attr.size;
+        
+        if (fvdat->filesize != new_filesize) {
+            fvdat->filesize = new_filesize;
+            ubc_setsize(vp, new_filesize);
+        }
     }
 
     fuse_ticket_drop(fdi.tick);
@@ -2395,7 +2400,13 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
         }
     }
 
-    cache_attrs(vp, (struct fuse_attr_out *)fdi.answ);
+    if (!err) {
+        if (sizechanged) {
+            fuse_invalidate_attr(vp);
+        } else {
+            cache_attrs(vp, (struct fuse_attr_out *)fdi.answ);
+        }
+    }
 
 out:
     fuse_ticket_drop(fdi.tick);
