@@ -5,6 +5,7 @@
 
 #include "fuse.h"
 #include "fuse_file.h"
+#include "fuse_internal.h"
 #include "fuse_ipc.h"
 #include "fuse_node.h"
 #include "fuse_sysctl.h"
@@ -95,6 +96,10 @@ fuse_filehandle_put(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type,
 
     if (fufh->fufh_flags & FUFH_MAPPED) {
         panic("trying to put mapped fufh\n");
+    }
+
+    if (fuse_isdeadfs(vp)) {
+        return 0;
     }
 
     if (vnode_vtype(vp) == VDIR) {

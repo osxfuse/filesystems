@@ -176,6 +176,7 @@ struct fuse_data {
 #define FSESS_NO_ATTRCACHE        0x1000 // no attribute caching
 #define FSESS_NO_READAHEAD        0x2000 // no readaheads
 #define FSESS_NO_UBC              0x4000 // no caching
+#define FSESS_NO_SYNCWRITES       0x8000 // no synchronous writes
 
 static __inline__ struct fuse_data *
 fusefs_get_data(mount_t mp)

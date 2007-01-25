@@ -117,8 +117,13 @@ fuse_vfs_mount(mount_t       mp,
     err = ENOTSUP;
 
     if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCWRITES) {
+        if (fusefs_args.altflags &
+            (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD)) {
+            return EINVAL;
+        }
         vfs_clearflags(mp, MNT_SYNCHRONOUS);
         vfs_setflags(mp, MNT_ASYNC);
+        mntopts |= FSESS_NO_SYNCWRITES;
     } else {
         vfs_clearflags(mp, MNT_ASYNC);
         vfs_setflags(mp, MNT_SYNCHRONOUS);
@@ -326,6 +331,11 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
         panic("no private data for mount point?");
     }
 
+    if (!(data->dataflag & FSESS_INITED)) {
+        flags |= FORCECLOSE;
+        fdata_kick_set(data);
+    }
+
     err = vflush(mp, NULLVP, flags);
     if (err) {
         debug_printf("vflush failed");
@@ -348,7 +358,6 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
 alreadydead:
     data->mpri = FM_NOMOUNTED;
     data->mntco--;
-
     FUSE_LOCK();
     fdev = data->fdev;
     if (data->mntco == 0 && !(data->dataflag & FSESS_OPENED)) {
@@ -677,7 +686,7 @@ struct fuse_sync_cargs {
 static int
 fuse_sync_callback(vnode_t vp, void *cargs)
 {
-    int type, error = 0;
+    int type;
     struct fuse_sync_cargs *args;
     struct fuse_vnode_data *fvdat;
     struct fuse_dispatcher  fdi;

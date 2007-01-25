@@ -15,6 +15,8 @@
 
 #include <fuse_param.h>
 
+#define FUSE_FS_TYPE "fusefs"
+
 // shared between the kernel and user spaces
 struct fuse_mount_args {
     char     mntpath[MAXPATHLEN]; // path to the mount point
@@ -60,32 +62,39 @@ enum {
 #define FUSE_MOPT_FSNAME                0x00000100
 #define FUSE_MOPT_GID                   0x00000200
 #define FUSE_MOPT_HARD_REMOVE           0x00000400
-#define FUSE_MOPT_IOSIZE                0x00000800
-#define FUSE_MOPT_JAIL_SYMLINKS         0x00001000
-#define FUSE_MOPT_KERNEL_CACHE          0x00002000
-#define FUSE_MOPT_LARGE_READ            0x00004000
-#define FUSE_MOPT_MAX_READ              0x00008000
-#define FUSE_MOPT_NO_ATTRCACHE          0x00010000
-#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00020000
-#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00040000
-#define FUSE_MOPT_NO_READAHEAD          0x00080000
-#define FUSE_MOPT_NO_SYNCWRITES         0x00100000
-#define FUSE_MOPT_NO_UBC                0x00200000
-#define FUSE_MOPT_PING_DISKARB          0x00400000
-#define FUSE_MOPT_READDIR_INO           0x00800000
-#define FUSE_MOPT_ROOTMODE              0x01000000
-#define FUSE_MOPT_SUBTYPE               0x02000000
-#define FUSE_MOPT_UID                   0x04000000
-#define FUSE_MOPT_UMASK                 0x08000000
-#define FUSE_MOPT_USE_INO               0x10000000
-#define FUSE_MOPT_VOLNAME               0x20000000
+#define FUSE_MOPT_INIT_TIMEOUT          0x00000800
+#define FUSE_MOPT_IOSIZE                0x00001000
+#define FUSE_MOPT_JAIL_SYMLINKS         0x00002000
+#define FUSE_MOPT_KERNEL_CACHE          0x00004000
+#define FUSE_MOPT_LARGE_READ            0x00008000
+#define FUSE_MOPT_MAX_READ              0x00010000
+#define FUSE_MOPT_NO_ATTRCACHE          0x00020000
+#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00040000
+#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00080000
+#define FUSE_MOPT_NO_READAHEAD          0x00100000
+#define FUSE_MOPT_NO_SYNCWRITES         0x00200000
+#define FUSE_MOPT_NO_UBC                0x00400000
+#define FUSE_MOPT_PING_DISKARB          0x00800000
+#define FUSE_MOPT_READDIR_INO           0x01000000
+#define FUSE_MOPT_ROOTMODE              0x02000000
+#define FUSE_MOPT_SUBTYPE               0x04000000
+#define FUSE_MOPT_UID                   0x08000000
+#define FUSE_MOPT_UMASK                 0x10000000
+#define FUSE_MOPT_USE_INO               0x20000000
+#define FUSE_MOPT_VOLNAME               0x40000000
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF
 #define FUSE_CUSTOM_FSID_DEVICE_MAJOR   255
 #define FUSE_CUSTOM_FSID_VAL1           0x55464553
 
-#define FUSE_UNOTIFICATIONS_MOUNTED     \
+#define FUSE_UNOTIFICATIONS_MOUNTED      \
     "com.google.filesystems.fusefs.unotifications.mounted"
+
+#define FUSE_UNOTIFICATIONS_INITED       \
+    "com.google.filesystems.fusefs.unotifications.inited"
+
+#define FUSE_UNOTIFICATIONS_INITTIMEDOUT \
+    "com.google.filesystems.fusefs.unotifications.inittimedout"
 
 #endif /* _FUSE_MOUNT_H_ */

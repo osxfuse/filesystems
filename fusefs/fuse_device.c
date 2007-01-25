@@ -299,8 +299,8 @@ int
 fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
 {
     int ret = EINVAL;
-    struct fuse_softc  *fdev;
-    struct fuse_data   *data;
+    struct fuse_softc *fdev;
+    struct fuse_data  *data;
 
     fdev = FUSE_SOFTC_FROM_UNIT_FAST(minor(dev));
     if (!fdev) {
@@ -315,7 +315,15 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
     switch (cmd) {
 
     case FUSEDEVIOCISHANDSHAKECOMPLETE:
+        if (data->mpri == FM_NOMOUNTED) {
+            return ENXIO;
+        }
         *(u_int32_t *)udata = (data->dataflag & FSESS_INITED);
+        ret = 0;
+        break;
+
+    case FUSEDEVIOCDAEMONISDYING:
+        fdata_kick_set(data);
         ret = 0;
         break;
 

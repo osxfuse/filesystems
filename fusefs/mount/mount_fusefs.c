@@ -26,12 +26,12 @@
 #include "mntopts.h"
 #include <fuse_ioctl.h>
 #include <fuse_mount.h>
+#include <fuse_param.h>
 #include <fuse_version.h>
 
 #include <CoreFoundation/CoreFoundation.h>
 
 #define PROGNAME "mount_fusefs"
-#define FUSE_INIT_WAIT_INTERVAL 100000 /* us */
 
 char *getproctitle(pid_t pid, char **title, int *len);
 void  showhelp(void);
@@ -51,12 +51,22 @@ struct mntopt mopts[] = {
     { "fsname=",             0, FUSE_MOPT_FSNAME,                1 }, // used
     { "gid=",                0, FUSE_MOPT_GID,                   1 },
     { "hard_remove",         0, FUSE_MOPT_HARD_REMOVE,           1 },
+    { "init_timeout=",       0, FUSE_MOPT_INIT_TIMEOUT,          1 }, // used
     { "iosize=",             0, FUSE_MOPT_IOSIZE,                1 }, // used
     { "jail_symlinks",       0, FUSE_MOPT_JAIL_SYMLINKS,         1 }, // used
     { "kernel_cache",        0, FUSE_MOPT_KERNEL_CACHE,          1 },
     { "large_read",          0, FUSE_MOPT_LARGE_READ,            1 },
     { "max_read=",           0, FUSE_MOPT_MAX_READ,              1 },
     { "ping_diskarb",        0, FUSE_MOPT_PING_DISKARB,          1 }, // used
+    { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,           1 },
+    { "rootmode=",           0, FUSE_MOPT_ROOTMODE,              1 },
+    { "subtype=",            0, FUSE_MOPT_SUBTYPE,               1 }, // used
+    { "uid=",                0, FUSE_MOPT_UID,                   1 },
+    { "umask=",              0, FUSE_MOPT_UMASK,                 1 },
+    { "use_ino",             0, FUSE_MOPT_USE_INO,               1 },
+    { "volname=",            0, FUSE_MOPT_VOLNAME,               1 }, // used
+
+    /* negative ones */
 
     { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,          1 }, // used
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
@@ -65,13 +75,6 @@ struct mntopt mopts[] = {
     { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,         1 }, // used
     { "ubc",                 1, FUSE_MOPT_NO_UBC,                1 }, // used
 
-    { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,           1 },
-    { "rootmode=",           0, FUSE_MOPT_ROOTMODE,              1 },
-    { "subtype=",            0, FUSE_MOPT_SUBTYPE,               1 }, // used
-    { "uid=",                0, FUSE_MOPT_UID,                   1 },
-    { "umask=",              0, FUSE_MOPT_UMASK,                 1 },
-    { "use_ino",             0, FUSE_MOPT_USE_INO,               1 },
-    { "volname=",            0, FUSE_MOPT_VOLNAME,               1 }, // used
     { NULL }
 };
 
@@ -213,12 +216,13 @@ fuse_to_subtype(void **target, void *value, void *fallback)
     return 0;
 }
 
-static uint32_t  blocksize = FUSE_DEFAULT_BLOCKSIZE;
-static uint32_t  fsid      = 0;
-static char     *fsname    = NULL;
-static uint32_t  iosize    = FUSE_DEFAULT_IOSIZE;
-static uint32_t  subtype   = 0;
-static char     *volname   = NULL;
+static uint32_t  blocksize    = FUSE_DEFAULT_BLOCKSIZE;
+static uint32_t  fsid         = 0;
+static char     *fsname       = NULL;
+static uint32_t  init_timeout = FUSE_DEFAULT_INIT_TIMEOUT;
+static uint32_t  iosize       = FUSE_DEFAULT_IOSIZE;
+static uint32_t  subtype      = 0;
+static char     *volname      = NULL;
 
 struct mntval mvals[] = {
     {
@@ -247,6 +251,15 @@ struct mntval mvals[] = {
         NULL,
         (void **)&fsname,
         "invalid value for argument fsname"
+    },
+    {
+        FUSE_MOPT_INIT_TIMEOUT,
+        NULL,
+        0,
+        fuse_to_uint32,
+        (void *)FUSE_DEFAULT_INIT_TIMEOUT,
+        (void **)&init_timeout,
+        "invalid value for argument init_timeout"
     },
     {
         FUSE_MOPT_IOSIZE,
@@ -404,6 +417,33 @@ ping_diskarb(char *mntpath)
     return 0;
 }
 
+int
+post_notification(char *name, char *object)
+{
+    CFStringRef nf_name, nf_object;
+    CFNotificationCenterRef distributedCenter;
+    CFStringEncoding encoding = kCFStringEncodingASCII;
+
+    distributedCenter = CFNotificationCenterGetDistributedCenter();
+
+    if (!distributedCenter) {
+        return -1;
+    }
+
+    nf_name = CFStringCreateWithCString(kCFAllocatorDefault, name, encoding);
+      
+    nf_object = CFStringCreateWithCString(kCFAllocatorDefault, object,
+                                          encoding);
+ 
+    CFNotificationCenterPostNotification(distributedCenter,
+                                         nf_name, nf_object, NULL, false);
+
+    CFRelease(nf_name);
+    CFRelease(nf_object);
+
+    return 0;
+}
+
 // We will be called as follows by the FUSE library:
 //
 //   mount_fusefs -o OPTIONS... <fdnam> <mountpoint>
@@ -512,6 +552,14 @@ main(int argc, char **argv)
 
     fuse_process_mvals();
 
+    /*
+     * 'nosyncwrites' must not appear with either 'noubc' or 'noreadahead'.
+     */
+    if ((altflags & FUSE_MOPT_NO_SYNCWRITES) &&
+        (altflags & (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD))) {
+        errx(1, "'nosyncwrites' can't be used with 'noubc' or 'noreadahead'");
+    }
+
     errno = 0;
     fd = strtol(fdnam, NULL, 10);
     if ((errno == EINVAL) || (errno == ERANGE)) {
@@ -562,7 +610,7 @@ main(int argc, char **argv)
         snprintf(args.volname, MAXPATHLEN, "%s", volname);
     }
 
-    if (mount("fusefs", mntpath, mntflags, (void *)&args) < 0) {
+    if (mount(FUSE_FS_TYPE, mntpath, mntflags, (void *)&args) < 0) {
         err(EX_OSERR, "fusefs@%d on %s", index, mntpath);
     }
 
@@ -577,7 +625,6 @@ main(int argc, char **argv)
      */
     {
         pid_t pid;
-        int wait_iterations = 60;
 
         signal(SIGCHLD, SIG_IGN);
 
@@ -588,55 +635,57 @@ main(int argc, char **argv)
         setbuf(stderr, NULL);
 
         if (pid == 0) { /* child */
+
+            int ret, wait_iterations;
+
+            post_notification(FUSE_UNOTIFICATIONS_MOUNTED, mntpath);
+
+            if (init_timeout < FUSE_MIN_INIT_TIMEOUT) {
+                init_timeout = FUSE_MIN_INIT_TIMEOUT;
+            }
+
+            if (init_timeout > FUSE_MAX_INIT_TIMEOUT) {
+                init_timeout = FUSE_MAX_INIT_TIMEOUT;
+            }
+
+            wait_iterations = \
+                (init_timeout * 1000000) / FUSE_INIT_WAIT_INTERVAL;
+
             for (; wait_iterations > 0; wait_iterations--) { 
                 u_int32_t hs_complete = 0;
-                int ret = ioctl(fd, FUSEDEVIOCISHANDSHAKECOMPLETE,
-                                &hs_complete);
-                if ((ret == 0) && hs_complete) {
 
+                ret = ioctl(fd, FUSEDEVIOCISHANDSHAKECOMPLETE, &hs_complete);
+                if (ret) {
+                    break;
+                }
+
+                if (hs_complete) {
                     if (args.altflags & FUSE_MOPT_PING_DISKARB) {
                         /* Let Disk Arbitration know. */
                         if (ping_diskarb(mntpath)) {
-                            err(EX_OSERR, "fusefs@%d on %s (ping DiskArb)",
-                                index, mntpath);
+                            /* Somebody might want to exit here instead. */
+                            fprintf(stderr, "fusefs@%d on %s (ping DiskArb)",
+                                    index, mntpath);
                         }
                     }
 
-                    /* Let any notification listeners know. */
-                    do {
-                        CFStringRef nf_name, nf_object;
-                        CFNotificationCenterRef distributedCenter;
-                        CFStringEncoding encoding = kCFStringEncodingASCII;
-                        
-                        distributedCenter =
-                            CFNotificationCenterGetDistributedCenter();
- 
-                        if (!distributedCenter) {
-                            break;
-                        }
+                    post_notification(FUSE_UNOTIFICATIONS_INITED, mntpath);
 
-                        nf_name = CFStringCreateWithCString(
-                                     kCFAllocatorDefault,
-                                     FUSE_UNOTIFICATIONS_MOUNTED, encoding);
-
-                        nf_object = CFStringCreateWithCString(
-                                        kCFAllocatorDefault,
-                                        mntpath, encoding);
-
-                        CFNotificationCenterPostNotification(
-                            distributedCenter, nf_name, nf_object, NULL, false);
-
-                        CFRelease(nf_name);
-                        CFRelease(nf_object);
-
-                    } while (0);
-                    
                     exit(0);
                 }
+
                 usleep(FUSE_INIT_WAIT_INTERVAL);
+
+            } /* for */
+
+            post_notification(FUSE_UNOTIFICATIONS_INITTIMEDOUT, mntpath);
+
+            if (ret == 0) {
+                /* Somebody might want to exit here instead. */
+                fprintf(stderr, "fusefs@%d on %s (gave up on init handshake)",
+                        index, mntpath);
             }
-            err(EX_OSERR, "fusefs@%d on %s (gave up on init handshake)",
-                index, mntpath);
+
         } /* parent: just fall through and exit */
     }
 
@@ -656,6 +705,7 @@ showhelp()
       "    -o debug               turn on debug information printing\n"
       "    -o fsid                set the second 32-bit component of the fsid\n"
       "    -o fsname=<name>       set the file system's name\n"
+      "    -o init_timeout=<sec>  timeout for the init method to complete\n"
       "    -o iosize=<size>       specify maximum I/O size in bytes\n" 
       "    -o jail_symlinks       contain symbolic links within the mount\n"
       "    -o noauthopaque        set MNTK_AUTH_OPAQUE in the kernel\n"

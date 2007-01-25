@@ -52,12 +52,25 @@ fuse_vnop_access(struct vnop_access_args *ap)
     vfs_context_t context = ap->a_context;
     struct fuse_access_param facp;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
+    struct fuse_data *data = fusefs_get_data(vnode_mount(vp));
 
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs(vp)) {
         if (vnode_isvroot(vp)) {
             return 0;
+        } else {
+            return EBADF;
+        }
+    }
+
+    if (!(data->dataflag & FSESS_INITED)) {
+        if (vnode_isvroot(vp)) {
+            if (fuse_vfs_context_issuser(context) ||
+               (fuse_match_cred(data->daemoncred,
+                                vfs_context_ucred(context)) == 0)) {
+                return 0;
+            }
         }
         return EBADF;
     }
@@ -506,24 +519,22 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
         memcpy(vap, VTOVA(vp), sizeof(*vap));
     }
 
-    if (vnode_isreg(vp) && vfs_issynchronous(vnode_mount(vp))) {
+    if (vnode_isreg(vp) && (dataflag & FSESS_NO_UBC)) {
 
         /*
          * This is for those cases when the file size changed without us
          * knowing, and we want to catch up.
          *
-         * We don't want to do it when we have asynchronous writes
+         * For the sake of sanity, we don't want to do it with UBC.
+         * We also don't want to do it when we have asynchronous writes
          * enabled because we might have pending writes on *our* side.
+         * We're not researching distributed file systems here!
          *
          */
 
         struct fuse_vnode_data *fvdat = VTOFUD(vp);
         off_t new_filesize = ((struct fuse_attr_out *)fdi.answ)->attr.size;
-        
-        if (fvdat->filesize != new_filesize) {
-            fvdat->filesize = new_filesize;
-            ubc_setsize(vp, new_filesize);
-        }
+        fvdat->filesize = new_filesize;
     }
 
     fuse_ticket_drop(fdi.tick);
@@ -1977,11 +1988,16 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
     for (type = 0; type < FUFH_MAXTYPE; type++) {
         fufh = &(fvdat->fufh[type]);
         if (fufh->fufh_flags & FUFH_VALID) {
-            if (fufh->fufh_flags & FUFH_STRATEGY) {
+            if ((fufh->fufh_flags & FUFH_STRATEGY) ||
+                vfs_isforce(vnode_mount(vp))) {
                 fufh->fufh_flags &= ~FUFH_MAPPED;
                 fufh->open_count = 0;
                 (void)fuse_filehandle_put(vp, ap->a_context, type, 0);
             } else {
+                /*
+                 * This is not a forced unmount. So why is the vnode being
+                 * reclaimed if a fufh is valid?
+                 */
                 panic("vnode being reclaimed but fufh (type=%d) is valid",
                       type);
             }

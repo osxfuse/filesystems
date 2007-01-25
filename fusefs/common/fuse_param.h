@@ -51,6 +51,11 @@
 #define FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE (1L << 19)
 #define FUSE_DEFAULT_IOV_CREDIT            16
 
-#endif
+#endif /* KERNEL */
+
+#define FUSE_DEFAULT_INIT_TIMEOUT          5      /* s  */
+#define FUSE_MIN_INIT_TIMEOUT              1      /* s  */
+#define FUSE_MAX_INIT_TIMEOUT              300    /* s  */
+#define FUSE_INIT_WAIT_INTERVAL            100000 /* us */
 
 #endif /* _FUSE_PARAM_H_ */
