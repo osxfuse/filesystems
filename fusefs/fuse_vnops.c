@@ -217,7 +217,8 @@ fuse_vnop_close(struct vnop_close_args *ap)
     fufh = &(fvdat->fufh[fufh_type]);
 
     if (!(fufh->fufh_flags & FUFH_VALID)) {
-        panic("fufh type %d found to be invalid in close\n", fufh_type);
+        panic("MacFUSE: fufh type (%d) found to be invalid in close()\n",
+              fufh_type);
     }
 
     fufh->open_count--;
@@ -264,7 +265,7 @@ fuse_vnop_create(struct vnop_create_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(dvp)) {
-        panic("fuse_vnop_create(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_create(): called on a dead file system");
     }
 
     bzero(&fdi, sizeof(fdi));
@@ -717,7 +718,7 @@ fuse_vnop_link(struct vnop_link_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(vp)) {
-        panic("fuse_vnop_link(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_link(): called on a dead file system");
     }
 
     if (vnode_mount(tdvp) != vnode_mount(vp)) {
@@ -1258,7 +1259,7 @@ fuse_vnop_mkdir(struct vnop_mkdir_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(dvp)) {
-        panic("fuse_vnop_mkdir(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_mkdir(): called on a dead file system");
     }
 
     fmdi.mode = MAKEIMODE(vap->va_type, vap->va_mode);
@@ -1291,7 +1292,7 @@ fuse_vnop_mknod(struct vnop_mknod_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(dvp)) {
-        panic("fuse_vnop_mknod(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_mknod(): called on a dead file system");
     }
 
     fmni.mode = MAKEIMODE(vap->va_type, vap->va_mode);
@@ -1322,7 +1323,7 @@ fuse_vnop_mmap(struct vnop_mmap_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(vp)) {
-        panic("fuse_vnop_mmap(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_mmap(): called on a dead file system");
     }
 
     if (fufh_type == FUFH_INVALID) { // nothing to do
@@ -1982,7 +1983,7 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
     fuse_trace_printf_vnop();
 
     if (!fvdat) {
-        panic("FUSE: no vnode data during recycling");
+        panic("MacFUSE: no vnode data during recycling");
     }
 
     for (type = 0; type < FUFH_MAXTYPE; type++) {
@@ -1998,7 +1999,7 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
                  * This is not a forced unmount. So why is the vnode being
                  * reclaimed if a fufh is valid?
                  */
-                panic("vnode being reclaimed but fufh (type=%d) is valid",
+                panic("MacFUSE: vnode reclaimed but fufh (type=%d) is valid",
                       type);
             }
         }
@@ -2044,7 +2045,7 @@ fuse_vnop_remove(struct vnop_remove_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(vp)) {
-        panic("fuse_vnop_remove(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_remove(): called on a dead file system");
     }
 
     if (vnode_isdir(vp)) {
@@ -2129,7 +2130,7 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(fdvp)) {
-        panic("fuse_vnop_rename(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_rename(): called on a dead file system");
     }
 
     cache_purge(fvp);
@@ -2163,7 +2164,7 @@ fuse_vnop_rmdir(struct vnop_rmdir_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(ap->a_vp)) {
-        panic("fuse_vnop_rmdir(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_rmdir(): called on a dead file system");
     }
 
     if (VTOFUD(ap->a_vp) == VTOFUD(ap->a_dvp)) {
@@ -2409,7 +2410,7 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
 
     if (vnode_vtype(vp) != vtyp) {
         if (vnode_vtype(vp) == VNON && vtyp != VNON) {
-            debug_printf("FUSE: Dang! vnode_vtype is VNON and vtype isn't.\n");
+            debug_printf("MacFUSE: vnode_vtype is VNON and vtype isn't!\n");
         } else {
             // XXX: should ditch vnode.
             err = ENOTCONN;
@@ -2555,7 +2556,7 @@ fuse_vnop_symlink(struct vnop_symlink_args *ap)
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(dvp)) {
-        panic("fuse_vnop_symlink(): called on a dead file system");
+        panic("MacFUSE: fuse_vnop_symlink(): called on a dead file system");
     }
             
     len = strlen(target) + 1;

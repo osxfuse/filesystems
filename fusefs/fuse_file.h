@@ -59,7 +59,7 @@ fuse_filehandle_xlate_from_fflags(int fflags)
     } else if (fflags & (FREAD)) {
         return FUFH_RDONLY;
     } else {
-        panic("What kind of a flag is this?");
+        panic("MacFUSE: What kind of a flag is this (%x)?", fflags);
     }
 }
 

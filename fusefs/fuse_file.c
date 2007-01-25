@@ -91,11 +91,12 @@ fuse_filehandle_put(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type,
     }
 
     if (fufh->open_count != 0) {
-        panic("trying to put fufh with open count %d\n", fufh->open_count);
+        panic("MacFUSE: trying to put fufh with open count %d\n",
+              fufh->open_count);
     }
 
     if (fufh->fufh_flags & FUFH_MAPPED) {
-        panic("trying to put mapped fufh\n");
+        panic("MacFUSE: trying to put mapped fufh\n");
     }
 
     if (fuse_isdeadfs(vp)) {

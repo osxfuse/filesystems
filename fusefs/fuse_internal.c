@@ -847,7 +847,7 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
     struct fuse_data *data;
 
     if (!vp || vtype == VCHR || vtype == VBLK) {
-        panic("buf_strategy: b_vp == NULL || vtype == VCHR | VBLK\n");
+        panic("MacFUSE: buf_strategy: b_vp == NULL || vtype == VCHR | VBLK\n");
     }
 
     bflags = buf_flags(bp);

@@ -85,7 +85,7 @@ fiov_adjust(struct fuse_iov *fiov, size_t size)
         fiov->base = TEMPORARY_KLUDGE_realloc(fiov->base, fiov->allocated_size,
                                               FU_AT_LEAST(size));
         if (!fiov->base) {
-            panic("FUSE: realloc failed");
+            panic("MacFUSE: realloc failed");
         }
 
         fiov->allocated_size = FU_AT_LEAST(size);
@@ -223,7 +223,7 @@ fticket_aw_pull_uio(struct fuse_ticket *tick, uio_t uio)
             break;
 
         default:
-            panic("FUSE: unknown answer type for ticket %p", tick);
+            panic("MacFUSE: unknown answer type for ticket %p", tick);
         }
     }
 
@@ -373,7 +373,7 @@ fuse_pop_freeticks(struct fuse_data *data)
 
     if (STAILQ_EMPTY(&data->freetickets_head) &&
         (data->freeticket_counter != 0)) {
-        panic("ticket count mismatch!");
+        panic("MacFUSE: ticket count mismatch!");
     }
 
     return tick;
@@ -424,7 +424,7 @@ fuse_ticket_fetch(struct fuse_data *data)
         lck_mtx_unlock(data->ticket_mtx);
         tick = fticket_alloc(data);
         if (!tick) {
-            panic("ticket allocation failed");
+            panic("MacFUSE: ticket allocation failed");
         }
         lck_mtx_lock(data->ticket_mtx);
         fuse_push_allticks(tick);
@@ -432,7 +432,7 @@ fuse_ticket_fetch(struct fuse_data *data)
         /* locked here */
         tick = fuse_pop_freeticks(data);
         if (!tick) {
-            panic("no free ticket despite the counter's value");
+            panic("MacFUSE: no free ticket despite the counter's value");
         }
     }
 
@@ -512,7 +512,7 @@ fuse_insert_message(struct fuse_ticket *tick)
     debug_printf("tick=%p\n", tick);
 
     if (tick->tk_flag & FT_DIRTY) {
-        panic("FUSE: ticket reused without being refreshed");
+        panic("MacFUSE: ticket reused without being refreshed");
     }
 
     tick->tk_flag |= FT_DIRTY;
@@ -543,7 +543,7 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     case FUSE_FORGET:
-        panic("FUSE: a handler has been intalled for FUSE_FORGET");
+        panic("MacFUSE: a handler has been intalled for FUSE_FORGET");
         break;
 
     case FUSE_GETATTR:
@@ -659,15 +659,15 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     case FUSE_GETLK:
-        panic("FUSE: no response body format check for FUSE_GETLK");
+        panic("MacFUSE: no response body format check for FUSE_GETLK");
         break;
 
     case FUSE_SETLK:
-        panic("FUSE: no response body format check for FUSE_SETLK");
+        panic("MacFUSE: no response body format check for FUSE_SETLK");
         break;
 
     case FUSE_SETLKW:
-        panic("FUSE: no response body format check for FUSE_SETLKW");
+        panic("MacFUSE: no response body format check for FUSE_SETLKW");
         break;
 
     case FUSE_ACCESS:
@@ -683,7 +683,7 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     default:
-        panic("FUSE: opcodes out of sync");
+        panic("MacFUSE: opcodes out of sync");
     }
 
     return (err);
@@ -765,7 +765,7 @@ fdisp_make(struct fuse_dispatcher *fdip,
     }
 
     if (fdip->tick == 0) {
-        panic("fuse_ticket_fetch() failed");
+        panic("MacFUSE: fuse_ticket_fetch() failed");
     }
 
     FUSE_DIMALLOC(&fdip->tick->tk_ms_fiov, fdip->finh,

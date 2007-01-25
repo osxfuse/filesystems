@@ -169,7 +169,7 @@ fuse_device_close(dev_t dev, int flags, int devtype, struct proc *p)
 
     data = fdev->data;
     if (!data) {
-        panic("FUSE: no softc data upon device close");
+        panic("MacFUSE: no softc data upon device close");
     }
 
     fdata_kick_set(data);
@@ -272,7 +272,7 @@ again:
         break;
 
     default:
-        panic("FUSE: unknown message type for ticket %p", tick);
+        panic("MacFUSE: unknown message type for ticket %p", tick);
     }
 
     for (i = 0; buf[i]; i++) {

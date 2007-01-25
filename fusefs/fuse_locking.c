@@ -307,7 +307,7 @@ void
 fusefs_lock_truncate(fusenode_t cp, lck_rw_type_t lck_rw_type)
 {
     if (cp->nodelockowner == current_thread()) {
-        panic("fusefs_lock_truncate: cnode 0x%08x locked!", cp);
+        panic("MacFUSE: fusefs_lock_truncate: cnode 0x%08x locked!", cp);
     }
 
     lck_rw_lock(cp->truncatelock, lck_rw_type);

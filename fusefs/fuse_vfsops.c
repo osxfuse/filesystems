@@ -208,7 +208,7 @@ fuse_vfs_mount(mount_t       mp,
     }
 
     if (!data->daemoncred) {
-        panic("fuse daemon found, but identity unknown");
+        panic("MacFUSE: daemon found but identity unknown");
     }
 
     if (data->mpri != FM_NOMOUNTED) {
@@ -328,7 +328,7 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
 
     data = fusefs_get_data(mp);
     if (!data) {
-        panic("no private data for mount point?");
+        panic("MacFUSE: no private data for mount point?");
     }
 
     if (!(data->dataflag & FSESS_INITED)) {
@@ -555,7 +555,7 @@ fuse_vfs_getattr(mount_t mp, struct vfs_attr *attr, vfs_context_t context)
 
     data = fusefs_get_data(mp);
     if (!data) {
-        panic("no private data for mount point?");
+        panic("MacFUSE: no private data for mount point?");
     }
 
     if (!(data->dataflag & FSESS_INITED)) {
@@ -753,7 +753,7 @@ fuse_vfs_sync(mount_t mp, int waitfor, vfs_context_t context)
     } 
 
     if (vfs_isrdonly(mp)) {
-        return EROFS; // should panic!
+        return EROFS; // should panic!?
     }
 
     /*
