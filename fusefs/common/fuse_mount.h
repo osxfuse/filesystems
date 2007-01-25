@@ -88,13 +88,27 @@ enum {
 #define FUSE_CUSTOM_FSID_DEVICE_MAJOR   255
 #define FUSE_CUSTOM_FSID_VAL1           0x55464553
 
-#define FUSE_UNOTIFICATIONS_MOUNTED      \
+/* Notifications... */
+
+/* The object. */
+
+#define FUSE_UNOTIFICATIONS_OBJECT              \
+    "com.google.filesystems.fusefs.unotifications"
+
+/* The notifications themselves. */
+
+#define FUSE_UNOTIFICATIONS_NOTIFY_MOUNTED      \
     "com.google.filesystems.fusefs.unotifications.mounted"
 
-#define FUSE_UNOTIFICATIONS_INITED       \
+#define FUSE_UNOTIFICATIONS_NOTIFY_INITED       \
     "com.google.filesystems.fusefs.unotifications.inited"
 
-#define FUSE_UNOTIFICATIONS_INITTIMEDOUT \
+#define FUSE_UNOTIFICATIONS_NOTIFY_INITTIMEDOUT \
     "com.google.filesystems.fusefs.unotifications.inittimedout"
+
+/* User data keys. */
+
+#define kFUSEDevicePathKey "kFUSEDevicePath"
+#define kFUSEMountPathKey  "kFUSEMountPath"
 
 #endif /* _FUSE_MOUNT_H_ */

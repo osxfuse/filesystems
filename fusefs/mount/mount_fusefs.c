@@ -418,9 +418,16 @@ ping_diskarb(char *mntpath)
 }
 
 int
-post_notification(char *name, char *object)
+post_notification(char   *name,
+                  char   *udata_keys[],
+                  char   *udata_values[],
+                  CFIndex nf_num)
 {
-    CFStringRef nf_name, nf_object;
+    CFIndex i;
+    CFStringRef nf_name   = NULL;
+    CFStringRef nf_object = NULL;
+    CFMutableDictionaryRef nf_udata  = NULL;
+
     CFNotificationCenterRef distributedCenter;
     CFStringEncoding encoding = kCFStringEncodingASCII;
 
@@ -432,14 +439,46 @@ post_notification(char *name, char *object)
 
     nf_name = CFStringCreateWithCString(kCFAllocatorDefault, name, encoding);
       
-    nf_object = CFStringCreateWithCString(kCFAllocatorDefault, object,
+    nf_object = CFStringCreateWithCString(kCFAllocatorDefault,
+                                          FUSE_UNOTIFICATIONS_OBJECT,
                                           encoding);
  
-    CFNotificationCenterPostNotification(distributedCenter,
-                                         nf_name, nf_object, NULL, false);
+    nf_udata = CFDictionaryCreateMutable(kCFAllocatorDefault,
+                                         nf_num,
+                                         &kCFCopyStringDictionaryKeyCallBacks,
+                                         &kCFTypeDictionaryValueCallBacks);
 
-    CFRelease(nf_name);
-    CFRelease(nf_object);
+    if (!nf_name || !nf_object || !nf_udata) {
+        goto out;
+    }
+
+    for (i = 0; i < nf_num; i++) {
+        CFStringRef a_key = CFStringCreateWithCString(kCFAllocatorDefault,
+                                                      udata_keys[i],
+                                                      kCFStringEncodingASCII);
+        CFStringRef a_value = CFStringCreateWithCString(kCFAllocatorDefault,
+                                                        udata_values[i],
+                                                        kCFStringEncodingASCII);
+        CFDictionarySetValue(nf_udata, a_key, a_value);
+        CFRelease(a_key);
+        CFRelease(a_value);
+    }
+
+    CFNotificationCenterPostNotification(distributedCenter,
+                                         nf_name, nf_object, nf_udata, false);
+
+out:
+    if (nf_name) {
+        CFRelease(nf_name);
+    }
+
+    if (nf_object) {
+        CFRelease(nf_object);
+    }
+
+    if (nf_udata) {
+        CFRelease(nf_udata);
+    }
 
     return 0;
 }
@@ -637,8 +676,11 @@ main(int argc, char **argv)
         if (pid == 0) { /* child */
 
             int ret, wait_iterations;
-
-            post_notification(FUSE_UNOTIFICATIONS_MOUNTED, mntpath);
+            char *udata_keys[]   = { kFUSEMountPathKey };
+            char *udata_values[] = { mntpath };
+           
+            post_notification(FUSE_UNOTIFICATIONS_NOTIFY_MOUNTED,
+                              udata_keys, udata_values, 1);
 
             if (init_timeout < FUSE_MIN_INIT_TIMEOUT) {
                 init_timeout = FUSE_MIN_INIT_TIMEOUT;
@@ -669,7 +711,8 @@ main(int argc, char **argv)
                         }
                     }
 
-                    post_notification(FUSE_UNOTIFICATIONS_INITED, mntpath);
+                    post_notification(FUSE_UNOTIFICATIONS_NOTIFY_INITED,
+                                      udata_keys, udata_values, 1);
 
                     exit(0);
                 }
@@ -678,7 +721,8 @@ main(int argc, char **argv)
 
             } /* for */
 
-            post_notification(FUSE_UNOTIFICATIONS_INITTIMEDOUT, mntpath);
+            post_notification(FUSE_UNOTIFICATIONS_NOTIFY_INITTIMEDOUT,
+                              udata_keys, udata_values, 1);
 
             if (ret == 0) {
                 /* Somebody might want to exit here instead. */
