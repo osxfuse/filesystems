@@ -1,0 +1,11 @@
+//
+//  sshfs.pch
+//  Prefix header for sshfs
+// 
+//  Created by Avi Drissman on 12/28/06.
+//  Copyright Google 2006. All rights reserved.
+//
+
+#ifdef __OBJC__
+  #import <Cocoa/Cocoa.h>
+#endif

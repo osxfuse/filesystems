@@ -1,0 +1,24 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {
+                clearRecents = id; 
+                connectCancel = id; 
+                connectOK = id; 
+                connectToRecent = id; 
+                showConnect = id; 
+            }; 
+            CLASS = AppController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "connectPanel_" = NSPanel; 
+                "pathField_" = NSTextField; 
+                "serverField_" = NSTextField; 
+                "usernameField_" = NSTextField; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}

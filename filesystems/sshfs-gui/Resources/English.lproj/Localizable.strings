@@ -1,0 +1,3 @@
+/* can't find sshfs binary */
+"nosshfs" = "I'm sorry, but the sshfs binary couldn't be found.";
+
