@@ -19,5 +19,3 @@
    interesting stuff with things like IODataQueue's and Mach VM in general.
    It would be a nice subproject to come up with a more optimized user-kernel
    communication for MacFUSE's purposes.
-
-3. The interaction/handshaking with the Finder could use some improvement.
