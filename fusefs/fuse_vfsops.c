@@ -343,7 +343,9 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
         panic("MacFUSE: no private data for mount point?");
     }
 
-    if (!(data->dataflag & FSESS_INITED)) {
+    if (fdata_kick_get(data)) {
+        flags |= FORCECLOSE;
+    } else if (!(data->dataflag & FSESS_INITED)) {
         flags |= FORCECLOSE;
         fdata_kick_set(data);
     }

@@ -1,0 +1,51 @@
+= Changes and Feature Additions in MacFUSE Core Binary Releases =
+
+== MacFUSE 0.1.9 ==
+
+  * The user-space library has better termination behavior. It handles SIGTERM hopefully properly now, and will try to automatically unmount the file system under most circumstances. Even when a file system daemon misbehaves and refuses to cooperate during termination, you should be able to force-quit the daemon and unmounting should proceed. Overall, this should result in much better experience, especially during file system development (when your daemons might be dying and misbehaving all the time).
+
+  * There is improved support for operation without buffer caching (the 'noubc' option).
+
+  * There is improved support for asynchronous writes (the 'nosyncwrites' option).
+
+  * The 'nosyncwrites' option is now mutually exclusive with the 'noubc' and 'noreadahead' options.
+
+  * mount_fusefs now sends notifications to OS X's distributed notification center as a file system is being mounted. See Apple's documentation for CFNotificationCenterAddObserver() & family to see how to receive these notifications. There is one notification sent right after a successful mount, one after the file system has initialized (the daemon has acknowledged FUSE_INIT), and another if there has been a timeout waiting for the file system to initialize. All these notifications are sent for an object called "com.google.filesystems.fusefs.unotifications". There is also a user-data dictionary in each notification. The dictionary at least contains the mount-path in question. See fusefs/common/fuse_mount.h for the names of these notification, etc.
+
+  * There is a new option ('init_timeout') that can be used to specify how long mount_fusefs to wait for the file system to initialize/stabilize (basically, for the daemon to send a response to FUSE_INIT). By default, init_timeout is 10 seconds. If the file system does initialize within this time, mount_fusefs will ping Disk Arbitration *and* send the "inited" notification to the distributed notification center. If there is a timeout, mount_fusefs will *not* ping Disk Arbitrarion and will send the "inittimedout" notification. Helper programs can use this mechanism to decide if they need to do any cleanup etc.
+
+  * There is a new option ('daemon_timeout') that lets you specify a timeout in seconds for the kernel to wait for the user file system daemon to respond (for any message). If the daemon fails to respond within this time, the kernel marks the file system as "dead". By default, there is no timeout -- the kernel will wait indefinitely (unless you kill the file system daemon yourself). This should stop the Finder from "beachballing". In fact, there will be a VFS-level kernel notification sent out that will tell the Finder to eject the volume (remember to use the 'ping_diskarb' option). *NOTE* that this ejection will be /forced/ -- if you have files open when the file system became "dead", they will be unceremoniously ignored. The alternative (you can modify the source to do so) is to not eject forcibly if files were open. Since the file system is dead, it's not like you would be able to "save" them -- it's just that you will have to eject it later manually after you've "closed" those files. An even better alternative would be to have support from going back-and-forth between "dead" and "alive" states (based on a network connection coming and going, for example) but that's for later. In any case, the goal is that "killing" the file system daemon ("kill <daemon's process ID>") should always work.
+
+  * The personality named "NTFS" in the fusefs.fs bundle is now called "NTFS-3g". This fixes the problem where Disk Utility and Startup Disk preference pane get confused because the description they are looking for is not found in fusefs.fs's plist.
+
+  * The installer package does a better job of cleaning up previously installed MacFUSE files.
+
+  * There is an uninstall program.
+
+  * The sshfs.app GUI wrapper has been open sourced.
+
+== MacFUSE 0.1.8 ==
+
+  * There was no 0.1.8 release.
+
+== MacFUSE 0.1.7 ==
+
+  * The file `/usr/local/bin/mount_fusefs` is removed. The `mount_fusefs` in the `fusefs.fs` bundle is the actual binary used by the user-space FUSE library. This obviates the need to have `/usr/local/bin` in your path, making it a bit easier to write fuse file system apps.
+
+  * The MacFUSE kernel extension (kext) has been moved from `/System/Library/Extensions` to `/Library/Extensions`. Dynamically loading the kext on first mount seems to be working well enough, so we don't anticipate a need to load at boot-time. This move will also free us from having to worry about the kext cache.
+
+  * Fix for timestamp issues (See issue #33).
+
+  * Fixed a problem with 64-bit file offsets that was causing issues with files greater than 4GB.
+
+  * `mount_fusefs` will no longer automatically append a `"@%d"` (`%d` being the MacFUSE device number) to the fsname. This is for the benefit of those running ntfs-3g with disk utility.
+
+  * Improved support for the `ping_diskarb` mount option (See issue #10). The `mount_fusefs` program with the `ping_diskarb` option now waits for the file system to initialize before notifying Disk Arbitration that the mount occurred. Currently it will wait for up to 6 seconds at most and then cancel the "ping" if the file system does not initialize within that time.
+
+  * The `mount_fusefs` program will wait for the file system to initialize (similar to the `ping_diskarb` case above).  It will then send the notification `"com.google.filesystems.fusefs.unotifications.mounted"` with a string containing the mount path as the object to the distributed notification center.  This is so that projects like MacFUSE ntfs-3g can create their own mount wrapper that waits until the file system is initialized before exiting.
+
+  * Support for operation with buffer cache and readahead turned off for the cases where the "remote" file size is changing without the local file system's knowledge.
+
+  * From now on, no more tarballs. We'll only have package installers.
+
+  * The versioning scheme has changed to the simpler form `x.y.z`.
