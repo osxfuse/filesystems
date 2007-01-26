@@ -168,7 +168,7 @@ fticket_wait_answer(struct fuse_ticket *tick)
     int err = 0;
 
     debug_printf("tick=%p\n", tick);
-    lck_mtx_lock(tick->tk_aw_mtx);
+    fuse_lck_mtx_lock(tick->tk_aw_mtx);
 
     if (fticket_answered(tick)) {
         goto out;
@@ -183,8 +183,28 @@ fticket_wait_answer(struct fuse_ticket *tick)
 
     err = msleep(tick, tick->tk_aw_mtx, PCATCH, "fu_ans", 0);
 
+    /*
+     * An experimental version of the above:
+    {
+        struct timespec ts = { 1, 0 };
+again:
+        err = msleep(tick, tick->tk_aw_mtx, PCATCH, "fu_ans", &ts);
+        if (err == EAGAIN) {
+            if (fdata_kick_get(tick->tk_data)) {
+                err = ENOTCONN;
+                fticket_set_answered(tick);
+                vfs_event_signal(&vfs_statfs(tick->tk_data->mp)->f_fsid,
+                                 VQ_DEAD, 0);
+                goto out;
+            }
+            goto again;
+        }
+    }
+    *
+    */
+
 out:
-    lck_mtx_unlock(tick->tk_aw_mtx);
+    fuse_lck_mtx_unlock(tick->tk_aw_mtx);
 
     if (!(err || fticket_answered(tick))) {
         debug_printf("fuse requester was woken up but still no answer");
@@ -334,19 +354,19 @@ fdata_kick_set(struct fuse_data *data)
 {
     debug_printf("data=%p\n", data);
 
-    lck_mtx_lock(data->ms_mtx);
+    fuse_lck_mtx_lock(data->ms_mtx);
     if (fdata_kick_get(data)) { 
-        lck_mtx_unlock(data->ms_mtx);
+        fuse_lck_mtx_unlock(data->ms_mtx);
         return;
     }
 
     data->dataflag |= FSESS_KICK;
     wakeup_one((caddr_t)data);
-    lck_mtx_unlock(data->ms_mtx);
+    fuse_lck_mtx_unlock(data->ms_mtx);
 
-    lck_mtx_lock(data->ticket_mtx);
+    fuse_lck_mtx_lock(data->ticket_mtx);
     wakeup(&data->ticketer);
-    lck_mtx_unlock(data->ticket_mtx);
+    fuse_lck_mtx_unlock(data->ticket_mtx);
 }
 
 static __inline__ void
@@ -418,15 +438,15 @@ fuse_ticket_fetch(struct fuse_data *data)
 
     debug_printf("data=%p\n", data);
 
-    lck_mtx_lock(data->ticket_mtx);
+    fuse_lck_mtx_lock(data->ticket_mtx);
 
     if (data->freeticket_counter == 0) {
-        lck_mtx_unlock(data->ticket_mtx);
+        fuse_lck_mtx_unlock(data->ticket_mtx);
         tick = fticket_alloc(data);
         if (!tick) {
             panic("MacFUSE: ticket allocation failed");
         }
-        lck_mtx_lock(data->ticket_mtx);
+        fuse_lck_mtx_lock(data->ticket_mtx);
         fuse_push_allticks(tick);
     } else {
         /* locked here */
@@ -440,7 +460,7 @@ fuse_ticket_fetch(struct fuse_data *data)
         err = msleep(&data->ticketer, data->ticket_mtx, PCATCH | PDROP,
                      "fu_ini", 0);
     } else {
-        lck_mtx_unlock(data->ticket_mtx);
+        fuse_lck_mtx_unlock(data->ticket_mtx);
     }
 
     if (err) {
@@ -457,26 +477,26 @@ fuse_ticket_drop(struct fuse_ticket *tick)
 
     debug_printf("tick=%p\n", tick);
 
-    lck_mtx_lock(tick->tk_data->ticket_mtx);
+    fuse_lck_mtx_lock(tick->tk_data->ticket_mtx);
 
     if (fuse_max_freetickets >= 0 &&
         fuse_max_freetickets <= tick->tk_data->freeticket_counter) {
         die = 1;
     } else {
-        lck_mtx_unlock(tick->tk_data->ticket_mtx);
+        fuse_lck_mtx_unlock(tick->tk_data->ticket_mtx);
         fticket_refresh(tick);
-        lck_mtx_lock(tick->tk_data->ticket_mtx);
+        fuse_lck_mtx_lock(tick->tk_data->ticket_mtx);
     }
 
     /* locked here */
 
     if (die) {
         fuse_remove_allticks(tick);
-        lck_mtx_unlock(tick->tk_data->ticket_mtx);
+        fuse_lck_mtx_unlock(tick->tk_data->ticket_mtx);
         fticket_destroy(tick);
     } else {
         fuse_push_freeticks(tick);
-        lck_mtx_unlock(tick->tk_data->ticket_mtx);
+        fuse_lck_mtx_unlock(tick->tk_data->ticket_mtx);
     }
 }
 
@@ -501,9 +521,9 @@ fuse_insert_callback(struct fuse_ticket *tick, fuse_handler_t *handler)
 
     tick->tk_aw_handler = handler;
 
-    lck_mtx_lock(tick->tk_data->aw_mtx);
+    fuse_lck_mtx_lock(tick->tk_data->aw_mtx);
     fuse_aw_push(tick);
-    lck_mtx_unlock(tick->tk_data->aw_mtx);
+    fuse_lck_mtx_unlock(tick->tk_data->aw_mtx);
 }
 
 void
@@ -521,10 +541,10 @@ fuse_insert_message(struct fuse_ticket *tick)
         return;
     }
 
-    lck_mtx_lock(tick->tk_data->ms_mtx);
+    fuse_lck_mtx_lock(tick->tk_data->ms_mtx);
     fuse_ms_push(tick);
     wakeup_one((caddr_t)tick->tk_data);
-    lck_mtx_unlock(tick->tk_data->ms_mtx);
+    fuse_lck_mtx_unlock(tick->tk_data->ms_mtx);
 }
 
 static int
@@ -727,7 +747,7 @@ fuse_standard_handler(struct fuse_ticket *tick, uio_t uio)
 
     err = fticket_pull(tick, uio);
 
-    lck_mtx_lock(tick->tk_aw_mtx);
+    fuse_lck_mtx_lock(tick->tk_aw_mtx);
 
     if (fticket_answered(tick)) {
         dropflag = 1;
@@ -737,7 +757,7 @@ fuse_standard_handler(struct fuse_ticket *tick, uio_t uio)
         wakeup(tick);
     }
 
-    lck_mtx_unlock(tick->tk_aw_mtx);
+    fuse_lck_mtx_unlock(tick->tk_aw_mtx);
 
     if (dropflag) {
         fuse_ticket_drop(tick);
@@ -803,19 +823,19 @@ fdisp_wait_answ(struct fuse_dispatcher *fdip)
 
         debug_printf("IPC: interrupted, err = %d\n", err);
 
-        lck_mtx_lock(fdip->tick->tk_aw_mtx);
+        fuse_lck_mtx_lock(fdip->tick->tk_aw_mtx);
 
         if (fticket_answered(fdip->tick)) {
             debug_printf("IPC: already answered\n");
-            lck_mtx_unlock(fdip->tick->tk_aw_mtx);
+            fuse_lck_mtx_unlock(fdip->tick->tk_aw_mtx);
             goto out;
         } else {
             debug_printf("IPC: setting to answered\n");
             age = fdip->tick->tk_age;
             fticket_set_answered(fdip->tick);
-            lck_mtx_unlock(fdip->tick->tk_aw_mtx);
+            fuse_lck_mtx_unlock(fdip->tick->tk_aw_mtx);
 #ifndef DONT_TRY_HARD_PREVENT_IO_IN_VAIN
-            lck_mtx_lock(fdip->tick->tk_data->aw_mtx);
+            fuse_lck_mtx_lock(fdip->tick->tk_data->aw_mtx);
             TAILQ_FOREACH(tick, &fdip->tick->tk_data->aw_head, tk_aw_link) {
                 if (tick == fdip->tick) {
                     if (fdip->tick->tk_age == age) {
@@ -826,7 +846,7 @@ fdisp_wait_answ(struct fuse_dispatcher *fdip)
                 }
             }
 
-            lck_mtx_unlock(fdip->tick->tk_data->aw_mtx);
+            fuse_lck_mtx_unlock(fdip->tick->tk_data->aw_mtx);
 #endif
             return (err);
         }

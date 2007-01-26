@@ -1,6 +1,30 @@
+diff -Naur old/README.MacFUSE new/README.MacFUSE
+--- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
++++ new/README.MacFUSE	2007-01-25 23:28:23.000000000 -0800
+@@ -0,0 +1,7 @@
++MacFUSE Project Page:
++
++http://code.google.com/p/macfuse/
++
++Making a Universal build:
++
++CFLAGS="-D__FreeBSD__=10 -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+diff -Naur old/configure new/configure
+--- old/configure	2006-12-01 04:00:35.000000000 -0800
++++ new/configure	2007-01-25 22:59:01.000000000 -0800
+@@ -11776,7 +11776,8 @@
+ fi
+ 
+ 
+-libfuse_libs=-pthread
++#libfuse_libs=-pthread
++libfuse_libs=
+ LIBS=
+ { echo "$as_me:$LINENO: checking for library containing clock_gettime" >&5
+ echo $ECHO_N "checking for library containing clock_gettime... $ECHO_C" >&6; }
 diff -Naur old/example/fusexmp.c new/example/fusexmp.c
 --- old/example/fusexmp.c	2006-10-01 05:34:47.000000000 -0700
-+++ new/example/fusexmp.c	2007-01-24 14:00:26.000000000 -0800
++++ new/example/fusexmp.c	2007-01-25 22:10:50.000000000 -0800
 @@ -314,7 +314,11 @@
  static int xmp_setxattr(const char *path, const char *name, const char *value,
                          size_t size, int flags)
@@ -51,7 +75,7 @@ diff -Naur old/example/fusexmp.c new/example/fusexmp.c
      return 0;
 diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
 --- old/example/fusexmp_fh.c	2006-10-01 05:35:02.000000000 -0700
-+++ new/example/fusexmp_fh.c	2007-01-24 14:00:26.000000000 -0800
++++ new/example/fusexmp_fh.c	2007-01-25 22:10:50.000000000 -0800
 @@ -32,8 +32,9 @@
      int res;
  
@@ -144,9 +168,22 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .getattr	= xmp_getattr,
      .fgetattr	= xmp_fgetattr,
      .access	= xmp_access,
+diff -Naur old/fuse.pc.in new/fuse.pc.in
+--- old/fuse.pc.in	2006-06-06 02:18:25.000000000 -0700
++++ new/fuse.pc.in	2007-01-25 23:04:11.000000000 -0800
+@@ -4,7 +4,7 @@
+ includedir=@includedir@
+ 
+ Name: fuse
+-Description: Filesystem in Userspace
++Description: Filesystem in Userspace (MacFUSE)
+ Version: @VERSION@
+-Libs: -L${libdir} -lfuse -pthread
++Libs: -L${libdir} -lfuse
+ Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
 diff -Naur old/include/fuse.h new/include/fuse.h
 --- old/include/fuse.h	2006-11-30 03:53:18.000000000 -0800
-+++ new/include/fuse.h	2007-01-24 14:00:26.000000000 -0800
++++ new/include/fuse.h	2007-01-25 22:10:50.000000000 -0800
 @@ -663,4 +663,8 @@
  }
  #endif
@@ -158,7 +195,7 @@ diff -Naur old/include/fuse.h new/include/fuse.h
  #endif /* _FUSE_H_ */
 diff -Naur old/lib/Makefile.in new/lib/Makefile.in
 --- old/lib/Makefile.in	2006-12-01 04:00:50.000000000 -0800
-+++ new/lib/Makefile.in	2007-01-24 14:00:26.000000000 -0800
++++ new/lib/Makefile.in	2007-01-25 22:10:50.000000000 -0800
 @@ -60,8 +60,12 @@
  	fuse_loop.c fuse_loop_mt.c fuse_lowlevel.c fuse_misc.h \
  	fuse_mt.c fuse_opt.c fuse_session.c fuse_signals.c helper.c \
@@ -200,20 +237,25 @@ diff -Naur old/lib/Makefile.in new/lib/Makefile.in
  libulockmgr_la_LDFLAGS = -version-number 1:0:0
 diff -Naur old/lib/fuse.c new/lib/fuse.c
 --- old/lib/fuse.c	2006-11-06 03:53:12.000000000 -0800
-+++ new/lib/fuse.c	2007-01-24 14:00:26.000000000 -0800
-@@ -734,6 +734,11 @@
++++ new/lib/fuse.c	2007-01-25 23:01:27.000000000 -0800
+@@ -734,6 +734,16 @@
  
  static void curr_time(struct timespec *now)
  {
 +#if (__FreeBSD__ >= 10)
++#define MACFUSE_TIMEVAL_TO_TIMESPEC(tv, ts) {                           \
++        (ts)->tv_sec = (tv)->tv_sec;                                    \
++        (ts)->tv_nsec = (tv)->tv_usec * 1000;                           \
++    }
 +    struct timeval tp;
 +    gettimeofday(&tp, NULL);
-+    TIMEVAL_TO_TIMESPEC(&tp, now); /* We are losing resolution here. */
++    /* XXX: TBD: We are losing resolution here. */
++    MACFUSE_TIMEVAL_TO_TIMESPEC(&tp, now);
 +#else
      static clockid_t clockid = CLOCK_MONOTONIC;
      int res = clock_gettime(clockid, now);
      if (res == -1 && errno == EINVAL) {
-@@ -744,6 +749,7 @@
+@@ -744,6 +754,7 @@
          perror("fuse: clock_gettime");
          abort();
      }
@@ -221,39 +263,142 @@ diff -Naur old/lib/fuse.c new/lib/fuse.c
  }
  
  static void update_stat(struct node *node, const struct stat *stbuf)
-diff -Naur old/lib/fuse_loop_mt.c new/lib/fuse_loop_mt.c
---- old/lib/fuse_loop_mt.c	2006-09-06 04:07:20.000000000 -0700
-+++ new/lib/fuse_loop_mt.c	2007-01-24 14:00:26.000000000 -0800
-@@ -107,7 +107,11 @@
-     }
- 
-     pthread_kill(mt->main.thread_id, SIGHUP);
+diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
+--- old/lib/fuse_session.c	2006-09-23 02:17:34.000000000 -0700
++++ new/lib/fuse_session.c	2007-01-25 22:45:48.000000000 -0800
+@@ -15,6 +15,9 @@
+ #include <string.h>
+ #include <assert.h>
+ #include <errno.h>
 +#if (__FreeBSD__ >= 10)
-+    exit(0);
-+#else
-     pause();
++#include <sys/param.h>
 +#endif
  
-     return NULL;
+ struct fuse_session {
+     struct fuse_session_ops op;
+@@ -24,6 +27,10 @@
+     volatile int exited;
+ 
+     struct fuse_chan *ch;
++
++#if (__FreeBSD__ >= 10)
++    char mntonname[MAXPATHLEN];
++#endif
+ };
+ 
+ struct fuse_chan {
+@@ -40,6 +47,30 @@
+     int compat;
+ };
+ 
++#if (__FreeBSD__ >= 10)
++char *fuse_session_get_mntonname(struct fuse_session *se)
++{
++    if (se) {
++        return se->mntonname;
++    }
++
++    return NULL;
++}
++
++void fuse_session_set_mntonname(struct fuse_session *se, char *mntonname)
++{
++    if (!se || !mntonname) {
++        return;
++    }
++
++    if (!realpath(mntonname, se->mntonname)) {
++        memset(se->mntonname, 0, MAXPATHLEN);
++    }
++
++    return;
++}
++#endif
++
+ struct fuse_session *fuse_session_new(struct fuse_session_ops *op, void *data)
+ {
+     struct fuse_session *se = (struct fuse_session *) malloc(sizeof(*se));
+diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
+--- old/lib/fuse_signals.c	2006-09-04 03:13:56.000000000 -0700
++++ new/lib/fuse_signals.c	2007-01-25 23:08:43.000000000 -0800
+@@ -13,12 +13,34 @@
+ #include <signal.h>
+ 
+ static struct fuse_session *fuse_instance;
++#if (__FreeBSD__ >= 10)
++extern char *fuse_session_get_mntonname(struct fuse_session *se);
++
++#include <unistd.h>
++#endif
+ 
+ static void exit_handler(int sig)
+ {
+     (void) sig;
++#if (__FreeBSD__ >= 10)
++    if (fuse_instance && !fuse_session_exited(fuse_instance)) {
++        int fd;
++        pid_t pid;
++
++        fd = fuse_chan_fd(fuse_session_next_chan(fuse_instance, NULL));
++        pid = fork();
++        if (pid == 0) { /* child */
++             char *mntonname = fuse_session_get_mntonname(fuse_instance);
++             fcntl(fd, F_SETFD, 1); /* close-on-exec */
++             execl("/sbin/umount", "/sbin/umount", mntonname, NULL);
++        } else {
++            /* We do nothing in the parent. */
++        }
++    }
++#else
+     if (fuse_instance)
+         fuse_session_exit(fuse_instance);
++#endif
  }
+ 
+ static int set_one_signal_handler(int sig, void (*handler)(int))
+diff -Naur old/lib/helper.c new/lib/helper.c
+--- old/lib/helper.c	2006-11-11 01:39:25.000000000 -0800
++++ new/lib/helper.c	2007-01-25 22:36:33.000000000 -0800
+@@ -264,6 +264,10 @@
+     if (fd)
+         *fd = fuse_chan_fd(ch);
+ 
++#if (__FreeBSD__ >= 10)
++    fuse_session_set_mntonname(fuse_get_session(fuse), *mountpoint);
++#endif
++
+     return fuse;
+ 
+  err_unmount:
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
-+++ new/lib/mount_bsd.c	2007-01-24 14:04:27.000000000 -0800
-@@ -21,9 +21,67 @@
++++ new/lib/mount_bsd.c	2007-01-25 23:44:08.000000000 -0800
+@@ -6,6 +6,11 @@
+     See the file COPYING.LIB.
+ */
+ 
++#if (__FreeBSD__ >= 10)
++#undef _POSIX_C_SOURCE
++#include <sys/types.h>
++#endif
++
+ #include "fuse_i.h"
+ #include "fuse_opt.h"
+ 
+@@ -21,8 +26,69 @@
  #include <string.h>
  #include <paths.h>
  
--#define FUSERMOUNT_PROG         "mount_fusefs"
-+#define FUSERMOUNT_PROG         "/System/Library/Filesystems/fusefs.fs/mount_fusefs"
- #define FUSE_DEV_TRUNK          "/dev/fuse"
- 
 +#if (__FreeBSD__ >= 10)
-+
-+#define PRIVATE_LOAD_COMMAND    "/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs"
++#define FUSERMOUNT_PROG  "/System/Library/Filesystems/fusefs.fs/mount_fusefs"
++#define FUSE_DEV_TRUNK   "/dev/fuse"
++#define PRIVATE_LOAD_COMMAND "/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs"
 +
 +#include <sys/param.h>
 +#include <sys/mount.h>
 +#include <AssertMacros.h>
++
++static const char *MacFUSE = "MacFUSE User Library 0.1.9 (01-25-07)";
 +
 +static int
 +checkloadable(void)
@@ -303,12 +448,14 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +    return result;
 +}
 +
++#else
+ #define FUSERMOUNT_PROG         "mount_fusefs"
+ #define FUSE_DEV_TRUNK          "/dev/fuse"
 +#endif
-+
+ 
  enum {
      KEY_ALLOW_ROOT,
-     KEY_RO,
-@@ -108,11 +166,31 @@
+@@ -108,11 +174,31 @@
      FUSE_OPT_KEY("noprivate",           KEY_KERN),
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
@@ -340,31 +487,67 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      FUSE_OPT_END
  };
  
-@@ -199,7 +277,11 @@
+@@ -199,8 +285,21 @@
      if (rv)
          return;
  
 +#if (__FreeBSD__ >= 10)
-+    asprintf(&umount_cmd, "/sbin/umount %s", mountpoint);
++    {
++        int ret;
++        char *rp = NULL;
++        char resolved_path[PATH_MAX];
++
++        rp = realpath(mountpoint, resolved_path);
++        if (rp) {
++            ret = unmount(resolved_path, 0);
++        }
++    }
 +#else
      asprintf(&umount_cmd, "/sbin/umount %s", dev);
-+#endif
      system(umount_cmd);
++#endif
  }
  
-@@ -222,7 +304,11 @@
+ void fuse_kern_unmount(const char *mountpoint, int fd)
+@@ -222,13 +321,29 @@
      if (*ep != '\0')
          return;
  
 +#if (__FreeBSD__ >= 10)
-+    asprintf(&umount_cmd, "/sbin/umount %s", mountpoint);
++    {
++        int ret;
++        char *rp = NULL;
++        char resolved_path[PATH_MAX];
++
++        rp = realpath(mountpoint, resolved_path);
++        if (rp) {
++            ret = unmount(resolved_path, 0);
++        }
++    }
 +#else
      asprintf(&umount_cmd, "/sbin/umount " _PATH_DEV "%s", dev);
-+#endif
      system(umount_cmd);
++#endif
  }
  
-@@ -247,6 +333,15 @@
+ /* Check if kernel is doing init in background */
+ static int init_backgrounded(void)
+ {
++#if (__FreeBSD__ >= 10)
++    return 0;
++#else
+     int ibg, len;
+ 
+     len = sizeof(ibg);
+@@ -237,6 +352,7 @@
+         return 0;
+ 
+     return ibg;
++#endif
+ }
+ 
+ 
+@@ -247,6 +363,15 @@
      char *fdnam, *dev;
      int pid;
  
@@ -380,7 +563,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      fdnam = getenv("FUSE_DEV_FD");
  
      if (fdnam) {
-@@ -267,12 +362,29 @@
+@@ -267,12 +392,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -416,7 +599,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +434,31 @@
+@@ -322,11 +464,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }
@@ -450,9 +633,18 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      return fd;
 diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
 --- old/lib/ulockmgr.c	2006-10-08 06:29:08.000000000 -0700
-+++ new/lib/ulockmgr.c	2007-01-24 14:00:26.000000000 -0800
-@@ -21,6 +21,10 @@
++++ new/lib/ulockmgr.c	2007-01-25 22:57:01.000000000 -0800
+@@ -18,9 +18,19 @@
+ #include <assert.h>
+ #include <signal.h>
+ #include <sys/stat.h>
++#if (__FreeBSD__ >= 10)
++#undef _POSIX_C_SOURCE
  #include <sys/socket.h>
++#define _POSIX_C_SOURCE 200112L
++#else
++#include <sys/socket.h>
++#endif
  #include <sys/wait.h>
  
 +#if (__FreeBSD__ >= 10)
@@ -462,7 +654,7 @@ diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
  struct message {
      unsigned intr : 1;
      unsigned nofd : 1;
-@@ -125,6 +129,13 @@
+@@ -125,6 +135,13 @@
          return -1;
      }
      ulockmgr_cfd = sv[1];

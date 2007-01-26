@@ -175,20 +175,20 @@ fuse_device_close(dev_t dev, int flags, int devtype, struct proc *p)
     fdata_kick_set(data);
     data->dataflag &= ~FSESS_OPENED;
 
-    lck_mtx_lock(data->aw_mtx);
+    fuse_lck_mtx_lock(data->aw_mtx);
 
     if (data->mntco > 0) {
         struct fuse_ticket *tick;
 
         while ((tick = fuse_aw_pop(data))) {
-            lck_mtx_lock(tick->tk_aw_mtx);
+            fuse_lck_mtx_lock(tick->tk_aw_mtx);
             fticket_set_answered(tick);
             tick->tk_aw_errno = ENOTCONN;
             wakeup(tick);
-            lck_mtx_unlock(tick->tk_aw_mtx);
+            fuse_lck_mtx_unlock(tick->tk_aw_mtx);
         }
 
-        lck_mtx_unlock(data->aw_mtx);
+        fuse_lck_mtx_unlock(data->aw_mtx);
 
         skip_destroy = 1;
     }
@@ -226,19 +226,19 @@ fuse_device_read(dev_t dev, uio_t uio, int ioflag)
 
     data = fdev->data;
 
-    lck_mtx_lock(data->ms_mtx);
+    fuse_lck_mtx_lock(data->ms_mtx);
 
     // The read loop (upgoing messages to the user daemon).
 again:
     if (fdata_kick_get(data)) {
-        lck_mtx_unlock(data->ms_mtx);
+        fuse_lck_mtx_unlock(data->ms_mtx);
         return ENODEV;
     }
 
     if (!(tick = fuse_ms_pop(data))) {
         err = msleep(data, data->ms_mtx, PCATCH, "fu_msg", 0);
         if (err != 0) {
-            lck_mtx_unlock(data->ms_mtx);
+            fuse_lck_mtx_unlock(data->ms_mtx);
             return (fdata_kick_get(data) ? ENODEV : err);
         }
         tick = fuse_ms_pop(data);
@@ -248,7 +248,7 @@ again:
         goto again;
     }
 
-    lck_mtx_unlock(data->ms_mtx);
+    fuse_lck_mtx_unlock(data->ms_mtx);
 
     if (fdata_kick_get(data)) {
          if (tick) {
@@ -387,7 +387,7 @@ fuse_device_write(dev_t dev, uio_t uio, int ioflag)
 
     data = fdev->data;
 
-    lck_mtx_lock(data->aw_mtx);
+    fuse_lck_mtx_lock(data->aw_mtx);
 
     TAILQ_FOREACH_SAFE(tick, &data->aw_head, tk_aw_link, x_tick) {
         if (tick->tk_unique == ohead.unique) {
@@ -397,7 +397,7 @@ fuse_device_write(dev_t dev, uio_t uio, int ioflag)
         }
     }
 
-    lck_mtx_unlock(data->aw_mtx);
+    fuse_lck_mtx_unlock(data->aw_mtx);
 
     if (found) {
         if (tick->tk_aw_handler) {

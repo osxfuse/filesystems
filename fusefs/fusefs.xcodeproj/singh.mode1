@@ -261,6 +261,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
+									<integer>4</integer>
 									<integer>1</integer>
 								</array>
 							</array>
@@ -284,7 +285,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>542 110 855 520 0 0 1440 878 </string>
+						<string>478 147 855 520 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -321,7 +322,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {647, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>542 110 855 520 0 0 1440 878 </string>
+								<string>478 147 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -341,7 +342,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {647, 474}}</string>
 								<key>RubberWindowFrame</key>
-								<string>542 110 855 520 0 0 1440 878 </string>
+								<string>478 147 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -365,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>541CABC40B6867F400844908</string>
+				<string>5489A5EA0B69EA4C004161D4</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>541CABC50B6867F400844908</string>
+				<string>5489A5EB0B69EA4C004161D4</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -513,7 +514,7 @@
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>542 110 855 520 0 0 1440 878 </string>
+	<string>478 147 855 520 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
@@ -590,7 +591,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>541CABC60B6867F400844908</string>
+				<string>5489A5F30B69EA7A004161D4</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

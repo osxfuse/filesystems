@@ -37,7 +37,41 @@ extern lck_grp_attr_t *fuse_group_attr;
 extern lck_grp_t      *fuse_lock_group;
 extern lck_mtx_t      *fuse_mutex;
 
-#define FUSE_LOCK()   lck_mtx_lock(fuse_mutex)
-#define FUSE_UNLOCK() lck_mtx_unlock(fuse_mutex)
+#ifdef FUSE_TRACE_LK
+
+#define FUSE_LOCK()                                                 \
+    {                                                               \
+        IOLog("0: FUSE_LOCK(): %s@%d\n", __FUNCTION__, __LINE__);   \
+        lck_mtx_lock(fuse_mutex);                                   \
+        IOLog("1: FUSE_LOCK(): %s@%d\n", __FUNCTION__, __LINE__);   \
+    }
+
+#define FUSE_UNLOCK()                                               \
+    {                                                               \
+        IOLog("1: FUSE_UNLOCK(): %s@%d\n", __FUNCTION__, __LINE__); \
+        lck_mtx_unlock(fuse_mutex);                                 \
+        IOLog("0: FUSE_UNLOCK(): %s@%d\n", __FUNCTION__, __LINE__); \
+    }
+
+#define fuse_lck_mtx_lock(m)                                                  \
+    {                                                                         \
+        IOLog("0: lck_mtx_lock(%p): %s@%d\n", (m), __FUNCTION__, __LINE__);   \
+        lck_mtx_lock((m));                                                    \
+        IOLog("1: lck_mtx_lock(%p): %s@%d\n", (m), __FUNCTION__, __LINE__);   \
+    }
+
+#define fuse_lck_mtx_unlock(m)                                                \
+    {                                                                         \
+        IOLog("1: lck_mtx_unlock(%p): %s@%d\n", (m), __FUNCTION__, __LINE__); \
+        lck_mtx_unlock((m));                                                  \
+        IOLog("0: lck_mtx_unlock(%p): %s@%d\n", (m), __FUNCTION__, __LINE__); \
+    }
+
+#else
+#define FUSE_LOCK()            lck_mtx_lock(fuse_mutex)
+#define FUSE_UNLOCK()          lck_mtx_unlock(fuse_mutex)
+#define fuse_lck_mtx_lock(m)   lck_mtx_lock((m))
+#define fuse_lck_mtx_unlock(m) lck_mtx_unlock((m))
+#endif
 
 #endif /* _FUSE_LOCKING_H_ */

@@ -20,24 +20,25 @@
 #include <fuse_param.h>
 #include <fuse_version.h>
 
-//#define FUSE_DEBUG  1
-//#define FUSE_KDEBUG 1
-//#define FUSE_TRACE  1
+//#define FUSE_DEBUG    1
+//#define FUSE_KDEBUG   1
+//#define FUSE_TRACE    1
 //#define FUSE_TRACE_OP 1
+//#define FUSE_TRACE_LK 1
 
 #define FUSEFS_SIGNATURE 0x55464553 // 'FUSE'
 
 #ifdef FUSE_TRACE
-#define fuse_trace_printf(fmt, ...) printf(fmt, ## __VA_ARGS__)
-#define fuse_trace_printf_func()    printf("%s\n", __FUNCTION__)
+#define fuse_trace_printf(fmt, ...) IOLog(fmt, ## __VA_ARGS__)
+#define fuse_trace_printf_func()    IOLog("%s\n", __FUNCTION__)
 #else
 #define fuse_trace_printf(fmt, ...) {}
 #define fuse_trace_printf_func()    {}
 #endif
 
 #ifdef FUSE_TRACE_OP
-#define fuse_trace_printf_vfsop() printf("%s\n", __FUNCTION__)
-#define fuse_trace_printf_vnop()  printf("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vfsop() IOLog("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vnop()  IOLog("%s\n", __FUNCTION__)
 #else
 #define fuse_trace_printf_vfsop() {}
 #define fuse_trace_printf_vnop()  {}
@@ -45,7 +46,7 @@
 
 #ifdef FUSE_DEBUG
 #define debug_printf(fmt, ...) \
-  printf("%s[%s:%d]: " fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__)
+  IOLog("%s[%s:%d]: " fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__)
 #else
 #define debug_printf(fmt, ...) {}
 #endif
@@ -53,19 +54,19 @@
 #ifdef FUSE_KDEBUG
 #undef debug_printf
 #define debug_printf(fmt, ...) \
-  printf("%s[%s:%d]: " fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__);\
+  IOLog("%s[%s:%d]: " fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__);\
   kprintf("%s[%s:%d]: " fmt, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__)
 #define kdebug_printf(fmt, ...) debug_printf(fmt, ## __VA_ARGS__)
 #else
 #define kdebug_printf(fmt, ...) {}
 #endif
 
-#define FUSE_ASSERT(a)                                                     \
-    {                                                                      \
-        if (!(a)) {                                                        \
-            printf("File "__FILE__", line %d: assertion ' %s ' failed.\n", \
-                  __LINE__, #a);                                           \
-        }                                                                  \
+#define FUSE_ASSERT(a)                                                    \
+    {                                                                     \
+        if (!(a)) {                                                       \
+            IOLog("File "__FILE__", line %d: assertion ' %s ' failed.\n", \
+                  __LINE__, #a);                                          \
+        }                                                                 \
     }
 
 #define E_NONE 0
