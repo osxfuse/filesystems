@@ -257,17 +257,11 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
 								<string>1C37FBAC04509CD000000102</string>
-								<string>54890F840B6A0CB300D6D150</string>
-								<string>54890F850B6A0CB300D6D150</string>
-								<string>54890F880B6A14B300D6D150</string>
-								<string>54890F890B6A14B300D6D150</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>18</integer>
-									<integer>16</integer>
-									<integer>1</integer>
+									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
@@ -290,7 +284,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>719 148 855 520 0 0 1440 878 </string>
+						<string>475 192 855 520 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -327,7 +321,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {647, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>719 148 855 520 0 0 1440 878 </string>
+								<string>475 192 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -347,7 +341,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {647, 474}}</string>
 								<key>RubberWindowFrame</key>
-								<string>719 148 855 520 0 0 1440 878 </string>
+								<string>475 192 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -371,9 +365,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54890F800B6A0C8D00D6D150</string>
+				<string>54890FD10B6AC87000D6D150</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54890F810B6A0C8D00D6D150</string>
+				<string>54890FD20B6AC87000D6D150</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -515,10 +509,11 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>5403C7EA0ACA9BB300CD9322</string>
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>719 148 855 520 0 0 1440 878 </string>
+	<string>475 192 855 520 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
@@ -595,7 +590,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>544AF9DD0B69FCD100C118D6</string>
+				<string>54890FD50B6AC88200D6D150</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
