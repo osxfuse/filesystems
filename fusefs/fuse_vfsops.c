@@ -116,6 +116,11 @@ fuse_vfs_mount(mount_t       mp,
 
     err = ENOTSUP;
 
+    if ((fusefs_args.daemon_timeout > FUSE_MAX_DAEMON_TIMEOUT) ||
+        (fusefs_args.daemon_timeout < FUSE_MIN_DAEMON_TIMEOUT)) {
+        return EINVAL;
+    }
+
     if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCWRITES) {
         if (fusefs_args.altflags &
             (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD)) {
@@ -248,14 +253,22 @@ fuse_vfs_mount(mount_t       mp,
         vfs_getnewfsid(mp);    
     }
 
+    data->blocksize = fusefs_args.blocksize;
+    data->dataflag |= mntopts;
+    data->daemon_timeout.tv_sec =  fusefs_args.daemon_timeout;
+    data->daemon_timeout.tv_nsec = 0;
+    if (data->daemon_timeout.tv_sec) {
+        data->daemon_timeout_p = &(data->daemon_timeout);
+    } else {
+        data->daemon_timeout_p = (struct timespec *)0;
+    }
     data->fdev = fdev;
+    data->iosize = fusefs_args.iosize;
+    data->max_read = max_read;
     data->mp = mp;
     data->mpri = FM_PRIMARY;
-    data->dataflag |= mntopts;
-    data->max_read = max_read;
     data->subtype = fusefs_args.subtype;
 
-    data->blocksize = fusefs_args.blocksize;
     if (data->blocksize < FUSE_MIN_BLOCKSIZE) {
         data->blocksize = FUSE_MIN_BLOCKSIZE;
     }
@@ -263,14 +276,13 @@ fuse_vfs_mount(mount_t       mp,
         data->blocksize = FUSE_MAX_BLOCKSIZE;
     }
 
-    data->iosize = fusefs_args.iosize;
     if (data->iosize < FUSE_MIN_IOSIZE) {
         data->iosize = FUSE_MIN_IOSIZE;
     }
     if (data->iosize > FUSE_MAX_IOSIZE) {
         data->iosize = FUSE_MAX_IOSIZE;
     }
- 
+
     if (data->iosize < data->blocksize) {
         data->iosize = data->blocksize;
     }

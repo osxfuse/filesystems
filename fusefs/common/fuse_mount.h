@@ -23,12 +23,13 @@ struct fuse_mount_args {
 
     uint32_t altflags;            // see mount-time flags below
     uint32_t blocksize;           // fictitious block size of our "storage"
+    uint32_t daemon_timeout;      // timeout in seconds for upcalls to daemon
     uint32_t fsid;                // optional custom value for part of fsid[0]
     char     fsname[MAXPATHLEN];  // file system description string (arbitrary)
-    uint32_t iosize;              // maximum size for reading or writing
     uint32_t index;               // the N in /dev/fuseN
-    uint32_t subtype;             // the file system's sub type (type is FUSE)
+    uint32_t iosize;              // maximum size for reading or writing
     dev_t    rdev;                // dev_t for the /dev/fuseN in question
+    uint32_t subtype;             // the file system's sub type (type is FUSE)
     char     volname[MAXPATHLEN]; // volume name
 };
 typedef struct fuse_mount_args fuse_mount_args;
@@ -54,34 +55,35 @@ enum {
 #define FUSE_MOPT_ALLOW_OTHER           0x00000001
 #define FUSE_MOPT_ALLOW_ROOT            0x00000002
 #define FUSE_MOPT_BLOCKSIZE             0x00000004
-#define FUSE_MOPT_DEBUG                 0x00000008
-#define FUSE_MOPT_DEFAULT_PERMISSIONS   0x00000010
-#define FUSE_MOPT_DIRECT_IO             0x00000020
-#define FUSE_MOPT_FD                    0x00000040
-#define FUSE_MOPT_FSID                  0x00000080
-#define FUSE_MOPT_FSNAME                0x00000100
-#define FUSE_MOPT_GID                   0x00000200
-#define FUSE_MOPT_HARD_REMOVE           0x00000400
-#define FUSE_MOPT_INIT_TIMEOUT          0x00000800
-#define FUSE_MOPT_IOSIZE                0x00001000
-#define FUSE_MOPT_JAIL_SYMLINKS         0x00002000
-#define FUSE_MOPT_KERNEL_CACHE          0x00004000
-#define FUSE_MOPT_LARGE_READ            0x00008000
-#define FUSE_MOPT_MAX_READ              0x00010000
-#define FUSE_MOPT_NO_ATTRCACHE          0x00020000
-#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00040000
-#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00080000
-#define FUSE_MOPT_NO_READAHEAD          0x00100000
-#define FUSE_MOPT_NO_SYNCWRITES         0x00200000
-#define FUSE_MOPT_NO_UBC                0x00400000
-#define FUSE_MOPT_PING_DISKARB          0x00800000
-#define FUSE_MOPT_READDIR_INO           0x01000000
-#define FUSE_MOPT_ROOTMODE              0x02000000
-#define FUSE_MOPT_SUBTYPE               0x04000000
-#define FUSE_MOPT_UID                   0x08000000
-#define FUSE_MOPT_UMASK                 0x10000000
-#define FUSE_MOPT_USE_INO               0x20000000
-#define FUSE_MOPT_VOLNAME               0x40000000
+#define FUSE_MOPT_DAEMON_TIMEOUT        0x00000008
+#define FUSE_MOPT_DEBUG                 0x00000010
+#define FUSE_MOPT_DEFAULT_PERMISSIONS   0x00000020
+#define FUSE_MOPT_DIRECT_IO             0x00000040
+#define FUSE_MOPT_FD                    0x00000080
+#define FUSE_MOPT_FSID                  0x00000100
+#define FUSE_MOPT_FSNAME                0x00000200
+#define FUSE_MOPT_GID                   0x00000400
+#define FUSE_MOPT_HARD_REMOVE           0x00000800
+#define FUSE_MOPT_INIT_TIMEOUT          0x00001000
+#define FUSE_MOPT_IOSIZE                0x00002000
+#define FUSE_MOPT_JAIL_SYMLINKS         0x00004000
+#define FUSE_MOPT_KERNEL_CACHE          0x00008000
+#define FUSE_MOPT_LARGE_READ            0x00010000
+#define FUSE_MOPT_MAX_READ              0x00020000
+#define FUSE_MOPT_NO_ATTRCACHE          0x00040000
+#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00080000
+#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00100000
+#define FUSE_MOPT_NO_READAHEAD          0x00200000
+#define FUSE_MOPT_NO_SYNCWRITES         0x00400000
+#define FUSE_MOPT_NO_UBC                0x00800000
+#define FUSE_MOPT_PING_DISKARB          0x01000000
+#define FUSE_MOPT_READDIR_INO           0x02000000
+#define FUSE_MOPT_ROOTMODE              0x04000000
+#define FUSE_MOPT_SUBTYPE               0x08000000
+#define FUSE_MOPT_UID                   0x10000000
+#define FUSE_MOPT_UMASK                 0x20000000
+#define FUSE_MOPT_USE_INO               0x40000000
+#define FUSE_MOPT_VOLNAME               0x80000000
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF

@@ -58,4 +58,8 @@
 #define FUSE_MAX_INIT_TIMEOUT              300    /* s  */
 #define FUSE_INIT_WAIT_INTERVAL            100000 /* us */
 
+#define FUSE_DEFAULT_DAEMON_TIMEOUT        0      /* no timeout */
+#define FUSE_MIN_DAEMON_TIMEOUT            0      /* s */
+#define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
+
 #endif /* _FUSE_PARAM_H_ */

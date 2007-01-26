@@ -43,6 +43,7 @@ struct mntopt mopts[] = {
     { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,           1 },
     { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,            1 },
     { "blocksize=",          0, FUSE_MOPT_BLOCKSIZE,             1 }, // used
+    { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,        1 }, // used
     { "debug",               0, FUSE_MOPT_DEBUG,                 1 }, // used
     { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,   1 },
     { "directio",            0, FUSE_MOPT_DIRECT_IO,             1 },
@@ -216,13 +217,14 @@ fuse_to_subtype(void **target, void *value, void *fallback)
     return 0;
 }
 
-static uint32_t  blocksize    = FUSE_DEFAULT_BLOCKSIZE;
-static uint32_t  fsid         = 0;
-static char     *fsname       = NULL;
-static uint32_t  init_timeout = FUSE_DEFAULT_INIT_TIMEOUT;
-static uint32_t  iosize       = FUSE_DEFAULT_IOSIZE;
-static uint32_t  subtype      = 0;
-static char     *volname      = NULL;
+static uint32_t  blocksize      = FUSE_DEFAULT_BLOCKSIZE;
+static uint32_t  daemon_timeout = FUSE_DEFAULT_DAEMON_TIMEOUT;
+static uint32_t  fsid           = 0;
+static char     *fsname         = NULL;
+static uint32_t  init_timeout   = FUSE_DEFAULT_INIT_TIMEOUT;
+static uint32_t  iosize         = FUSE_DEFAULT_IOSIZE;
+static uint32_t  subtype        = 0;
+static char     *volname        = NULL;
 
 struct mntval mvals[] = {
     {
@@ -233,6 +235,15 @@ struct mntval mvals[] = {
         (void *)FUSE_DEFAULT_BLOCKSIZE,
         (void **)&blocksize,
         "invalid value for argument blocksize"
+    },
+    {
+        FUSE_MOPT_DAEMON_TIMEOUT,
+        NULL,
+        0,
+        fuse_to_uint32,
+        (void *)FUSE_DEFAULT_DAEMON_TIMEOUT,
+        (void **)&daemon_timeout,
+        "invalid value for argument daemon_timeout"
     },
     {
         FUSE_MOPT_FSID,
@@ -630,12 +641,21 @@ main(int argc, char **argv)
         }
     }
 
-    args.altflags  = altflags;
-    args.blocksize = blocksize;
-    args.fsid      = fsid;
-    args.index     = index;
-    args.iosize    = iosize;
-    args.subtype   = subtype;
+    if (daemon_timeout < FUSE_MIN_DAEMON_TIMEOUT) {
+        daemon_timeout = FUSE_MIN_DAEMON_TIMEOUT;
+    }
+
+    if (daemon_timeout > FUSE_MAX_DAEMON_TIMEOUT) {
+        daemon_timeout = FUSE_MAX_DAEMON_TIMEOUT;
+    }
+
+    args.altflags       = altflags;
+    args.blocksize      = blocksize;
+    args.daemon_timeout = daemon_timeout;
+    args.fsid           = fsid;
+    args.index          = index;
+    args.iosize         = iosize;
+    args.subtype        = subtype;
 
     if (!fsname) {
         snprintf(args.fsname, MAXPATHLEN, "instance@fuse%d", index);

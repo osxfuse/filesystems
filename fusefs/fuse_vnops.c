@@ -1989,18 +1989,20 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
     for (type = 0; type < FUFH_MAXTYPE; type++) {
         fufh = &(fvdat->fufh[type]);
         if (fufh->fufh_flags & FUFH_VALID) {
+            fufh->fufh_flags &= ~FUFH_MAPPED;
+            fufh->open_count = 0;
             if ((fufh->fufh_flags & FUFH_STRATEGY) ||
                 vfs_isforce(vnode_mount(vp))) {
-                fufh->fufh_flags &= ~FUFH_MAPPED;
-                fufh->open_count = 0;
                 (void)fuse_filehandle_put(vp, ap->a_context, type, 0);
             } else {
                 /*
                  * This is not a forced unmount. So why is the vnode being
-                 * reclaimed if a fufh is valid?
+                 * reclaimed if a fufh is valid? Well, unless we are dead.
                  */
-                panic("MacFUSE: vnode reclaimed but fufh (type=%d) is valid",
-                      type);
+                if (!fuse_isdeadfs(vp)) {
+                    panic("MacFUSE: vnode reclaimed with valid fufh (type=%d)",
+                          type);
+                }
             }
         }
     }

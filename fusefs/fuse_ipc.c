@@ -166,6 +166,7 @@ static int
 fticket_wait_answer(struct fuse_ticket *tick)
 {
     int err = 0;
+    struct fuse_data *data;
 
     debug_printf("tick=%p\n", tick);
     fuse_lck_mtx_lock(tick->tk_aw_mtx);
@@ -174,14 +175,24 @@ fticket_wait_answer(struct fuse_ticket *tick)
         goto out;
     }
 
-    if (fdata_kick_get(tick->tk_data)) {
+    data = tick->tk_data;
+
+    if (fdata_kick_get(data)) {
         err = ENOTCONN;
         fticket_set_answered(tick);
-        vfs_event_signal(&vfs_statfs(tick->tk_data->mp)->f_fsid, VQ_DEAD, 0);
+        vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
         goto out;
     }
 
-    err = msleep(tick, tick->tk_aw_mtx, PCATCH, "fu_ans", 0);
+    err = msleep(tick, tick->tk_aw_mtx, PCATCH, "fu_ans",
+                 data->daemon_timeout_p);
+    if (err == EAGAIN) {
+        fdata_kick_set(data);
+        err = ENOTCONN;
+        fticket_set_answered(tick);
+        vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
+        goto out;
+    }
 
     /*
      * An experimental version of the above:

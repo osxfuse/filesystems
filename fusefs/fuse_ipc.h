@@ -153,6 +153,8 @@ struct fuse_data {
     uint32_t                   max_write;
     uint32_t                   max_read;
     uint32_t                   blocksize;
+    struct timespec            daemon_timeout;
+    struct timespec           *daemon_timeout_p;
     uint32_t                   iosize;
     uint32_t                   subtype;
     char                       volname[MAXPATHLEN];
