@@ -257,7 +257,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
 								<string>1C37FBAC04509CD000000102</string>
-								<string>54890FF30B6ADA8400D6D150</string>
+								<string>54E7BC820B6AE34C00DCB696</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
@@ -287,7 +287,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>475 192 855 520 0 0 1440 878 </string>
+						<string>300 246 855 520 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -324,7 +324,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {647, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>475 192 855 520 0 0 1440 878 </string>
+								<string>300 246 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -344,7 +344,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {647, 474}}</string>
 								<key>RubberWindowFrame</key>
-								<string>475 192 855 520 0 0 1440 878 </string>
+								<string>300 246 855 520 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -368,9 +368,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54890FF40B6ADA8400D6D150</string>
+				<string>54E7BC8B0B6AE36900DCB696</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54890FF50B6ADA8400D6D150</string>
+				<string>54E7BC8C0B6AE36900DCB696</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -515,7 +515,7 @@
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>475 192 855 520 0 0 1440 878 </string>
+	<string>300 246 855 520 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
