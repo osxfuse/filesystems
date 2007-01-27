@@ -87,3 +87,67 @@ if [ $? -eq 0 ]
 then
   sudo chown -R root:admin "$OUTPUT_PACKAGE"
 fi
+
+if [ $? -ne 0 ]
+then
+  echo "Failed to change ownership of $OUTPUT_PACKAGE"
+  exit 1
+fi
+
+SCRATCH_DMG="$BUILD_DIR/scratch.dmg"
+VOLUME_NAME="MacFUSE Core $MACFUSE_VERSION"
+
+# Create the volume.
+sudo hdiutil create -layout NONE -megabytes 10 -fs HFS+ -volname "$VOLUME_NAME" "$SCRATCH_DMG"
+if [ $? -ne 0 ]
+then
+    echo "Failed to create scratch disk image: $SCRATCH_DMG"
+    exit 1
+fi
+
+# Attach/mount the volume.
+sudo hdiutil attach "$SCRATCH_DMG"
+if [ $? -ne 0 ]
+then
+    echo "Failed to attach scratch disk image: $SCRATCH_DMG"
+    exit 1
+fi
+
+VOLUME_PATH="/Volumes/$VOLUME_NAME"
+
+# Copy over the package.
+sudo cp -pR "$OUTPUT_PACKAGE" "$VOLUME_PATH"
+if [ $? -ne 0]
+then
+    hdiutil detach "$VOLUME_PATH"
+    exit 1
+fi
+
+# Set the custom icon.
+sudo cp -pR "$INSTALL_RESOURCES/.VolumeIcon.icns" "$VOLUME_PATH"/.VolumeIcon.icns
+sudo /Developer/Tools/SetFile -a -C "$VOLUME_PATH"
+
+# Copy over the license file.
+sudo cp "$INSTALL_RESOURCES/License.rtf" "$VOLUME_PATH"/License.rtf
+
+# Copy over the CHANGELOG.txt.
+sudo cp "../../CHANGELOG.txt" "$VOLUME_PATH"/CHANGELOG.txt
+
+# Detach the volume.
+hdiutil detach "$VOLUME_PATH"
+if [ $? -ne 0 ]
+then
+    echo "Failed to detach volume: $VOLUME_PATH"
+    exit 1
+fi
+
+# Convert to a read-only compressed dmg.
+hdiutil convert -format UDZO "$SCRATCH_DMG" -o "$BUILD_DIR"/"MacFUSE-Core-$MACFUSE_VERSION.dmg"
+if [ $? -ne 0 ]
+then
+    echo "Failed to convert disk image."
+    exit 1
+fi
+
+echo "SUCCESS: All Done."
+exit 0
