@@ -53,7 +53,7 @@ function remove_file() {
     return 0;
   fi
 
-  if [ ! -e "$path" ]
+  if [ \( ! -e "$path" \) -a \( ! -L "$path" \) ]
   then
     # No longer exists
     echo "Skipping file: '$path' since it no longer exists."
