@@ -37,22 +37,26 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
     int markroot = FALSE;
     uint64_t size = 0;
 
-    if (insize == 0xffffffff) {
+    hn = NULL;
+    vn = NULL;
+    dirVN = NULL;
+
+    if ((vtyp >= VBAD) || (vtyp < 0)) {
+        return EINVAL;
+    }
+
+    if (insize == FUSE_ROOT_SIZE) {
         markroot = TRUE;
     } else {
         size = insize;
     }
 
-    hn = NULL;
-    vn = NULL;
-    dirVN = NULL;
-
     mntdata = vfs_fsprivate(mp);
     dummy_device = (dev_t)mntdata->fdev;
 
     err = HNodeLookupCreatingIfNecessary(dummy_device,
-                                         (ino_t)nodeid, // XXXXXXXX
-                                         0 /* fork index */,
+                                         (ino_t)nodeid, /* XXXXXXXXXX */
+                                         0              /* fork index */,
                                          &hn,
                                          &vn);
     if ((err == 0) && (vn == NULL)) {

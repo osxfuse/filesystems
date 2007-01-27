@@ -366,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54E7BCFE0B6B2F3200DCB696</string>
+				<string>54F658300B6C19FF00E5CE2E</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54E7BCFF0B6B2F3200DCB696</string>
+				<string>54F658310B6C19FF00E5CE2E</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -510,6 +510,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>5403C7EA0ACA9BB300CD9322</string>
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -529,12 +530,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>fuse_node.c</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -590,7 +593,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>54890FD50B6AC88200D6D150</string>
+				<string>54F658320B6C19FF00E5CE2E</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

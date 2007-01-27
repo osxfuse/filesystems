@@ -331,7 +331,8 @@ bringup:
     err = FSNodeGetOrCreateFileVNodeByID(mp,
                                          feo->nodeid,
                                          dvp,
-                                         VREG, /*size*/0,
+                                         VREG,
+                                         FUSE_ZERO_SIZE,
                                          vpp,
                                          (gone_good_old) ? 0 : FN_CREATING);
     if (err) {
@@ -542,10 +543,18 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
 
     if (vnode_vtype(vp) != vap->va_type) {
         if (vnode_vtype(vp) == VNON && vap->va_type != VNON) {
-            // vp->v_type = vap->va_type;
+            /*
+             * We should be doing the following:
+             *
+             * vp->vtype = vap->v_type
+             */
         } else {
-            /* stale vnode */
-            // XXX: vnode should be ditched.
+            /*
+             * TODO
+             *
+             * STALE VNODE: Need to ditch the vnode here. Leaving it around
+             * could (?) lead to a panic later on.
+             */
             debug_printf("fuse_getattr d: returning ENOTCONN\n");
             return (ENOTCONN);
         }
@@ -845,7 +854,7 @@ fuse_vnop_lookup(struct vnop_lookup_args *ap)
     enum fuse_opcode op;
     uint64_t nid, parent_nid;
     struct fuse_access_param facp;
-    uint64_t size = 0;
+    uint64_t size = FUSE_ZERO_SIZE;
 
     if (fuse_isdeadfs(dvp)) {
         *vpp = NULL;

@@ -393,13 +393,13 @@ fuse_vfs_root(mount_t mp, struct vnode **vpp, vfs_context_t context)
 
     fuse_trace_printf_vfsop();
 
-    err = FSNodeGetOrCreateFileVNodeByID(mp,           // mount
-                                         FUSE_ROOT_ID, // node id
-                                         NULLVP,       // parent
-                                         VDIR,         // type
-                                         0xffffffff,   // size
-                                         &vp,          // ptr
-                                         0);           // flags
+    err = FSNodeGetOrCreateFileVNodeByID(mp,             // mount
+                                         FUSE_ROOT_ID,   // node id
+                                         NULLVP,         // parent
+                                         VDIR,           // type
+                                         FUSE_ROOT_SIZE, // size
+                                         &vp,            // ptr
+                                         0);             // flags
 
     *vpp = vp;
 
