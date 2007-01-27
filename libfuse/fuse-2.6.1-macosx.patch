@@ -170,7 +170,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .access	= xmp_access,
 diff -Naur old/fuse.pc.in new/fuse.pc.in
 --- old/fuse.pc.in	2006-06-06 02:18:25.000000000 -0700
-+++ new/fuse.pc.in	2007-01-25 23:04:11.000000000 -0800
++++ new/fuse.pc.in	2007-01-26 23:40:53.000000000 -0800
 @@ -4,7 +4,7 @@
  includedir=@includedir@
  
@@ -179,8 +179,9 @@ diff -Naur old/fuse.pc.in new/fuse.pc.in
 +Description: File System in User Space (MacFUSE)
  Version: @VERSION@
 -Libs: -L${libdir} -lfuse -pthread
+-Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
 +Libs: -L${libdir} -lfuse
- Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
++Cflags: -I${includedir}/fuse -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64
 diff -Naur old/include/fuse.h new/include/fuse.h
 --- old/include/fuse.h	2006-11-30 03:53:18.000000000 -0800
 +++ new/include/fuse.h	2007-01-25 22:10:50.000000000 -0800
@@ -372,7 +373,7 @@ diff -Naur old/lib/helper.c new/lib/helper.c
   err_unmount:
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
-+++ new/lib/mount_bsd.c	2007-01-25 23:44:08.000000000 -0800
++++ new/lib/mount_bsd.c	2007-01-26 23:40:30.000000000 -0800
 @@ -6,6 +6,11 @@
      See the file COPYING.LIB.
  */
@@ -398,7 +399,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +#include <sys/mount.h>
 +#include <AssertMacros.h>
 +
-+static const char *MacFUSE = "MacFUSE User Library 0.1.9 (01-25-07)";
++static const char *MacFUSE = "MacFUSE User Library 0.1.9 (01-26-07)";
 +
 +static int
 +checkloadable(void)
@@ -455,12 +456,13 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  
  enum {
      KEY_ALLOW_ROOT,
-@@ -108,11 +174,31 @@
+@@ -108,11 +174,32 @@
      FUSE_OPT_KEY("noprivate",           KEY_KERN),
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
 +#if (__FreeBSD__ >= 10)
 +    /* Mac OS X specific options */
++    FUSE_OPT_KEY("daemon_timeout=",     KEY_KERN),
 +    FUSE_OPT_KEY("fsid=",               KEY_KERN),
 +    FUSE_OPT_KEY("fsname=",             KEY_KERN),
 +    FUSE_OPT_KEY("init_timeout=",       KEY_KERN),
@@ -487,7 +489,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      FUSE_OPT_END
  };
  
-@@ -199,8 +285,21 @@
+@@ -199,8 +286,21 @@
      if (rv)
          return;
  
@@ -509,7 +511,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  void fuse_kern_unmount(const char *mountpoint, int fd)
-@@ -222,13 +321,29 @@
+@@ -222,13 +322,29 @@
      if (*ep != '\0')
          return;
  
@@ -539,7 +541,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      int ibg, len;
  
      len = sizeof(ibg);
-@@ -237,6 +352,7 @@
+@@ -237,6 +353,7 @@
          return 0;
  
      return ibg;
@@ -547,7 +549,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  
-@@ -247,6 +363,15 @@
+@@ -247,6 +364,15 @@
      char *fdnam, *dev;
      int pid;
  
@@ -563,7 +565,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      fdnam = getenv("FUSE_DEV_FD");
  
      if (fdnam) {
-@@ -267,12 +392,29 @@
+@@ -267,12 +393,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -599,7 +601,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +464,31 @@
+@@ -322,11 +465,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }

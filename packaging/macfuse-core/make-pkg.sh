@@ -129,7 +129,7 @@ fi
 
 # Set the custom icon.
 sudo cp -pR "$INSTALL_RESOURCES/.VolumeIcon.icns" "$VOLUME_PATH"/.VolumeIcon.icns
-sudo /Developer/Tools/SetFile -a -C "$VOLUME_PATH"
+sudo /Developer/Tools/SetFile -a C "$VOLUME_PATH"
 
 # Copy over the license file.
 sudo cp "$INSTALL_RESOURCES/License.rtf" "$VOLUME_PATH"/License.rtf
