@@ -24,5 +24,9 @@ then
   touch $INSTALL_VOLUME/System/Library/Extensions
 fi
 
+# Remove any incompatible versions of libfuse we might have installed.
+rm -f $INSTALL_VOLUME/usr/local/lib/libfuse.*
+rm -f $INSTALL_VOLUME/usr/local/lib/libulockmgr.*
+
 # Signal success
 exit 0
