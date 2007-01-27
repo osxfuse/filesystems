@@ -58,10 +58,16 @@ then
   exit 1
 fi
 
+SCRATCH_DMG="$BUILD_DIR/scratch.dmg"
+FINAL_DMG="$BUILD_DIR/MacFUSE-Core-$MACFUSE_VERSION.dmg"
+VOLUME_NAME="MacFUSE Core $MACFUSE_VERSION"
+
 # Remove any previous runs
 sudo rm -rf "$DISTRIBUTION_FOLDER"
 sudo rm -rf "$OUTPUT_PACKAGE"
 sudo rm -f "$INFO_PLIST_OUT"
+sudo rm -f "$SCRATCH_DMG"
+sudo rm -f "$FINAL_DMG"
 
 # Create the distribution folder
 mkdir $DISTRIBUTION_FOLDER
@@ -94,8 +100,6 @@ then
   exit 1
 fi
 
-SCRATCH_DMG="$BUILD_DIR/scratch.dmg"
-VOLUME_NAME="MacFUSE Core $MACFUSE_VERSION"
 
 # Create the volume.
 sudo hdiutil create -layout NONE -megabytes 10 -fs HFS+ -volname "$VOLUME_NAME" "$SCRATCH_DMG"
@@ -117,7 +121,7 @@ VOLUME_PATH="/Volumes/$VOLUME_NAME"
 
 # Copy over the package.
 sudo cp -pR "$OUTPUT_PACKAGE" "$VOLUME_PATH"
-if [ $? -ne 0]
+if [ $? -ne 0 ]
 then
     hdiutil detach "$VOLUME_PATH"
     exit 1
@@ -142,12 +146,14 @@ then
 fi
 
 # Convert to a read-only compressed dmg.
-hdiutil convert -format UDZO "$SCRATCH_DMG" -o "$BUILD_DIR"/"MacFUSE-Core-$MACFUSE_VERSION.dmg"
+hdiutil convert -format UDZO "$SCRATCH_DMG" -o "$FINAL_DMG"
 if [ $? -ne 0 ]
 then
     echo "Failed to convert disk image."
     exit 1
 fi
+
+sudo rm "$SCRATCH_DMG"
 
 echo "SUCCESS: All Done."
 exit 0
