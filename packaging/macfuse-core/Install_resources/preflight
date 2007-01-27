@@ -7,26 +7,38 @@ INSTALL_PATH=$2
 INSTALL_VOLUME=$3
 SYSTEM_ROOT=$4
 
-# We originally screwed up the version number in fusefs.fs,
-# so until we are > version 1.0, we need to blow this away
-# every time :-(
+## MacFUSE File System Bundle
+
+# We originally screwed up the version number in fusefs.fs, so until we are
+# > version 1.0, we need to blow this away every time :-(
 if [ -d $INSTALL_VOLUME/System/Library/Filesystems/fusefs.fs ]
 then
   rm -rf $INSTALL_VOLUME/System/Library/Filesystems/fusefs.fs
 fi
 
-# We originally installed the kernel extension 
-# in /System/Library/Extensions. If it is there before
-# this install, then we'll remove it and touch the parent directory.
+## MacFUSE Kernel Extension
+
+if [ -d $INSTALL/Library/Extensions/fusefs.kext ]
+then
+  rm -rf $INSTALL_VOLUME/Library/Extensions/fusefs.kext
+fi
+
+# We originally installed the kernel extension in /System/Library/Extensions.
+# If it is there before this install, then we'll remove it and touch the
+# parent directory.
 if [ -d $INSTALL_VOLUME/System/Library/Extensions/fusefs.kext ]
 then
   rm -rf $INSTALL_VOLUME/System/Library/Extensions/fusefs.kext
   touch $INSTALL_VOLUME/System/Library/Extensions
 fi
 
+## MacFUSE User Library
+
 # Remove any incompatible versions of libfuse we might have installed.
 rm -f $INSTALL_VOLUME/usr/local/lib/libfuse.*
 rm -f $INSTALL_VOLUME/usr/local/lib/libulockmgr.*
+rm -f $INSTALL_VOLUME/usr/local/lib/pkgconfig/fuse.pc
 
-# Signal success
+## Signal success
+
 exit 0

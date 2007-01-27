@@ -176,7 +176,7 @@ diff -Naur old/fuse.pc.in new/fuse.pc.in
  
  Name: fuse
 -Description: Filesystem in Userspace
-+Description: Filesystem in Userspace (MacFUSE)
++Description: File System in User Space (MacFUSE)
  Version: @VERSION@
 -Libs: -L${libdir} -lfuse -pthread
 +Libs: -L${libdir} -lfuse
