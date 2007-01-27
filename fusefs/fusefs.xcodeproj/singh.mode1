@@ -257,11 +257,14 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateExpansionKey</key>
 							<array>
 								<string>1C37FBAC04509CD000000102</string>
+								<string>54890FF30B6ADA8400D6D150</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>0</integer>
+									<integer>7</integer>
+									<integer>2</integer>
+									<integer>1</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
@@ -365,9 +368,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54890FD10B6AC87000D6D150</string>
+				<string>54890FF40B6ADA8400D6D150</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54890FD20B6AC87000D6D150</string>
+				<string>54890FF50B6ADA8400D6D150</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -509,7 +512,6 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>5403C7EA0ACA9BB300CD9322</string>
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
