@@ -391,12 +391,12 @@ out:
 
 #include <DiskArbitration/DiskArbitration.h>
 
-extern int DiskArbInit(void);
-extern int DiskArbDiskAppearedWithMountpointPing_auto(
+extern kern_return_t DiskArbInit(void) __attribute__((weak_import));
+extern kern_return_t DiskArbDiskAppearedWithMountpointPing_auto(
   char     *disk,
   unsigned  flags,
   char     *mountpoint
-);
+) __attribute__((weak_import));
 
 int
 ping_diskarb(char *mntpath)
@@ -411,6 +411,10 @@ ping_diskarb(char *mntpath)
     ret = statfs(mntpath, &sb);
     if (ret < 0) {
         return ret;
+    }
+
+    if (!DiskArbInit || !DiskArbDiskAppearedWithMountpointPing_auto) {
+        return 0;
     }
 
     ret = DiskArbInit();
