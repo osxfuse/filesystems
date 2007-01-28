@@ -604,6 +604,8 @@ main(int argc, char **argv)
 
     (void)checkpath(mntpath, args.mntpath);
 
+    mntpath = args.mntpath;
+
     fuse_process_mvals();
 
     /*

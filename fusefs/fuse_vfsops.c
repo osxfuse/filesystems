@@ -370,6 +370,9 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
     fdata_kick_set(data);
 
 alreadydead:
+
+    vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_UNMOUNT, 0);
+
     data->mpri = FM_NOMOUNTED;
     data->mntco--;
     FUSE_LOCK();
