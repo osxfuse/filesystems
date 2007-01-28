@@ -373,7 +373,7 @@ diff -Naur old/lib/helper.c new/lib/helper.c
   err_unmount:
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-05-03 07:46:04.000000000 -0700
-+++ new/lib/mount_bsd.c	2007-01-26 23:40:30.000000000 -0800
++++ new/lib/mount_bsd.c	2007-01-28 03:37:29.000000000 -0800
 @@ -6,6 +6,11 @@
      See the file COPYING.LIB.
  */
@@ -462,17 +462,17 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
 +#if (__FreeBSD__ >= 10)
 +    /* Mac OS X specific options */
++    FUSE_OPT_KEY("blocksize=",          KEY_KERN),
 +    FUSE_OPT_KEY("daemon_timeout=",     KEY_KERN),
 +    FUSE_OPT_KEY("fsid=",               KEY_KERN),
 +    FUSE_OPT_KEY("fsname=",             KEY_KERN),
 +    FUSE_OPT_KEY("init_timeout=",       KEY_KERN),
-+    FUSE_OPT_KEY("large_read",          KEY_KERN),
-+    FUSE_OPT_KEY("max_read=",           KEY_KERN),
++    FUSE_OPT_KEY("iosize=",             KEY_KERN),
++    FUSE_OPT_KEY("jail_symlinks",       KEY_KERN),
 +    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaque",        KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaqueaccess",  KEY_KERN),
 +    FUSE_OPT_KEY("nobrowse",            KEY_KERN),
-+    FUSE_OPT_KEY("nonempty",            KEY_KERN),
 +    FUSE_OPT_KEY("noreadahead",         KEY_KERN),
 +    FUSE_OPT_KEY("nosyncwrites",        KEY_KERN),
 +    FUSE_OPT_KEY("noubc",               KEY_KERN),

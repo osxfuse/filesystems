@@ -68,22 +68,21 @@ enum {
 #define FUSE_MOPT_IOSIZE                0x00002000
 #define FUSE_MOPT_JAIL_SYMLINKS         0x00004000
 #define FUSE_MOPT_KERNEL_CACHE          0x00008000
-#define FUSE_MOPT_LARGE_READ            0x00010000
-#define FUSE_MOPT_MAX_READ              0x00020000
-#define FUSE_MOPT_NO_ATTRCACHE          0x00040000
-#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00080000
-#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00100000
-#define FUSE_MOPT_NO_READAHEAD          0x00200000
-#define FUSE_MOPT_NO_SYNCWRITES         0x00400000
-#define FUSE_MOPT_NO_UBC                0x00800000
-#define FUSE_MOPT_PING_DISKARB          0x01000000
-#define FUSE_MOPT_READDIR_INO           0x02000000
-#define FUSE_MOPT_ROOTMODE              0x04000000
-#define FUSE_MOPT_SUBTYPE               0x08000000
-#define FUSE_MOPT_UID                   0x10000000
-#define FUSE_MOPT_UMASK                 0x20000000
-#define FUSE_MOPT_USE_INO               0x40000000
-#define FUSE_MOPT_VOLNAME               0x80000000
+#define FUSE_MOPT_NO_ATTRCACHE          0x00010000
+#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00020000
+#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00040000
+#define FUSE_MOPT_NO_BROWSE             0x00080000
+#define FUSE_MOPT_NO_READAHEAD          0x00100000
+#define FUSE_MOPT_NO_SYNCWRITES         0x00200000
+#define FUSE_MOPT_NO_UBC                0x00400000
+#define FUSE_MOPT_PING_DISKARB          0x00800000
+#define FUSE_MOPT_READDIR_INO           0x01000000
+#define FUSE_MOPT_ROOTMODE              0x02000000
+#define FUSE_MOPT_SUBTYPE               0x04000000
+#define FUSE_MOPT_UID                   0x08000000
+#define FUSE_MOPT_UMASK                 0x10000000
+#define FUSE_MOPT_USE_INO               0x20000000
+#define FUSE_MOPT_VOLNAME               0x40000000
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF

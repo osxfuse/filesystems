@@ -121,6 +121,10 @@ fuse_vfs_mount(mount_t       mp,
         return EINVAL;
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_NO_BROWSE) {
+        vfs_setflags(mp, MNT_DONTBROWSE);
+    }
+
     if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCWRITES) {
         if (fusefs_args.altflags &
             (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD)) {
@@ -367,7 +371,9 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
         fuse_ticket_drop(fdi.tick);
     }
 
+#if 0
     vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_UNMOUNT, 0);
+#endif
 
     fdata_kick_set(data);
 

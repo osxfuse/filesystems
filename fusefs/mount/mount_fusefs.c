@@ -40,7 +40,7 @@ void  showversion(int doexit);
 struct mntopt mopts[] = {
     MOPT_STDOPTS,
     MOPT_UPDATE,
-    { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,           1 },
+    { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,           1 }, // used
     { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,            1 },
     { "blocksize=",          0, FUSE_MOPT_BLOCKSIZE,             1 }, // used
     { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,        1 }, // used
@@ -56,8 +56,6 @@ struct mntopt mopts[] = {
     { "iosize=",             0, FUSE_MOPT_IOSIZE,                1 }, // used
     { "jail_symlinks",       0, FUSE_MOPT_JAIL_SYMLINKS,         1 }, // used
     { "kernel_cache",        0, FUSE_MOPT_KERNEL_CACHE,          1 },
-    { "large_read",          0, FUSE_MOPT_LARGE_READ,            1 },
-    { "max_read=",           0, FUSE_MOPT_MAX_READ,              1 },
     { "ping_diskarb",        0, FUSE_MOPT_PING_DISKARB,          1 }, // used
     { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,           1 },
     { "rootmode=",           0, FUSE_MOPT_ROOTMODE,              1 },
@@ -72,6 +70,7 @@ struct mntopt mopts[] = {
     { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,          1 }, // used
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
     { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS, 1 }, // used
+    { "browse",              1, FUSE_MOPT_NO_BROWSE,             1 }, // used
     { "readahead",           1, FUSE_MOPT_NO_READAHEAD,          1 }, // used
     { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,         1 }, // used
     { "ubc",                 1, FUSE_MOPT_NO_UBC,                1 }, // used
@@ -772,14 +771,16 @@ showhelp()
     fprintf(stderr, "\nAvailable mount options:\n");
     fprintf(stderr,
       "    -o blocksize=<size>    specify block size in bytes of \"storage\"\n"
+      "    -o daemon_timeout=<s>  timeout in seconds for kernel calls to daemon\n"
       "    -o debug               turn on debug information printing\n"
       "    -o fsid                set the second 32-bit component of the fsid\n"
       "    -o fsname=<name>       set the file system's name\n"
-      "    -o init_timeout=<sec>  timeout for the init method to complete\n"
+      "    -o init_timeout=<s>    timeout in seconds for the init method to complete\n"
       "    -o iosize=<size>       specify maximum I/O size in bytes\n" 
       "    -o jail_symlinks       contain symbolic links within the mount\n"
       "    -o noauthopaque        set MNTK_AUTH_OPAQUE in the kernel\n"
       "    -o noauthopaqueaccess  set MNTK_AUTH_OPAQUE_ACCESS in the kernel\n"
+      "    -o nobrowse            set MNT_DONTBROWSE in the kernel\n"
       "    -o noreadahead         disable I/O read-ahead behavior for this file system\n"
       "    -o nosyncwrites        disable synchronous-writes behavior (dangerous)\n"
       "    -o noubc               disable the unified buffer cache for this file system\n"
