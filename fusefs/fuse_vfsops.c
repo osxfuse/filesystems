@@ -13,7 +13,7 @@
 
 #include <fuse_mount.h>
 
-static const struct timespec kZeroTime = {0, 0};
+static const struct timespec kZeroTime = { 0, 0 };
 
 vfstable_t fuse_vfs_table_ref = NULL;
 
@@ -62,7 +62,7 @@ struct vfs_fsentry fuse_vfs_entry = {
     0,
 
     // File system type name
-    "fusefs",
+    MACFUSE_FS_TYPE,
 
     // Flags specifying file system capabilities
     // VFS_TBLTHREADSAFE | VFS_TBLFSNODELOCK | VFS_TBLNOTYPENUM,
@@ -73,10 +73,8 @@ struct vfs_fsentry fuse_vfs_entry = {
 };
 
 static errno_t
-fuse_vfs_mount(mount_t       mp,
-               vnode_t       devvp,
-               user_addr_t   udata,
-               vfs_context_t context)
+fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
+               __unused vfs_context_t context)
 {
     size_t len;
 
@@ -91,30 +89,40 @@ fuse_vfs_mount(mount_t       mp,
 
     fuse_trace_printf_vfsop();
 
+    if (vfs_isupdate(mp)) {
+        return ENOTSUP;
+    }
+
+    vfs_setlocklocal(mp); /* USES_KLUDGE */
+
     err = copyin(udata, &fusefs_args, sizeof(fusefs_args));
     if (err) {
         debug_printf("copyin failed\n");
         return EINVAL;
     }
 
-    // Interesting flags that we can receive from mount or may want to forcibly
-    // set include:
-    //
-    // MNT_RDONLY
-    // MNT_SYNCHRONOUS
-    // MNT_NOEXEC
-    // MNT_NOSUID
-    // MNT_NODEV
-    // MNT_UNION
-    // MNT_ASYNC
-    // MNT_DONTBROWSE
-    // MNT_IGNORE_OWNERSHIP
-    // MNT_AUTOMOUNTED
-    // MNT_JOURNALED
-    // MNT_NOUSERXATTR
-    // MNT_DEFWRITE
+    /*
+    * Interesting flags that we can receive from mount or may want to
+    * otherwise forcibly set include:
+    *
+    *     MNT_ASYNC
+    *     MNT_AUTOMOUNTED              
+    *     MNT_DEFWRITE
+    *     MNT_DONTBROWSE
+    *     MNT_IGNORE_OWNERSHIP
+    *     MNT_JOURNALED
+    *     MNT_NODEV
+    *     MNT_NOEXEC
+    *     MNT_NOSUID
+    *     MNT_NOUSERXATTR
+    *     MNT_RDONLY
+    *     MNT_SYNCHRONOUS
+    *     MNT_UNION
+    */
 
     err = ENOTSUP;
+
+    /* Option Processing. */
 
     if ((fusefs_args.daemon_timeout > FUSE_MAX_DAEMON_TIMEOUT) ||
         (fusefs_args.daemon_timeout < FUSE_MIN_DAEMON_TIMEOUT)) {
@@ -125,14 +133,23 @@ fuse_vfs_mount(mount_t       mp,
         vfs_setflags(mp, MNT_DONTBROWSE);
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_NO_LOCALCACHES) {
+        fusefs_args.altflags |= FUSE_MOPT_NO_READAHEAD;
+        fusefs_args.altflags |= FUSE_MOPT_NO_UBC;
+        fusefs_args.altflags |= FUSE_MOPT_NO_VNCACHE;
+    }
+
     if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCWRITES) {
+
+        /* Cannot mix nosyncwrites with noubc or noreadahead. */
         if (fusefs_args.altflags &
             (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD)) {
             return EINVAL;
         }
+
+        mntopts |= FSESS_NO_SYNCWRITES;
         vfs_clearflags(mp, MNT_SYNCHRONOUS);
         vfs_setflags(mp, MNT_ASYNC);
-        mntopts |= FSESS_NO_SYNCWRITES;
     } else {
         vfs_clearflags(mp, MNT_ASYNC);
         vfs_setflags(mp, MNT_SYNCHRONOUS);
@@ -148,10 +165,6 @@ fuse_vfs_mount(mount_t       mp,
         // This sets MNTK_AUTH_OPAQUE_ACCESS in the mount point's mnt_kern_flag.
         vfs_setauthopaqueaccess(mp);
         err = 0;
-    }
-
-    if (vfs_isupdate(mp)) {
-        return err;
     }
 
     err = 0;
@@ -200,6 +213,15 @@ fuse_vfs_mount(mount_t       mp,
         mntopts |= FSESS_NO_UBC;
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
+        mntopts |= FSESS_NO_VNCACHE;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
+        mntopts |= (FSESS_NO_ATTRCACHE | FSESS_NO_READAHEAD | FSESS_NO_UBC |
+                    FSESS_NO_VNCACHE);
+    }
+
     max_read_set = 0;
 
     if (fdata_kick_get(data)) {
@@ -233,6 +255,10 @@ fuse_vfs_mount(mount_t       mp,
         goto out;
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
+        vfs_setextendedsecurity(mp);
+    }
+
     if ((fusefs_args.altflags & FUSE_MOPT_FSID) && (fusefs_args.fsid != 0)) {
         fsid_t   fsid;
         mount_t  other_mp;
@@ -257,8 +283,10 @@ fuse_vfs_mount(mount_t       mp,
         vfs_getnewfsid(mp);    
     }
 
-    data->blocksize = fusefs_args.blocksize;
+    data->mp = mp;
+    data->fdev = fdev;
     data->dataflag |= mntopts;
+
     data->daemon_timeout.tv_sec =  fusefs_args.daemon_timeout;
     data->daemon_timeout.tv_nsec = 0;
     if (data->daemon_timeout.tv_sec) {
@@ -266,39 +294,21 @@ fuse_vfs_mount(mount_t       mp,
     } else {
         data->daemon_timeout_p = (struct timespec *)0;
     }
-    data->fdev = fdev;
-    data->iosize = fusefs_args.iosize;
+
     data->max_read = max_read;
-    data->mp = mp;
     data->mpri = FM_PRIMARY;
     data->subtype = fusefs_args.subtype;
+    data->noimpl = (uint64_t)0;
 
-    if (data->blocksize < FUSE_MIN_BLOCKSIZE) {
-        data->blocksize = FUSE_MIN_BLOCKSIZE;
-    }
-    if (data->blocksize > FUSE_MAX_BLOCKSIZE) {
-        data->blocksize = FUSE_MAX_BLOCKSIZE;
-    }
+    data->blocksize = fuse_round_size(fusefs_args.blocksize,
+                                      FUSE_MIN_BLOCKSIZE, FUSE_MAX_BLOCKSIZE);
 
-    if (data->iosize < FUSE_MIN_IOSIZE) {
-        data->iosize = FUSE_MIN_IOSIZE;
-    }
-    if (data->iosize > FUSE_MAX_IOSIZE) {
-        data->iosize = FUSE_MAX_IOSIZE;
-    }
+    data->iosize = fuse_round_size(fusefs_args.iosize,
+                                   FUSE_MIN_IOSIZE, FUSE_MAX_IOSIZE);
 
     if (data->iosize < data->blocksize) {
         data->iosize = data->blocksize;
     }
-
-    vfs_setfsprivate(mp, data);
-    
-    /*
-     * In what looks like an oversight, Apple does not export this routine.
-     * Hopefully they will fix it in a revision. We need to do this so that
-     * advisory locking is handled by the VFS.
-     */
-    // vfs_setlocklocal(mp);
 
     copystr(fusefs_args.fsname, vfs_statfs(mp)->f_mntfromname,
             MNAMELEN - 1, &len);
@@ -307,7 +317,9 @@ fuse_vfs_mount(mount_t       mp,
     copystr(fusefs_args.volname, data->volname, MAXPATHLEN - 1, &len);
     bzero(data->volname + len, MAXPATHLEN - len);
 
-    // Handshake with the daemon
+    vfs_setfsprivate(mp, data);
+
+    /* Handshake with the daemon. */
     fuse_internal_send_init(data, context);
 
 out:
@@ -342,15 +354,29 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
         flags |= FORCECLOSE;
     }
 
-    data = fusefs_get_data(mp);
+    data = fuse_get_mpdata(mp);
     if (!data) {
         panic("MacFUSE: no private data for mount point?");
     }
 
     if (fdata_kick_get(data)) {
+        /*
+         * If the file system daemon is dead, it's pointless to try to do
+         * any unmount-time operations that go out to user space. Therefore,
+         * we pretend that this is a force unmount. However, this isn't much
+         * use. That's because if any non-root vnode is in use, the vflush()
+         * that the kernel does before calling our VFS_UNMOUNT will fail
+         * if the original unmount wasn't forcible already. That earlier
+         * vflush is called with SKIPROOT though, so it wouldn't bail out
+         * on the root vnode being in use. That's the only case where this
+         * the following FORCECLOSE will come in. Maybe I should just not do
+         * it as this might cause confusion. Let us see. I'll revisit this.
+         */
         flags |= FORCECLOSE;
+        IOLog("MacFUSE: forcing unmount on dead file system\n");
     } else if (!(data->dataflag & FSESS_INITED)) {
         flags |= FORCECLOSE;
+        IOLog("MacFUSE: forcing unmount on not-yet-alive file system\n");
         fdata_kick_set(data);
     }
 
@@ -366,6 +392,7 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
 
     fdisp_init(&fdi, 0 /* no data to send along */);
     fdisp_make(&fdi, FUSE_DESTROY, mp, 0, context);
+
     err = fdisp_wait_answ(&fdi);
     if (!err) {
         fuse_ticket_drop(fdi.tick);
@@ -395,7 +422,7 @@ alreadydead:
 }        
 
 static errno_t
-fuse_vfs_root(mount_t mp, struct vnode **vpp, vfs_context_t context)
+fuse_vfs_root(mount_t mp, struct vnode **vpp, __unused vfs_context_t context)
 {
     int err = 0;
     vnode_t vp = NULL;
@@ -429,7 +456,7 @@ handle_capabilities_and_attributes(struct vfs_attr *attr)
 //      | VOL_CAP_FMT_ZERO_RUNS
         | VOL_CAP_FMT_CASE_SENSITIVE
 //      | VOL_CAP_FMT_CASE_PRESERVING
-        | VOL_CAP_FMT_FAST_STATFS
+//      | VOL_CAP_FMT_FAST_STATFS
 //      | VOL_CAP_FMT_2TB_FILESIZE
         ;
     attr->f_capabilities.valid[VOL_CAPABILITIES_FORMAT] = 0
@@ -455,9 +482,9 @@ handle_capabilities_and_attributes(struct vfs_attr *attr)
 //      | VOL_CAP_INT_COPYFILE
 //      | VOL_CAP_INT_ALLOCATE
         | VOL_CAP_INT_VOL_RENAME
-//      | VOL_CAP_INT_ADVLOCK
-//      | VOL_CAP_INT_FLOCK
-//      | VOL_CAP_INT_EXTENDED_SECURITY
+        | VOL_CAP_INT_ADVLOCK
+        | VOL_CAP_INT_FLOCK
+        | VOL_CAP_INT_EXTENDED_SECURITY
 //      | VOL_CAP_INT_USERACCESS
         ;
     attr->f_capabilities.valid[VOL_CAPABILITIES_INTERFACES] = 0
@@ -502,7 +529,7 @@ handle_capabilities_and_attributes(struct vfs_attr *attr)
         | ATTR_CMN_ACCESSMASK
 //      | ATTR_CMN_FLAGS
 //      | ATTR_CMN_USERACCESS
-//      | ATTR_CMN_EXTENDED_SECURITY
+        | ATTR_CMN_EXTENDED_SECURITY
 //      | ATTR_CMN_UUID
 //      | ATTR_CMN_GRPUUID
         ;
@@ -576,7 +603,7 @@ fuse_vfs_getattr(mount_t mp, struct vfs_attr *attr, vfs_context_t context)
 
     fuse_trace_printf_vfsop();
 
-    data = fusefs_get_data(mp);
+    data = fuse_get_mpdata(mp);
     if (!data) {
         panic("MacFUSE: no private data for mount point?");
     }
@@ -604,17 +631,32 @@ dostatfs:
     if (faking == 1) {
         bzero(&faked, sizeof(faked));
         fsfo = &faked;
-
-         /*
-          * This is a kludge so that the Finder doesn't get unhappy
-          * upon seeing a block size of 0, which is possible if the Finder
-          * causes a vfs_getattr() before the daemon handshake is complete.
-          */
-         faked.st.frsize = FUSE_DEFAULT_BLOCKSIZE;
-
     } else {
         fsfo = fdi.answ;
     }
+
+    /* fundamental file system block size; goes into f_bsize */
+    fsfo->st.frsize = fuse_round_size(fsfo->st.frsize,
+                                      FUSE_MIN_BLOCKSIZE, FUSE_MAX_BLOCKSIZE);
+
+    /* preferred/optimal file system block size; goes into f_iosize */
+    fsfo->st.bsize  = fuse_round_size(fsfo->st.bsize,
+                                      FUSE_MIN_IOSIZE, FUSE_MAX_IOSIZE);
+
+    /* We must have: f_iosize >= f_bsize */
+    if (fsfo->st.bsize < fsfo->st.frsize) {
+        fsfo->st.bsize = fsfo->st.frsize;
+    }
+
+    /*
+     * TBD: Possibility:
+     *
+     * For actual I/O to MacFUSE's "virtual" storage device, we use
+     * data->blocksize and data->iosize. These are really meant to be
+     * constant across the lifetime of a single mount. If necessary, we
+     * can experiment by updating the mount point's stat with the frsize
+     * and bsize values we come across here.
+     */
 
     /*
      * FUSE user daemon will (might) give us this:
@@ -624,7 +666,7 @@ dostatfs:
      * __u64   bavail;  // free blocks available to non-superuser
      * __u64   files;   // total file nodes in the file system
      * __u64   ffree;   // free file nodes in the file system
-     * __u32   bsize;   // optimal transfer block size
+     * __u32   bsize;   // preferred/optimal file system block size
      * __u32   namelen; // maximum length of filenames
      * __u32   frsize;  // fundamental file system block size
      *
@@ -723,12 +765,12 @@ fuse_sync_callback(vnode_t vp, void *cargs)
         return VNODE_RETURNED_DONE;
     }
 
-    if (fdata_kick_get(fusefs_get_data(vnode_mount(vp)))) {
+    if (fdata_kick_get(fuse_get_mpdata(vnode_mount(vp)))) {
         return VNODE_RETURNED_DONE;
     }
 
-    if (!(fusefs_get_data(vnode_mount(vp))->dataflag &
-        vnode_vtype(vp) == VDIR ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
+    if (!(fuse_get_mpdata(vnode_mount(vp))->dataflag &
+        (vnode_vtype(vp) == VDIR) ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
         return VNODE_RETURNED;
     }
 
@@ -817,7 +859,7 @@ fuse_vfs_setattr(mount_t mp, struct vfs_attr *fsap, vfs_context_t context)
         return EACCES;
     }
 
-    data = fusefs_get_data(mp);
+    data = fuse_get_mpdata(mp);
 
     if (VFSATTR_IS_ACTIVE(fsap, f_vol_name)) {
 

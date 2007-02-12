@@ -1,5 +1,5 @@
 #include "common/fuse_version.h"
-
+#include "common/fuse_param.h"
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -11,11 +11,11 @@
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.google.filesystems.fusefs</string>
+	<string>MACFUSE_BUNDLE_IDENTIFIER_LITERAL</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>File System in User Space (MacFUSE)</string>
+	<string>MacFUSE (File System In User Space)</string>
 	<key>CFBundlePackageType</key>
 	<string>KEXT</string>
 	<key>CFBundleSignature</key>
@@ -32,6 +32,10 @@
 		<string>8.0.0</string>
 		<key>com.apple.kpi.mach</key>
 		<string>8.0.0</string>
+#if MACFUSE_ENABLE_UNSUPPORTED
+		<key>com.apple.kpi.unsupported</key>
+		<string>8.0.0</string>
+#endif
 	</dict>
 </dict>
 </plist>

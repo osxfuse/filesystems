@@ -8,6 +8,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/event.h>
 #include <libkern/OSMalloc.h>
 #include <libkern/locks.h>
 #include <IOKit/IOLib.h>
@@ -18,13 +19,16 @@
 #endif
 
 #include <fuse_param.h>
+#include <fuse_sysctl.h>
 #include <fuse_version.h>
 
-//#define FUSE_DEBUG    1
-//#define FUSE_KDEBUG   1
-//#define FUSE_TRACE    1
-//#define FUSE_TRACE_OP 1
-//#define FUSE_TRACE_LK 1
+//#define FUSE_DEBUG       1
+//#define FUSE_KDEBUG      1
+//#define FUSE_KTRACE_OP   1
+//#define FUSE_TRACE       1
+//#define FUSE_TRACE_LK    1
+//#define FUSE_TRACE_OP    1
+#define FUSE_TRACK_STATS 1
 
 #define FUSEFS_SIGNATURE 0x55464553 // 'FUSE'
 
@@ -42,6 +46,13 @@
 #else
 #define fuse_trace_printf_vfsop() {}
 #define fuse_trace_printf_vnop()  {}
+#endif
+
+#ifdef FUSE_KTRACE_OP
+#undef  fuse_trace_printf_vfsop
+#undef  fuse_trace_printf_vnop
+#define fuse_trace_printf_vfsop() kprintf("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vnop()  kprintf("%s\n", __FUNCTION__)
 #endif
 
 #ifdef FUSE_DEBUG
@@ -73,5 +84,63 @@
 
 #define FUSE_ZERO_SIZE 0x0000000000000000ULL
 #define FUSE_ROOT_SIZE 0xFFFFFFFFFFFFFFFFULL
+
+extern OSMallocTag fuse_malloc_tag;
+
+#ifdef FUSE_TRACK_STATS
+
+#define FUSE_OSAddAtomic(amount, value) OSAddAtomic((amount), (value))
+
+extern int32_t fuse_memory_allocated;
+
+static __inline__
+void *
+FUSE_OSMalloc(uint32_t size, OSMallocTag tag)
+{
+    void *addr = OSMalloc(size, tag);
+
+    if (!addr) {
+        panic("MacFUSE: memory allocation failed (size=%d)", size);
+    }
+
+    OSAddAtomic(size, (SInt32 *)&fuse_memory_allocated);
+    
+    return addr;
+}
+
+static __inline__
+void
+FUSE_OSFree(void *addr, uint32_t size, OSMallocTag tag)
+{
+    OSFree(addr, size, tag);
+
+    OSAddAtomic(-(size), (SInt32 *)&fuse_memory_allocated);
+}
+#else
+
+#define FUSE_OSAddAtomic(amount, value) {}
+#define FUSE_OSMalloc(size, tag)        OSMalloc((size), (tag))
+#define FUSE_OSFree(addr, size, tag)    OSFree((addr), (size), (tag))
+
+#endif /* FUSE_TRACK_STATISTICS */
+
+static __inline__
+void *
+FUSE_OSRealloc(void *oldptr, int oldsize, int newsize)
+{   
+    void *data;
+    
+    data = FUSE_OSMalloc(newsize, fuse_malloc_tag);
+    if (!data) {
+        panic("MacFUSE: OSMalloc failed in realloc");
+    }
+    
+    bcopy(oldptr, data, oldsize);
+    FUSE_OSFree(oldptr, oldsize, fuse_malloc_tag);
+    
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_realloc_count);
+    
+    return (data);
+}
 
 #endif /* _FUSE_H_ */

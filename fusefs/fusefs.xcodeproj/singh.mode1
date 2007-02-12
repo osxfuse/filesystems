@@ -266,7 +266,7 @@
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {186, 461}}</string>
+							<string>{{0, 0}, {186, 548}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -278,14 +278,14 @@
 					<key>GeometryConfiguration</key>
 					<dict>
 						<key>Frame</key>
-						<string>{{0, 0}, {203, 479}}</string>
+						<string>{{0, 0}, {203, 566}}</string>
 						<key>GroupTreeTableConfiguration</key>
 						<array>
 							<string>MainColumn</string>
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>515 182 855 520 0 0 1440 878 </string>
+						<string>160 271 1049 607 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -320,9 +320,9 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 0}, {647, 0}}</string>
+								<string>{{0, 0}, {841, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>515 182 855 520 0 0 1440 878 </string>
+								<string>160 271 1049 607 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -340,18 +340,18 @@
 							<key>GeometryConfiguration</key>
 							<dict>
 								<key>Frame</key>
-								<string>{{0, 5}, {647, 474}}</string>
+								<string>{{0, 5}, {841, 561}}</string>
 								<key>RubberWindowFrame</key>
-								<string>515 182 855 520 0 0 1440 878 </string>
+								<string>160 271 1049 607 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
 							<key>Proportion</key>
-							<string>474pt</string>
+							<string>561pt</string>
 						</dict>
 					</array>
 					<key>Proportion</key>
-					<string>647pt</string>
+					<string>841pt</string>
 				</dict>
 			</array>
 			<key>Name</key>
@@ -366,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54DF6F670B6D443500267BF7</string>
+				<string>54F8625E0B80298D00416A6F</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54DF6F680B6D443500267BF7</string>
+				<string>54F8625F0B80298D00416A6F</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -514,7 +514,7 @@
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>515 182 855 520 0 0 1440 878 </string>
+	<string>160 271 1049 607 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
@@ -535,7 +535,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>fuse.h</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -544,7 +544,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {749, 301}}</string>
 								<key>RubberWindowFrame</key>
-								<string>611 181 749 583 0 0 1440 878 </string>
+								<string>671 137 749 583 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -552,6 +552,8 @@
 							<string>301pt</string>
 						</dict>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -568,7 +570,7 @@
 								<key>Frame</key>
 								<string>{{0, 306}, {749, 236}}</string>
 								<key>RubberWindowFrame</key>
-								<string>611 181 749 583 0 0 1440 878 </string>
+								<string>671 137 749 583 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXBuildResultsModule</string>
@@ -591,14 +593,14 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>54DF6F690B6D443500267BF7</string>
+				<string>54F862680B8029E000416A6F</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.build</string>
 			<key>WindowString</key>
-			<string>611 181 749 583 0 0 1440 878 </string>
+			<string>671 137 749 583 0 0 1440 878 </string>
 			<key>WindowToolGUID</key>
 			<string>5403C7EA0ACA9BB300CD9322</string>
 			<key>WindowToolIsVisible</key>

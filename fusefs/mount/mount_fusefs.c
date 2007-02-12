@@ -22,6 +22,7 @@
 #include <sys/sysctl.h>
 #include <libgen.h>
 #include <signal.h>
+#include <mach/mach.h>
 
 #include "mntopts.h"
 #include <fuse_ioctl.h>
@@ -31,7 +32,7 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#define PROGNAME "mount_fusefs"
+#define PROGNAME "mount_" MACFUSE_FS_TYPE
 
 char *getproctitle(pid_t pid, char **title, int *len);
 void  showhelp(void);
@@ -46,7 +47,7 @@ struct mntopt mopts[] = {
     { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,        1 }, // used
     { "debug",               0, FUSE_MOPT_DEBUG,                 1 }, // used
     { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,   1 },
-    { "directio",            0, FUSE_MOPT_DIRECT_IO,             1 },
+    { "extended_security",   0, FUSE_MOPT_EXTENDED_SECURITY,     1 }, // used
     { "fd=",                 0, FUSE_MOPT_FD,                    1 },
     { "fsid=" ,              0, FUSE_MOPT_FSID,                  1 }, // used
     { "fsname=",             0, FUSE_MOPT_FSNAME,                1 }, // used
@@ -71,9 +72,11 @@ struct mntopt mopts[] = {
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
     { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS, 1 }, // used
     { "browse",              1, FUSE_MOPT_NO_BROWSE,             1 }, // used
+    { "localcaches",         1, FUSE_MOPT_NO_LOCALCACHES,        1 }, // used
     { "readahead",           1, FUSE_MOPT_NO_READAHEAD,          1 }, // used
     { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,         1 }, // used
     { "ubc",                 1, FUSE_MOPT_NO_UBC,                1 }, // used
+    { "vncache",             1, FUSE_MOPT_NO_VNCACHE,            1 }, // used
 
     { NULL }
 };
@@ -81,7 +84,7 @@ struct mntopt mopts[] = {
 typedef int (* converter_t)(void **target, void *value, void *fallback);
 
 struct mntval {
-    int         mv_mntflag;
+    uint64_t    mv_mntflag;
     void       *mv_value;
     int         mv_len;
     converter_t mv_converter;
@@ -303,8 +306,8 @@ struct mntval mvals[] = {
     },
 };
 
-void
-fuse_process_mvals()
+static void
+fuse_process_mvals(void)
 {
     int ret;
     struct mntval *mv;
@@ -397,13 +400,14 @@ extern kern_return_t DiskArbDiskAppearedWithMountpointPing_auto(
   char     *mountpoint
 ) __attribute__((weak_import));
 
-int
+static int
 ping_diskarb(char *mntpath)
 {
     int ret;
     struct statfs sb;
     enum {
         kDiskArbDiskAppearedEjectableMask   = 1 << 1,
+        kDiskArbDiskAppearedWholeDiskMask   = 1 << 2,
         kDiskArbDiskAppearedNetworkDiskMask = 1 << 3
     };
 
@@ -431,7 +435,7 @@ ping_diskarb(char *mntpath)
     return 0;
 }
 
-int
+static int
 post_notification(char   *name,
                   char   *udata_keys[],
                   char   *udata_values[],
@@ -499,16 +503,16 @@ out:
 
 // We will be called as follows by the FUSE library:
 //
-//   mount_fusefs -o OPTIONS... <fdnam> <mountpoint>
+//   mount_<MACFUSE_FS_TYPE> -o OPTIONS... <fdnam> <mountpoint>
 
 int
 main(int argc, char **argv)
 {
     int       mntflags  = 0;
     int       fd        = -1;
-    int32_t   index     = -1;
+    int32_t   dindex    = -1;
     char     *fdnam     = NULL;
-    int       altflags  = 0;
+    uint64_t  altflags  = 0;
     char     *mntpath   = NULL;
 
     int i, ch = '\0', done = 0;
@@ -519,6 +523,41 @@ main(int argc, char **argv)
     if (!getenv("MOUNT_FUSEFS_CALL_BY_LIB")) {
         showhelp();
         /* NOTREACHED */
+    }
+
+    if (!getenv("MOUNT_FUSEFS_IGNORE_VERSION_MISMATCH")) {
+        int                     kmod_ok = 0;
+        kern_return_t           kr;
+        kmod_info_array_t       kmods;
+        mach_msg_type_number_t  kmodBytes = 0;
+        int                     kmodCount = 0;
+        kmod_info_t            *kmodp;
+        mach_port_t             host_port = mach_host_self();
+
+        kr = kmod_get_info(host_port, (void *)&kmods, &kmodBytes);
+        (void)mach_port_deallocate(mach_task_self(), host_port);
+        if (kr != KERN_SUCCESS) {
+            errx(kr, "failed to retrieve kernel extension information");
+        }
+
+        for (kmodp = (kmod_info_t *)kmods; kmodp->next; kmodp++, kmodCount++) {
+            if (!strncmp(kmodp->name, MACFUSE_BUNDLE_IDENTIFIER,
+                         strlen(MACFUSE_BUNDLE_IDENTIFIER))) {
+                if (!strncmp(kmodp->version, MACFUSE_VERSION,
+                             strlen(MACFUSE_VERSION))) {
+                    kmod_ok = 1;
+                } else {
+                    errx(1, "MacFUSE kernel extension version mismatch "
+                            "(kernel has %s, %s has %s)",
+                        kmodp->version, PROGNAME, MACFUSE_VERSION);
+                    /* break */
+                }
+            }
+        }
+
+        if (!kmod_ok) {
+            errx(1, "MacFUSE kernel extension not loaded");
+        }
     }
 
     do {
@@ -582,6 +621,7 @@ main(int argc, char **argv)
         if (done) {
             break;
         }
+
     } while ((ch = getopt(argc, argv, "ho:v")) != -1);
 
     argc -= optind;
@@ -607,12 +647,18 @@ main(int argc, char **argv)
 
     fuse_process_mvals();
 
+    if (altflags & FUSE_MOPT_NO_LOCALCACHES) {
+        altflags |= FUSE_MOPT_NO_READAHEAD;
+        altflags |= FUSE_MOPT_NO_UBC;
+        altflags |= FUSE_MOPT_NO_VNCACHE;
+    }
+
     /*
      * 'nosyncwrites' must not appear with either 'noubc' or 'noreadahead'.
      */
     if ((altflags & FUSE_MOPT_NO_SYNCWRITES) &&
         (altflags & (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD))) {
-        errx(1, "'nosyncwrites' can't be used with 'noubc' or 'noreadahead'");
+        errx(1, "disabling local caching is not allowed with 'nosyncwrites'");
     }
 
     errno = 0;
@@ -639,10 +685,10 @@ main(int argc, char **argv)
         }
 
         errno = 0;
-        index = strtol(ndevbas + strlen(FUSE_DEVICE_BASENAME), NULL, 10);
+        dindex = strtol(ndevbas + strlen(FUSE_DEVICE_BASENAME), NULL, 10);
         if ((errno == EINVAL) || (errno == ERANGE) ||
-            (index < 0) || (index > FUSE_NDEVICES)) {
-            errx(1, "invalid FUSE device unit (#%d)\n", index);
+            (dindex < 0) || (dindex > FUSE_NDEVICES)) {
+            errx(1, "invalid FUSE device unit (#%d)\n", dindex);
         }
     }
 
@@ -658,24 +704,24 @@ main(int argc, char **argv)
     args.blocksize      = blocksize;
     args.daemon_timeout = daemon_timeout;
     args.fsid           = fsid;
-    args.index          = index;
+    args.index          = dindex;
     args.iosize         = iosize;
     args.subtype        = subtype;
 
     if (!fsname) {
-        snprintf(args.fsname, MAXPATHLEN, "instance@fuse%d", index);
+        snprintf(args.fsname, MAXPATHLEN, "instance@fuse%d", dindex);
     } else {
         snprintf(args.fsname, MAXPATHLEN, "%s", fsname);
     }
 
     if (!volname) {
-        snprintf(args.volname, MAXPATHLEN, "FUSE Volume %d", index);
+        snprintf(args.volname, MAXPATHLEN, "MacFUSE Volume %d", dindex);
     } else {
         snprintf(args.volname, MAXPATHLEN, "%s", volname);
     }
 
-    if (mount(FUSE_FS_TYPE, mntpath, mntflags, (void *)&args) < 0) {
-        err(EX_OSERR, "fusefs@%d on %s", index, mntpath);
+    if (mount(MACFUSE_FS_TYPE, mntpath, mntflags, (void *)&args) < 0) {
+        err(EX_OSERR, "%s@%d on %s", MACFUSE_FS_TYPE, dindex, mntpath);
     }
 
     /*
@@ -693,14 +739,15 @@ main(int argc, char **argv)
         signal(SIGCHLD, SIG_IGN);
 
         if ((pid = fork()) < 0) {
-            err(EX_OSERR, "fusefs@%d on %s (fork failed)", index, mntpath);
+            err(EX_OSERR, "%s@%d on %s (fork failed)",
+                MACFUSE_FS_TYPE, dindex, mntpath);
         }
 
         setbuf(stderr, NULL);
 
         if (pid == 0) { /* child */
 
-            int ret, wait_iterations;
+            int ret = 0, wait_iterations;
             char *udata_keys[]   = { kFUSEMountPathKey };
             char *udata_values[] = { mntpath };
            
@@ -731,8 +778,8 @@ main(int argc, char **argv)
                         /* Let Disk Arbitration know. */
                         if (ping_diskarb(mntpath)) {
                             /* Somebody might want to exit here instead. */
-                            fprintf(stderr, "fusefs@%d on %s (ping DiskArb)",
-                                    index, mntpath);
+                            fprintf(stderr, "%s@%d on %s (ping DiskArb)",
+                                    MACFUSE_FS_TYPE, dindex, mntpath);
                         }
                     }
 
@@ -751,8 +798,8 @@ main(int argc, char **argv)
 
             if (ret == 0) {
                 /* Somebody might want to exit here instead. */
-                fprintf(stderr, "fusefs@%d on %s (gave up on init handshake)",
-                        index, mntpath);
+                fprintf(stderr, "%s@%d on %s (gave up on init handshake)",
+                        MACFUSE_FS_TYPE, dindex, mntpath);
             }
 
         } /* parent: just fall through and exit */
@@ -773,6 +820,7 @@ showhelp()
       "    -o blocksize=<size>    specify block size in bytes of \"storage\"\n"
       "    -o daemon_timeout=<s>  timeout in seconds for kernel calls to daemon\n"
       "    -o debug               turn on debug information printing\n"
+      "    -o extended_security   turn on Mac OS X extended security (ACLs)\n"
       "    -o fsid                set the second 32-bit component of the fsid\n"
       "    -o fsname=<name>       set the file system's name\n"
       "    -o init_timeout=<s>    timeout in seconds for the init method to complete\n"
@@ -781,9 +829,11 @@ showhelp()
       "    -o noauthopaque        set MNTK_AUTH_OPAQUE in the kernel\n"
       "    -o noauthopaqueaccess  set MNTK_AUTH_OPAQUE_ACCESS in the kernel\n"
       "    -o nobrowse            set MNT_DONTBROWSE in the kernel\n"
+      "    -o nolocalcaches       meta option equivalent to noreadahead,noubc,novncache\n"
       "    -o noreadahead         disable I/O read-ahead behavior for this file system\n"
       "    -o nosyncwrites        disable synchronous-writes behavior (dangerous)\n"
       "    -o noubc               disable the unified buffer cache for this file system\n"
+      "    -o novncache           disable the vnode name cache for this file system\n"
       "    -o ping_diskarb        ping Disk Arbitration\n"
       "    -o subtype=<num>       set the file system's subtype identifier\n"
       "    -o volname=<name>      set the file system's volume name\n"      
@@ -794,7 +844,7 @@ showhelp()
 void
 showversion(int doexit)
 {
-    fprintf(stderr, "Mac OS X FUSE version %s\n", MACFUSE_VERSION);
+    fprintf(stderr, "MacFUSE version %s\n", MACFUSE_VERSION);
     if (doexit) {
         exit(EX_USAGE);
     }

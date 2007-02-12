@@ -62,7 +62,7 @@ fuse_internal_access(vnode_t                   vp,
     mp = vnode_mount(vp);
     vtype = vnode_vtype(vp);
 
-    data = fusefs_get_data(mp);
+    data = fuse_get_mpdata(mp);
     dataflag = data->dataflag;
 
     if ((action & KAUTH_VNODE_GENERIC_WRITE_BITS) && vfs_isrdonly(mp)) {
@@ -95,7 +95,7 @@ fuse_internal_access(vnode_t                   vp,
 #endif
     }
 
-    if (fusefs_get_data(mp)->dataflag & FSESS_NOACCESS) {
+    if (fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL_ACCESS) {
         // Let the kernel handle this.
         return 0;
     }
@@ -155,8 +155,13 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (err == ENOSYS) {
-        fusefs_get_data(mp)->dataflag |= FSESS_NOACCESS;
-        err = 0; // ENOTSUP;
+        fuse_get_mpdata(mp)->noimpl |= FSESS_NOIMPL_ACCESS;
+        err = 0; // or ENOTSUP;
+    }
+
+    if (err == ENOENT) {
+        IOLog("MacFUSE: revoking vnode %p (root=%d)\n", vp, vnode_isvroot(vp));
+        (void)fuse_internal_revoke(vp, REVOKEALL, context);
     }
 
     return err;
@@ -166,7 +171,7 @@ fuse_internal_access(vnode_t                   vp,
 
 __private_extern__
 int
-fuse_internal_fsync_callback(struct fuse_ticket *tick, uio_t uio)
+fuse_internal_fsync_callback(struct fuse_ticket *tick, __unused uio_t uio)
 {
     fuse_trace_printf_func();
 
@@ -212,6 +217,46 @@ fuse_internal_fsync(vnode_t                 vp,
 
 }
 
+/* ioctl */
+__private_extern__
+int
+fuse_internal_ioctl_avfi(vnode_t vp, __unused vfs_context_t context,
+                         struct fuse_avfi_ioctl *avfi)
+{
+    int ret = 0;
+
+    if (!avfi) {
+        return EINVAL;
+    }
+
+    if (avfi->cmd & FUSE_AVFI_MARKGONE) {
+
+        /*
+         * TBD
+         */
+        return EINVAL;
+    }
+
+    /* The result of this /does/ alter our return value. */
+    if (avfi->cmd & FUSE_AVFI_UBC) {
+        int ubc_flags = avfi->flags & (UBC_PUSHDIRTY  | UBC_PUSHALL |
+                                       UBC_INVALIDATE | UBC_SYNC);
+        ret = ubc_sync_range(vp, (off_t)0, ubc_getsize(vp), ubc_flags);
+    }
+
+    /* The result of this doesn't alter our return value. */
+    if (avfi->cmd & FUSE_AVFI_PURGEATTRCACHE) {
+        (void)fuse_invalidate_attr(vp);
+    }
+
+    /* The result of this doesn't alter our return value. */
+    if (avfi->cmd & FUSE_AVFI_PURGEVNCACHE) {
+        (void)cache_purge(vp);
+    }
+
+    return ret;
+}
+
 /* readdir */
 
 __private_extern__
@@ -243,7 +288,7 @@ fuse_internal_readdir(vnode_t                 vp,
         fri = fdi.indata;
         fri->fh = fufh->fh_id;
         fri->offset = uio_offset(uio);
-        data = fusefs_get_data(vnode_mount(vp));
+        data = fuse_get_mpdata(vnode_mount(vp));
         fri->size = min(uio_resid(uio), data->iosize); // mp->max_read
 
         if ((err = fdisp_wait_answ(&fdi))) {
@@ -256,7 +301,7 @@ fuse_internal_readdir(vnode_t                 vp,
         }
     }
 
-done:
+/* done: */
     fuse_ticket_drop(fdi.tick);
 
 out:
@@ -266,7 +311,7 @@ out:
 __private_extern__
 int
 fuse_internal_readdir_processdata(uio_t            uio,
-                                  size_t           reqsize,
+                         __unused size_t           reqsize,
                                   void            *buf,
                                   size_t           bufsize,
                                   struct fuse_iov *cookediov)
@@ -454,6 +499,22 @@ fuse_internal_rename(vnode_t               fdvp,
     return (err);
 }
 
+/* revoke */
+
+__private_extern__
+int
+fuse_internal_revoke(vnode_t vp, int flags, vfs_context_t context)
+{
+    int ret;
+    struct fuse_vnode_data *fvdat = VTOFUD(vp);
+
+    fvdat->flag |= FN_REVOKING;
+    ret = vn_revoke(vp, flags, context);
+    fvdat->flag &= ~FN_REVOKING;
+
+    return ret;
+}
+
 /* strategy */
 
 __private_extern__
@@ -480,7 +541,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
 
-    data = fusefs_get_data(vnode_mount(vp));
+    data = fuse_get_mpdata(vnode_mount(vp));
 
     /*
      * XXX
@@ -529,7 +590,8 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
                          fufh_type);
         }
     } else {
-       debug_printf("STRATEGY: using existing fufh of type %d\n", fufh_type);
+        FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_reuse_count);
+        debug_printf("STRATEGY: using existing fufh of type %d\n", fufh_type);
     }
     if (err) {
 
@@ -546,9 +608,9 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
           *
           * panic()?
           */
-         printf("*** MacFUSE: failed to get fh from strategy (err=%d)\n", err);
+         IOLog("MacFUSE: failed to get fh from strategy (err=%d)\n", err);
          if (!vfs_issynchronous(vnode_mount(vp))) {
-             printf("*** MacFUSE: asynchronous write failed!\n");
+             IOLog("MacFUSE: asynchronous write failed!\n");
          }
 
          buf_seterror(bp, EIO);
@@ -598,7 +660,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         }
 
         if (buf_map(bp, &bufdat)) {
-            printf("STRATEGY: failed to map buffer\n");
+            IOLog("MacFUSE: failed to map buffer in strategy\n");
             // fufh->useco--;
             return EFAULT;
         } else {
@@ -686,7 +748,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         debug_printf("WRITE: preparing for write\n");
 
         if (buf_map(bp, &bufdat)) {
-            printf("STRATEGY: failed to map buffer\n");
+            IOLog("MacFUSE: failed to map buffer in strategy\n");
             // fufh->useco--;
             return EFAULT;
         } else {
@@ -772,7 +834,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
             debug_printf("WRITE: about to write at offset %lld chunksize %d\n",
                    offset, chunksize);
             if ((err = fdisp_wait_answ(&fdi))) {
-                printf("STRATEGY: daemon returned error %d\n", err);
+                IOLog("MacFUSE: daemon returned error %d in strategy\n", err);
                 merr = 1;
                 break;
             }
@@ -872,7 +934,7 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap)
             off_t  f_offset;
             size_t contig_bytes;
 
-            data = fusefs_get_data(vnode_mount(vp));
+            data = fuse_get_mpdata(vnode_mount(vp));
 
             // Still think this is a kludge?
             f_offset = lblkno * data->blocksize;
@@ -1019,7 +1081,7 @@ fuse_internal_newentry(vnode_t               dvp,
 
 __private_extern__
 int
-fuse_internal_forget_callback(struct fuse_ticket *tick, uio_t uio)
+fuse_internal_forget_callback(struct fuse_ticket *tick, __unused uio_t uio)
 {
     struct fuse_dispatcher fdi;
 

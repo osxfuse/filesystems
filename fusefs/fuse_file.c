@@ -29,7 +29,8 @@ fuse_filehandle_get(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type)
 
     fufh = &(fvdat->fufh[fufh_type]);
     if (fufh->fufh_flags & FUFH_VALID) {
-        printf("the given fufh type is already valid ... called in vain\n");
+        IOLog("MacFUSE: fufh (type=%d) already valid... called in vain\n",
+              fufh_type);
         return 0;
     }
 
@@ -37,7 +38,7 @@ fuse_filehandle_get(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type)
         isdir = 1;
         op = FUSE_OPENDIR;
         if (fufh_type != FUFH_RDONLY) {
-            printf("non-rdonly fh requested for a directory?\n");
+            IOLog("MacFUSE: non-rdonly fufh requested for directory\n");
             fufh_type = FUFH_RDONLY;
         }
     }
@@ -48,11 +49,13 @@ fuse_filehandle_get(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type)
     foi = fdi.indata;
     foi->flags = oflags;
 
-    fuse_fh_upcall_count++;
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_upcall_count);
     if ((err = fdisp_wait_answ(&fdi))) {
-        debug_printf("OUCH ... daemon didn't give fh (err = %d)\n", err);
+        IOLog("MacFUSE: OUCH! daemon did not give fh (type=%d, err=%d)\n",
+              fufh_type, err);
         return err;
     }
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_current);
 
     foo = fdi.answ;
 
@@ -86,21 +89,23 @@ fuse_filehandle_put(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type,
 
     fufh = &(fvdat->fufh[fufh_type]);
     if (!(fufh->fufh_flags & FUFH_VALID)) {
-        printf("trying to put invalid filehandle?\n");
+        IOLog("MacFUSE: filehandle is already invalid (type=%d)\n", fufh_type);
         return 0;
     }
 
     if (fufh->open_count != 0) {
-        panic("MacFUSE: trying to put fufh with open count %d\n",
-              fufh->open_count);
+        panic("MacFUSE: trying to put fufh with open count %d (type=%d)\n",
+              fufh->open_count, fufh_type);
+        /* NOTREACHED */
     }
 
     if (fufh->fufh_flags & FUFH_MAPPED) {
-        panic("MacFUSE: trying to put mapped fufh\n");
+        panic("MacFUSE: trying to put mapped fufh (type=%d)\n", fufh_type);
+        /* NOTREACHED */
     }
 
     if (fuse_isdeadfs(vp)) {
-        return 0;
+        goto out;
     }
 
     if (vnode_vtype(vp) == VDIR) {
@@ -118,11 +123,13 @@ fuse_filehandle_put(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type,
         if ((err = fdisp_wait_answ(&fdi))) {
             goto out;
         } else {
+            FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_fh_current);
             fuse_ticket_drop(fdi.tick);
         }
     } else {
         fuse_insert_callback(fdi.tick, NULL);
         fuse_insert_message(fdi.tick);
+        FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_fh_current);
     }
 
 out:

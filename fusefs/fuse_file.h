@@ -35,7 +35,8 @@ struct fuse_filehandle {
 };
 typedef struct fuse_filehandle * fuse_filehandle_t;
 
-static __inline__ fufh_type_t
+static __inline__
+fufh_type_t
 fuse_filehandle_xlate_from_mmap(int fflags)
 {
     if (fflags & (PROT_READ | PROT_WRITE)) {
@@ -49,7 +50,8 @@ fuse_filehandle_xlate_from_mmap(int fflags)
     }
 }
 
-static __inline__ fufh_type_t
+static __inline__
+fufh_type_t
 fuse_filehandle_xlate_from_fflags(int fflags)
 {
     if ((fflags & FREAD) && (fflags & FWRITE)) {
@@ -63,7 +65,8 @@ fuse_filehandle_xlate_from_fflags(int fflags)
     }
 }
 
-static __inline__ int
+static __inline__
+int
 fuse_filehandle_xlate_to_oflags(fufh_type_t type)
 {
     int oflags = -1;
@@ -77,6 +80,8 @@ fuse_filehandle_xlate_to_oflags(fufh_type_t type)
         break;
     case FUFH_RDWR:
         oflags = O_RDWR;
+        break;
+    default:
         break;
     }
 

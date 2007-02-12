@@ -4,9 +4,12 @@
  */
 
 #include "fuse.h"
-#include "fuse_ipc.h"
 #include "fuse_device.h"
+#include "fuse_ipc.h"
+#include "fuse_internal.h"
 #include "fuse_locking.h"
+#include "fuse_nodehash.h"
+#include "fuse_sysctl.h"
 
 #include <fuse_ioctl.h>
 
@@ -15,7 +18,6 @@
             (var) && ((tvar) = TAILQ_NEXT((var), field), 1); \
             (var) = (tvar))
 
-static int fuse_global_usecount = 0;
 static int fuse_cdev_major      = -1;
 
 struct fuse_softc {
@@ -63,7 +65,7 @@ fuse_softc_set_data(fuse_softc_t fdev, struct fuse_data *data)
     fdev->data = data;
 }
 
-int
+static int
 fuse_device_enodev(void)
 {
     return ENODEV;
@@ -93,7 +95,8 @@ static struct cdevsw fuse_device_cdevsw = {
 };
 
 int
-fuse_device_open(dev_t dev, int flags, int devtype, struct proc *p)
+fuse_device_open(dev_t dev, __unused int flags, __unused int devtype,
+                 struct proc *p)
 {
     int unit;
     struct fuse_softc *fdev;
@@ -101,11 +104,11 @@ fuse_device_open(dev_t dev, int flags, int devtype, struct proc *p)
 
     fuse_trace_printf_func();
 
-    if (fuse_global_usecount < 0) {
+    if (fuse_dev_use_count < 0) {
         return ENOENT;
     }
 
-    fuse_global_usecount++;
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_dev_use_count);
 
     unit = minor(dev);
     if (unit >= FUSE_NDEVICES) {
@@ -114,12 +117,12 @@ fuse_device_open(dev_t dev, int flags, int devtype, struct proc *p)
 
     fdev = FUSE_SOFTC_FROM_UNIT_FAST(unit);
     if (!fdev) {
-        fuse_global_usecount--;
+        FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_dev_use_count);
         return ENXIO;
     }
 
     if (fdev->usecount > 0) {
-        fuse_global_usecount--;
+        FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_dev_use_count);
         return EBUSY;
     }
 
@@ -132,7 +135,7 @@ fuse_device_open(dev_t dev, int flags, int devtype, struct proc *p)
     if (fdev->data) {
         FUSE_UNLOCK();
         fdata_destroy(fdata);
-        fuse_global_usecount--;
+        FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_dev_use_count);
         fdev->usecount--;
         return EBUSY;
     } else {
@@ -147,7 +150,8 @@ fuse_device_open(dev_t dev, int flags, int devtype, struct proc *p)
 }
 
 int
-fuse_device_close(dev_t dev, int flags, int devtype, struct proc *p)
+fuse_device_close(dev_t dev, __unused int flags, __unused int devtype,
+                  __unused struct proc *p)
 {
     int unit, skip_destroy = 0;
     struct fuse_softc *fdev;
@@ -202,14 +206,13 @@ fuse_device_close(dev_t dev, int flags, int devtype, struct proc *p)
         fdata_destroy(data);
     }
 
-out:
-    fuse_global_usecount--;
+    FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_dev_use_count);
 
     return KERN_SUCCESS;
 }
 
 int
-fuse_device_read(dev_t dev, uio_t uio, int ioflag)
+fuse_device_read(dev_t dev, uio_t uio, __unused int ioflag)
 {
     int i, buflen[3], err = 0;
     void *buf[] = { NULL, NULL, NULL };
@@ -287,16 +290,20 @@ again:
         }
     }
 
-    // The 'FORGET' message is an example of a ticket that has explicitly
-    // been invalidated by the sender. The sender is not expecting or wanting
-    // a reply, so he sets the FT_INVALID bit in the ticket.
+    /*
+     * The 'FORGET' message is an example of a ticket that has explicitly
+     * been invalidated by the sender. The sender is not expecting or wanting
+     * a reply, so he sets the FT_INVALID bit in the ticket.
+     */
+   
     fuse_ticket_drop_invalid(tick);
 
     return (err);
 }
 
 int
-fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
+fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata,
+                  __unused int flags, __unused proc_t proc)
 {
     int ret = EINVAL;
     struct fuse_softc *fdev;
@@ -313,6 +320,25 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
     }
 
     switch (cmd) {
+    case FUSEDEVIOCSETIMPLEMENTEDBITS:
+        {
+            uint64_t fuse_noimpl = *(uint64_t *)udata;
+
+            if (fuse_noimpl & (1LL << FUSE_GETXATTR)) {
+                data->noimpl |= FSESS_NOIMPL_GETXATTR;
+            }
+            if (fuse_noimpl & (1LL << FUSE_LISTXATTR)) {
+                data->noimpl |= FSESS_NOIMPL_LISTXATTR;
+            }
+            if (fuse_noimpl & (1LL << FUSE_REMOVEXATTR)) {
+                data->noimpl |= FSESS_NOIMPL_REMOVEXATTR;
+            }
+            if (fuse_noimpl & (1LL << FUSE_SETXATTR)) {
+                data->noimpl |= FSESS_NOIMPL_SETXATTR;
+            }
+        }
+        ret = 0;
+        break;
 
     case FUSEDEVIOCISHANDSHAKECOMPLETE:
         if (data->mpri == FM_NOMOUNTED) {
@@ -327,6 +353,49 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
         ret = 0;
         break;
 
+    /*
+     * In the user-space library, you can get the inode number from a path
+     * by using something like:
+     *
+     * fuse_ino_t
+     * find_fuse_inode_for_path(const char *path)
+     * {
+     *     struct fuse_context *context = fuse_get_context();
+     *     struct fuse *the_fuse = context->fuse;
+     *     struct node *node find_node(the_fuse, FUSE_ROOT_ID, path);
+     *     if (!node) {
+     *         return 0;
+     *     }
+     *     return (node->nodeid);
+     * }
+     */
+    case FUSEDEVIOCALTERVNODEFORINODE:
+        {
+            HNodeRef hn;
+            vnode_t  vn;
+            dev_t    dummy_device = (dev_t)data->fdev;
+
+            struct fuse_avfi_ioctl *avfi = (struct fuse_avfi_ioctl *)udata;
+
+            ret = (int)HNodeLookupRealQuickIfExists(dummy_device,
+                                                    (ino_t)avfi->inode,
+                                                    0, /* fork index */
+                                                    &hn,
+                                                    &vn);
+            if (ret) {
+                return ret;
+            }
+
+            assert(vn != NULL);
+
+            ret = fuse_internal_ioctl_avfi(vn, (vfs_context_t)0, avfi);
+
+            if (vn) {
+                vnode_put(vn);
+            }
+        }
+        break;
+
     default:
         break;
         
@@ -335,7 +404,8 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata, int flags, proc_t proc)
     return ret;
 }
 
-static __inline__ int
+static __inline__
+int
 fuse_ohead_audit(struct fuse_out_header *ohead, uio_t uio)
 {
     if (uio_resid(uio) + sizeof(struct fuse_out_header) != ohead->len) {
@@ -354,7 +424,7 @@ fuse_ohead_audit(struct fuse_out_header *ohead, uio_t uio)
 }   
 
 int
-fuse_device_write(dev_t dev, uio_t uio, int ioflag)
+fuse_device_write(dev_t dev, uio_t uio, __unused int ioflag)
 {
     int err = 0, found = 0;
     struct fuse_out_header ohead;
@@ -417,7 +487,7 @@ fuse_device_write(dev_t dev, uio_t uio, int ioflag)
 int
 fuse_devices_start(void)
 {
-    int i;
+    int i = 0;
 
     if ((fuse_cdev_major = cdevsw_add(-1, &fuse_device_cdevsw)) == -1) {
         goto error;

@@ -24,6 +24,11 @@ extern uint64_t  HNodeGetInodeNumber(HNodeRef hnode);
 extern vnode_t   HNodeGetVNodeForForkAtIndex(HNodeRef hnode, size_t forkIndex);
 extern size_t    HNodeGetForkIndexForVNode(vnode_t vn);
 
+extern errno_t   HNodeLookupRealQuickIfExists(dev_t     dev,
+                                              uint64_t  ino,
+                                              size_t    forkIndex,
+                                              HNodeRef *hnodePtr,
+                                              vnode_t  *vnPtr);
 extern errno_t   HNodeLookupCreatingIfNecessary(dev_t     dev,
                                                 uint64_t  ino,
                                                 size_t    forkIndex,
@@ -35,5 +40,7 @@ extern void      HNodeAttachVNodeSucceeded(HNodeRef hnode,
 extern boolean_t HNodeAttachVNodeFailed(HNodeRef hnode, size_t forkIndex);
 extern boolean_t HNodeDetachVNode(HNodeRef hnode, vnode_t vn);
 extern void      HNodeScrubDone(HNodeRef hnode);
+
+void             HNodePrintState(void);
 
 #endif /* _FUSE_NODEHASH_H_ */

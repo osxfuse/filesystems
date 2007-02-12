@@ -6,6 +6,8 @@
 #ifndef _FUSE_PARAM_H_
 #define _FUSE_PARAM_H_
 
+#define MACFUSE_ENABLE_UNSUPPORTED 1
+
 /*
  * This is the prefix ("fuse" by default) of the name of a FUSE device node
  * in devfs. The suffix is the device number. "/dev/fuse0" is the first FUSE
@@ -27,8 +29,8 @@
  */
 #define FUSE_DEFAULT_BLOCKSIZE             4096
 
-#define FUSE_MIN_BLOCKSIZE                 4096
-#define FUSE_MAX_BLOCKSIZE                 4096
+#define FUSE_MIN_BLOCKSIZE                 512
+#define FUSE_MAX_BLOCKSIZE                 65536
 
 /*
  * This is default I/O size used while accessing the virtual storage devices.
@@ -36,8 +38,8 @@
  */
 #define FUSE_DEFAULT_IOSIZE                4096
 
-#define FUSE_MIN_IOSIZE                    4096
-#define FUSE_MAX_IOSIZE                    4096
+#define FUSE_MIN_IOSIZE                    512
+#define FUSE_MAX_IOSIZE                    65536
 
 #ifdef KERNEL
 
@@ -61,5 +63,12 @@
 #define FUSE_DEFAULT_DAEMON_TIMEOUT        0      /* no timeout */
 #define FUSE_MIN_DAEMON_TIMEOUT            0      /* s */
 #define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
+
+#define FUSE_UNMOUNT_DAEMON_TIMEOUT        20     /* s */
+
+#define FUSE_MAXATTRIBUTESIZE              (128*1024)
+
+#define FUSE_LINK_MAX                      LINK_MAX
+#define FUSE_UIO_BACKUP_MAX                8
 
 #endif /* _FUSE_PARAM_H_ */

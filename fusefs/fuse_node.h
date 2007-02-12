@@ -7,7 +7,9 @@
 #define _FUSE_NODE_H_
 
 #include "fuse_file.h"
+#include "fuse_knote.h"
 #include "fuse_nodehash.h"
+#include <fuse_param.h>
 
 extern errno_t (**fuse_vnode_operations)(void *);
 
@@ -17,7 +19,10 @@ enum {
     kHNodeMagic     = 'HNOD',
 };
 
-#define FN_CREATING      0x00000001
+#define FN_CREATING  0x00000001
+#define FN_REVOKING  0x00000002
+#define FN_DIRECT_IO 0x00000004
+#define FN_HAS_ACL   0x00000008
 
 struct fuse_vnode_data {
     uint32_t   fMagic;
@@ -33,6 +38,10 @@ struct fuse_vnode_data {
     int        flag;
     int        flags;
     uint32_t   c_flag;
+
+#if MACFUSE_ENABLE_UNSUPPORTED
+    struct klist c_knotes;
+#endif /* MACFUSE_ENABLE_UNSUPPORTED */
 
     /*
      * The nodelock must be held when data in the FUSE node is accessed or
@@ -67,7 +76,8 @@ typedef struct fuse_vnode_data * fusenode_t;
 
 #define FUSE_NULL_ID 0
 
-static __inline__ void
+static __inline__
+void
 fuse_invalidate_attr(vnode_t vp)
 {
     if (VTOFUD(vp)) {

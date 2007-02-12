@@ -34,16 +34,27 @@ static __inline__ void fuse_setup_ihead(struct fuse_in_header *ihead,
                                         enum fuse_opcode op, size_t blen,
                                         vfs_context_t context);
 
-static fuse_handler_t      fuse_standard_handler;
+static fuse_handler_t  fuse_standard_handler;
 
 void
 fiov_init(struct fuse_iov *fiov, size_t size)
 {
+    uint32_t msize = FU_AT_LEAST(size);
+
     debug_printf("fiov=%p, size=%x\n", fiov, size);
 
     fiov->len = 0;
-    MALLOC(fiov->base, void *, FU_AT_LEAST(size), M_TEMP, M_WAITOK | M_ZERO);
-    fiov->allocated_size = FU_AT_LEAST(size);
+
+    fiov->base = FUSE_OSMalloc(msize, fuse_malloc_tag);
+    if (!fiov->base) {
+        panic("MacFUSE: OSMalloc failed in fiov_init");
+    }
+
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_iov_current);
+
+    bzero(fiov->base, msize);
+
+    fiov->allocated_size = msize;
     fiov->credit = fuse_iov_credit;
 }
 
@@ -52,24 +63,10 @@ fiov_teardown(struct fuse_iov *fiov)
 {
     debug_printf("fiov=%p\n", fiov);
 
-    FREE(fiov->base, M_TEMP);
-}
+    FUSE_OSFree(fiov->base, fiov->allocated_size, fuse_malloc_tag);
+    fiov->allocated_size = 0;
 
-/*
- * XXX: Consider using something like kern_os_{malloc,free,realloc}()
- */
-static __inline__ void *
-TEMPORARY_KLUDGE_realloc(void *oldptr, int oldsize, int newsize)
-{
-    void *data;
-
-    debug_printf("KLUDGE: TEMPORARY_KLUDGE_realloc(old=%d new=%d) called\n",
-                 oldsize, newsize);
-
-    MALLOC(data, void *, newsize, M_TEMP, M_WAITOK);
-    bcopy(oldptr, data, oldsize);
-    _FREE(oldptr, M_TEMP);
-    return (data);
+    FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_iov_current);
 }
 
 void
@@ -82,8 +79,8 @@ fiov_adjust(struct fuse_iov *fiov, size_t size)
          fiov->allocated_size - size > fuse_iov_permanent_bufsize &&
              --fiov->credit < 0)) {
 
-        fiov->base = TEMPORARY_KLUDGE_realloc(fiov->base, fiov->allocated_size,
-                                              FU_AT_LEAST(size));
+        fiov->base = FUSE_OSRealloc(fiov->base, fiov->allocated_size,
+                                    FU_AT_LEAST(size));
         if (!fiov->base) {
             panic("MacFUSE: realloc failed");
         }
@@ -111,7 +108,15 @@ fticket_alloc(struct fuse_data *data)
 
     debug_printf("data=%p\n", data);
 
-    MALLOC(tick, void *, sizeof(*tick), M_TEMP, M_TEMP | M_ZERO);
+    tick = (struct fuse_ticket *)FUSE_OSMalloc(sizeof(struct fuse_ticket),
+                                               fuse_malloc_tag);
+    if (!tick) {
+        panic("MacFUSE: OSMalloc failed in fticket_alloc");
+    }
+
+    FUSE_OSAddAtomic(1, (SInt32 *)&fuse_tickets_current);
+
+    bzero(tick, sizeof(struct fuse_ticket));
 
     tick->tk_unique = data->ticketer++;
     tick->tk_data = data;
@@ -126,7 +131,8 @@ fticket_alloc(struct fuse_data *data)
     return (tick);
 }
 
-static __inline__ void
+static __inline__
+void
 fticket_refresh(struct fuse_ticket *tick)
 {
     debug_printf("tick=%p\n", tick);
@@ -159,7 +165,9 @@ fticket_destroy(struct fuse_ticket *tick)
     tick->tk_aw_mtx = NULL;
     fiov_teardown(&tick->tk_aw_fiov);
 
-    FREE(tick, M_TEMP);
+    FUSE_OSFree(tick, sizeof(struct fuse_ticket), fuse_malloc_tag);
+
+    FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_tickets_current);
 }
 
 static int
@@ -224,7 +232,8 @@ out:
     return (err);
 }
 
-static __inline__ int
+static __inline__
+int
 fticket_aw_pull_uio(struct fuse_ticket *tick, uio_t uio)
 {
     int err = 0;
@@ -286,7 +295,13 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
 
     debug_printf("fdev=%p, p=%p\n", fdev, p);
 
-    MALLOC(data, void *, sizeof(struct fuse_data), M_TEMP, M_WAITOK | M_ZERO);
+    data = (struct fuse_data *)FUSE_OSMalloc(sizeof(struct fuse_data),
+                                             fuse_malloc_tag);
+    if (!data) {
+        panic("MacFUSE: OSMalloc failed in fdata_alloc");
+    }
+
+    bzero(data, sizeof(struct fuse_data));
 
     data->mpri = FM_NOMOUNTED;
     data->fdev = fdev;
@@ -348,7 +363,7 @@ fdata_destroy(struct fuse_data *data)
     data->mhierlock = NULL;
 #endif
 
-    FREE(data, M_TEMP);
+    FUSE_OSFree(data, sizeof(struct fuse_data), fuse_malloc_tag);
 }
 
 int
@@ -378,10 +393,11 @@ fdata_kick_set(struct fuse_data *data)
     wakeup(&data->ticketer);
     fuse_lck_mtx_unlock(data->ticket_mtx);
 
-    vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
+    vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_NOTRESP, 0);
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_push_freeticks(struct fuse_ticket *tick)
 {
     debug_printf("tick=%p\n", tick);
@@ -391,7 +407,8 @@ fuse_push_freeticks(struct fuse_ticket *tick)
     tick->tk_data->freeticket_counter++;
 }
 
-static __inline__ struct fuse_ticket *
+static __inline__
+struct fuse_ticket *
 fuse_pop_freeticks(struct fuse_data *data)
 {
     struct fuse_ticket *tick;
@@ -411,7 +428,8 @@ fuse_pop_freeticks(struct fuse_data *data)
     return tick;
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_push_allticks(struct fuse_ticket *tick)
 {
     debug_printf("tick=%p\n", tick);
@@ -420,7 +438,8 @@ fuse_push_allticks(struct fuse_ticket *tick)
                       tk_alltickets_link);
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_remove_allticks(struct fuse_ticket *tick)
 {
     debug_printf("tick=%p\n", tick);
@@ -634,10 +653,11 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     case FUSE_STATFS:
-        if (fuse_libabi_geq(tick->tk_data, 7, 4))
+        if (fuse_libabi_geq(tick->tk_data, 7, 4)) {
             err = blen == sizeof(struct fuse_statfs_out) ? 0 : EINVAL;
-        else
+        } else {
             err = blen == FUSE_COMPAT_STATFS_SIZE ? 0 : EINVAL;
+        }
         break;
 
     case FUSE_RELEASE:
@@ -649,15 +669,19 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     case FUSE_SETXATTR:
+        /* TBD */
         break;
 
     case FUSE_GETXATTR:
+        /* TBD */
         break;
 
     case FUSE_LISTXATTR:
+        /* TBD */
         break;
 
     case FUSE_REMOVEXATTR:
+        /* TBD */
         break;
 
     case FUSE_FLUSH:
@@ -665,10 +689,11 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
         break;
 
     case FUSE_INIT:
-        if (blen == sizeof(struct fuse_init_out) || blen == 8)
+        if (blen == sizeof(struct fuse_init_out) || blen == 8) {
             err = 0;
-        else
+        } else {
             err = EINVAL;
+        }
         break;
 
     case FUSE_OPENDIR:
@@ -711,7 +736,16 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
                       sizeof(struct fuse_open_out) ? 0 : EINVAL;
         break;
 
+    case FUSE_INTERRUPT:
+        /* TBD */
+        break;
+
+    case FUSE_BMAP:
+        /* TBD */
+        break;
+
     case FUSE_DESTROY:
+        /* TBD */
         break;
 
     default:

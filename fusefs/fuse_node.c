@@ -4,9 +4,11 @@
  */
 
 #include "fuse.h"
+#include "fuse_internal.h"
 #include "fuse_ipc.h"
 #include "fuse_locking.h"
 #include "fuse_node.h"
+#include "fuse_sysctl.h"
 
 void
 FSNodeScrub(struct fuse_vnode_data *fvdat)
@@ -112,6 +114,7 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
             } else {
                 fvdat->parent = dvp;
             }
+            FUSE_OSAddAtomic(1, (SInt32 *)&fuse_vnodes_current);
         } else {
             if (HNodeAttachVNodeFailed(hn, 0 /* forkIndex */)) {
                 FSNodeScrub(fvdat);
@@ -138,14 +141,14 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
 int
 fuse_vget_i(mount_t               mp,
             uint64_t              nodeid,
-            vfs_context_t         context,
+   __unused vfs_context_t         context,
             vnode_t               dvp,
             vnode_t              *vpp,
             struct componentname *cnp,
             enum vtype            vtyp,
             uint64_t              size,
-            enum vget_mode        mode,
-            uint64_t              parentid)
+   __unused enum vget_mode        mode,
+   __unused uint64_t              parentid)
 {
     int err = 0;
 
@@ -157,7 +160,7 @@ fuse_vget_i(mount_t               mp,
 
 #if 0 //XROOT
     if (nodeid == FUSE_ROOT_ID) {
-        *vpp = fusefs_get_data(mp)->rvp; //XROOT
+        *vpp = fuse_get_mpdata(mp)->rvp; //XROOT
         err = vnode_get(*vpp);
         if (err) {
             *vpp = NULLVP;
@@ -172,9 +175,11 @@ fuse_vget_i(mount_t               mp,
         return err;
     }
 
-    cache_enter(dvp, *vpp, cnp);
+    if (!fuse_isnovncache_mp(mp)) {
+        cache_enter(dvp, *vpp, cnp);
+    }
 
-found:
+/* found: */
     VTOFUD(*vpp)->nlookup++;
 
     return 0;

@@ -11,9 +11,12 @@
 #include <sys/kernel_types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/ubc.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/xattr.h>
 
+#include <fuse_ioctl.h>
 #include "fuse_ipc.h"
 #include "fuse_node.h"
 
@@ -82,15 +85,14 @@ fuse_internal_attr_fat2vat(vnode_t            vp,
                            struct vnode_attr *vap)
 {
     struct timespec t;
-    struct fuse_data *data;
     mount_t mp = vnode_mount(vp);
+    struct fuse_data *data = fuse_get_mpdata(mp);
 
     debug_printf("mp=%p, fat=%p, vap=%p\n", mp, fat, vap);
 
     VATTR_INIT(vap);
 
     VATTR_RETURN(vap, va_fsid, vfs_statfs(mp)->f_fsid.val[0]);
-
     VATTR_RETURN(vap, va_fileid, fat->ino);
     VATTR_RETURN(vap, va_linkid, fat->ino);
 
@@ -98,13 +100,21 @@ fuse_internal_attr_fat2vat(vnode_t            vp,
      * If we have asynchronous writes enabled, our local in-kernel size
      * takes precedence over what the daemon thinks.
      */
+    /* ATTR_FUDGE_CASE */
     if (!vfs_issynchronous(mp)) {
         struct fuse_vnode_data *fvdat = VTOFUD(vp);
         fat->size = fvdat->filesize;    
     }
     VATTR_RETURN(vap, va_data_size, fat->size);
 
-    VATTR_RETURN(vap, va_total_alloc, fat->blocks * S_BLKSIZE);
+    /*
+     * The kernel will compute the following for us if we leave them
+     * untouched (and have sane values in statvfs):
+     *
+     * va_total_size
+     * va_data_alloc
+     * va_total_alloc
+     */
 
     t.tv_sec = fat->atime; t.tv_nsec = fat->atimensec;
     VATTR_RETURN(vap, va_access_time, t);
@@ -117,16 +127,59 @@ fuse_internal_attr_fat2vat(vnode_t            vp,
 
     VATTR_RETURN(vap, va_mode, fat->mode & ~S_IFMT);
     VATTR_RETURN(vap, va_nlink, fat->nlink);
-    VATTR_RETURN(vap, va_uid, fat->uid); // or 99 for experiments
-    VATTR_RETURN(vap, va_gid, fat->gid); // or 99 for experiments
+    VATTR_RETURN(vap, va_uid, fat->uid);
+    VATTR_RETURN(vap, va_gid, fat->gid);
     VATTR_RETURN(vap, va_rdev, fat->rdev);
 
     VATTR_RETURN(vap, va_type, IFTOVT(fat->mode));
 
-    data = fusefs_get_data(mp);
     VATTR_RETURN(vap, va_iosize, data->iosize);
 
     VATTR_RETURN(vap, va_flags, 0);
+}
+
+static __inline__
+void
+fuse_internal_attr_loadvap(vnode_t vp, struct vnode_attr *out_vap)
+{
+    mount_t mp = vnode_mount(vp);
+    struct vnode_attr *in_vap = VTOVA(vp);
+
+    if (in_vap == out_vap) {
+        return;
+    }
+
+    VATTR_RETURN(out_vap, va_fsid, in_vap->va_fsid);
+    VATTR_RETURN(out_vap, va_fileid, in_vap->va_fileid);
+    VATTR_RETURN(out_vap, va_linkid, in_vap->va_linkid);
+
+    /*
+     * If we have asynchronous writes enabled, our local in-kernel size
+     * takes precedence over what the daemon thinks.
+     */
+    /* ATTR_FUDGE_CASE */
+    if (!vfs_issynchronous(mp)) {
+        VATTR_RETURN(out_vap, va_data_size, VTOFUD(vp)->filesize);
+        VATTR_RETURN(in_vap,  va_data_size, VTOFUD(vp)->filesize);
+    } else {
+        VATTR_RETURN(out_vap, va_data_size, in_vap->va_data_size);
+    }
+
+    VATTR_RETURN(out_vap, va_access_time, in_vap->va_access_time);
+    VATTR_RETURN(out_vap, va_change_time, in_vap->va_change_time);
+    VATTR_RETURN(out_vap, va_modify_time, in_vap->va_modify_time);
+
+    VATTR_RETURN(out_vap, va_mode, in_vap->va_mode);
+    VATTR_RETURN(out_vap, va_nlink, in_vap->va_nlink);
+    VATTR_RETURN(out_vap, va_uid, in_vap->va_uid);
+    VATTR_RETURN(out_vap, va_gid, in_vap->va_gid);
+    VATTR_RETURN(out_vap, va_rdev, in_vap->va_rdev);
+
+    VATTR_RETURN(out_vap, va_type, in_vap->va_type);
+
+    VATTR_RETURN(out_vap, va_iosize, in_vap->va_iosize);
+
+    VATTR_RETURN(out_vap, va_flags, in_vap->va_flags);
 }
 
 #define timespecadd(vvp, uvp)                  \
@@ -161,6 +214,13 @@ fuse_internal_fsync(vnode_t                 vp,
 
 int
 fuse_internal_fsync_callback(struct fuse_ticket *tick, uio_t uio);
+
+/* ioctl */
+
+int
+fuse_internal_ioctl_avfi(vnode_t                 vp,
+                         vfs_context_t           context,
+                         struct fuse_avfi_ioctl *avfi);
 
 /* readdir */
 
@@ -200,6 +260,11 @@ fuse_internal_rename(vnode_t               fdvp,
                      struct componentname *tcnp,
                      vfs_context_t         context);
 
+/* revoke */
+
+int
+fuse_internal_revoke(vnode_t vp, int flags, vfs_context_t context);
+
 /* strategy */
 
 int
@@ -207,6 +272,33 @@ fuse_internal_strategy(vnode_t vp, buf_t bp);
 
 errno_t
 fuse_internal_strategy_buf(struct vnop_strategy_args *ap);
+
+
+/* xattr */
+
+/*
+ * By default, we compile to have these attributes /not/ handled by the
+ * user-space file system. Feel free to change this and recompile.
+ */
+static __inline__
+int
+fuse_is_shortcircuit_xattr(char *name)
+{
+    if (bcmp(name, XATTR_FINDERINFO_NAME, sizeof(XATTR_FINDERINFO_NAME)) == 0) {
+        return 1;
+    }
+
+    if (bcmp(name, XATTR_RESOURCEFORK_NAME,
+             sizeof(XATTR_RESOURCEFORK_NAME)) == 0) {
+        return 1;
+    }
+
+    if (bcmp(name, KAUTH_FILESEC_XATTR, sizeof(KAUTH_FILESEC_XATTR)) == 0) {
+        return 1;
+    }
+
+    return 0;
+}
 
 
 /* entity creation */
@@ -286,21 +378,182 @@ void fuse_internal_send_init(struct fuse_data *data, vfs_context_t context);
 
 static __inline__
 int
-fuse_isdeadfs(vnode_t vp)
+fuse_isdeadfs_mp(mount_t mp)
 {
-    mount_t mp = vnode_mount(vp);
-    struct fuse_data *data = fusefs_get_data(mp);
-
-    return (data->dataflag & FSESS_KICK);
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_KICK);
 }
 
 static __inline__
 int
-fuse_isdeadfs_mp(mount_t mp)
+fuse_isdeadfs(vnode_t vp)
 {
-    struct fuse_data *data = fusefs_get_data(mp);
+    return (fuse_isdeadfs_mp(vnode_mount(vp)));
+}
 
-    return (data->dataflag & FSESS_KICK);
+static __inline__
+int
+fuse_isdirectio(vnode_t vp)
+{
+    /* Try global first. */
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_DIRECT_IO) {
+        return 1;
+    }
+
+    return (VTOFUD(vp)->flag & FN_DIRECT_IO);
+}
+
+static __inline__
+int
+fuse_isdirectio_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_DIRECT_IO);
+}
+
+#if 0
+static __inline__
+int
+fuse_isnoattrcache(vnode_t vp)
+{
+    /* Try global first. */
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_ATTRCACHE) {
+        return 1;
+    }
+
+    return 0;
+}
+
+static __inline__
+int
+fuse_isnoattrcache_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_ATTRCACHE);
+}
+#endif
+
+static __inline__
+int
+fuse_isnoreadahead(vnode_t vp)
+{
+    /* Try global first. */
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_READAHEAD) {
+        return 1;
+    }
+    
+    /* In our model, direct_io implies no readahead. */
+    return fuse_isdirectio(vp);
+}
+
+#if 0
+static __inline__
+int
+fuse_isnoreadahead_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_READAHEAD);
+}
+#endif
+
+static __inline__
+int
+fuse_isnosyncwrites_mp(mount_t mp)
+{
+    /* direct_io implies we won't have nosyncwrites. */
+    if (fuse_isdirectio_mp(mp)) {
+        return 0;
+    }
+
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_SYNCWRITES);
+}
+
+static __inline__
+void
+fuse_setnosyncwrites_mp(mount_t mp)
+{
+    vfs_clearflags(mp, MNT_SYNCHRONOUS);
+    vfs_setflags(mp, MNT_ASYNC);
+    fuse_get_mpdata(mp)->dataflag |= FSESS_NO_SYNCWRITES;
+}
+
+static __inline__
+void
+fuse_clearnosyncwrites_mp(mount_t mp)
+{
+    if (!vfs_issynchronous(mp)) {
+        vfs_clearflags(mp, MNT_ASYNC);
+        vfs_setflags(mp, MNT_SYNCHRONOUS);
+        fuse_get_mpdata(mp)->dataflag &= ~FSESS_NO_SYNCWRITES;
+    }
+}
+
+static __inline__
+int
+fuse_isnoubc(vnode_t vp)
+{
+    /* Try global first. */
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_UBC) {
+        return 1;
+    }
+    
+    /* In our model, direct_io implies no UBC. */
+    return fuse_isdirectio(vp);
+}
+
+static __inline__
+int
+fuse_isnoubc_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_UBC);
+}
+
+static __inline__
+int
+fuse_isnovncache(vnode_t vp)
+{
+    /* Try global first. */
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_VNCACHE) {
+        return 1;
+    }
+    
+    /* In our model, direct_io implies no vncache for this vnode. */
+    return fuse_isdirectio(vp);
+}
+
+static __inline__
+int
+fuse_isnovncache_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_VNCACHE);
+}
+
+static __inline__
+uint32_t
+fuse_round_powerof2(uint32_t size)
+{
+    uint32_t result = 512;
+
+    while (result < size) {
+        result <<= 1;
+    }
+
+    return result;
+}
+
+static __inline__
+uint32_t
+fuse_round_size(uint32_t size, uint32_t b_min, uint32_t b_max)
+{
+    uint32_t candidate = fuse_round_powerof2(size);
+
+    /* We assume that b_min and b_max will already be powers of 2. */
+
+    if (candidate < b_min) {
+        candidate = b_min;
+    }
+
+    if (candidate > b_max) {
+        candidate = b_max;
+    }
+
+    return candidate;
 }
 
 #endif /* _FUSE_INTERNAL_H_ */

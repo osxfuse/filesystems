@@ -27,6 +27,9 @@ OSMallocTag  fuse_malloc_tag = NULL;
 extern struct vfs_fsentry fuse_vfs_entry;
 extern vfstable_t         fuse_vfs_table_ref;
 
+kern_return_t fusefs_start(kmod_info_t *ki, void *d);
+kern_return_t fusefs_stop(kmod_info_t *ki, void *d);
+
 static void
 fini_stuff(void)
 {
@@ -61,7 +64,7 @@ init_stuff(void)
 {
     kern_return_t ret = KERN_SUCCESS;
     
-    fuse_malloc_tag = OSMalloc_Tagalloc("com.google.filesystems.fuse",
+    fuse_malloc_tag = OSMalloc_Tagalloc(MACFUSE_BUNDLE_IDENTIFIER,
                                         OSMT_DEFAULT);
     if (fuse_malloc_tag == NULL) {
         ret = KERN_FAILURE;
@@ -72,7 +75,7 @@ init_stuff(void)
     lck_attr_setdebug(fuse_lock_attr);
 
     if (ret == KERN_SUCCESS) {
-        fuse_lock_group = lck_grp_alloc_init("com.google.filesystems.fuse",
+        fuse_lock_group = lck_grp_alloc_init(MACFUSE_BUNDLE_IDENTIFIER,
                                              fuse_group_attr);
         if (fuse_lock_group == NULL) {
             ret = KERN_FAILURE;
@@ -94,7 +97,7 @@ init_stuff(void)
 }
 
 kern_return_t
-fusefs_start(kmod_info_t *ki, void *d)
+fusefs_start(__unused kmod_info_t *ki, __unused void *d)
 {
     int ret;
 
@@ -121,6 +124,9 @@ fusefs_start(kmod_info_t *ki, void *d)
 
     fuse_sysctl_start();
 
+    IOLog("MacFUSE: starting (version %s, %s)\n",
+          MACFUSE_VERSION, MACFUSE_TIMESTAMP);
+
     return KERN_SUCCESS;
 
 error:
@@ -132,7 +138,7 @@ error:
 }
 
 kern_return_t
-fusefs_stop(kmod_info_t *ki, void *d)
+fusefs_stop(__unused kmod_info_t *ki, __unused void *d)
 {
     int ret;
 
@@ -150,6 +156,9 @@ fusefs_stop(kmod_info_t *ki, void *d)
     fini_stuff();
 
     fuse_sysctl_stop();
+
+    IOLog("MacFUSE: stopping (version %s, %s)\n",
+          MACFUSE_VERSION, MACFUSE_TIMESTAMP);
 
     return KERN_SUCCESS;
 }

@@ -30,9 +30,12 @@
 #include "fuse.h"
 #include "fuse_file.h"
 #include "fuse_internal.h"
+#include <fuse_ioctl.h>
 #include "fuse_ipc.h"
+#include "fuse_knote.h"
 #include "fuse_node.h"
 #include "fuse_nodehash.h"
+#include <fuse_param.h>
 #include "fuse_sysctl.h"
 #include "fuse_vnops.h"
 
@@ -52,7 +55,7 @@ fuse_vnop_access(struct vnop_access_args *ap)
     vfs_context_t context = ap->a_context;
     struct fuse_access_param facp;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
-    struct fuse_data *data = fusefs_get_data(vnode_mount(vp));
+    struct fuse_data *data = fuse_get_mpdata(vnode_mount(vp));
 
     fuse_trace_printf_vnop();
 
@@ -112,7 +115,7 @@ fuse_vnop_blktooff(struct vnop_blktooff_args *ap)
         return EIO;
     }
 
-    data = fusefs_get_data(vnode_mount(vp));
+    data = fuse_get_mpdata(vnode_mount(vp));
 
     *offsetPtr = lblkno * (off_t)(data->blocksize);
 
@@ -163,7 +166,7 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
     }
 
     fvdat = VTOFUD(vp);
-    data = fusefs_get_data(vnode_mount(vp));
+    data = fuse_get_mpdata(vnode_mount(vp));
 
     *bpnPtr = foffset / data->blocksize;
 
@@ -198,7 +201,7 @@ static int
 fuse_vnop_close(struct vnop_close_args *ap)
 {
     vnode_t vp = ap->a_vp;
-    fufh_type_t             fufh_type;
+    fufh_type_t fufh_type;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
 
@@ -214,16 +217,26 @@ fuse_vnop_close(struct vnop_close_args *ap)
         fufh_type = fuse_filehandle_xlate_from_fflags(ap->a_fflag);
     }
 
+    /* vclean() calls VNOP_CLOSE with fflag set to IO_NDELAY. TBD: handle. */
+
     fufh = &(fvdat->fufh[fufh_type]);
 
     if (!(fufh->fufh_flags & FUFH_VALID)) {
-        panic("MacFUSE: fufh type (%d) found to be invalid in close()\n",
-              fufh_type);
+        if ((fufh->open_count == 0) && !(fufh->fufh_flags & FUFH_MAPPED)) {
+            return 0;
+        }
+        panic("MacFUSE: fufh invalid in close [type=%d oc=%d vtype=%d cf=%d]\n",
+              fufh_type, fufh->open_count, vnode_vtype(vp), ap->a_fflag);
     }
 
     fufh->open_count--;
 
-    if ((fufh->open_count == 0) && !(fufh->fufh_flags & FUFH_MAPPED)) {
+    if (vnode_hasdirtyblks(vp)) {
+        (void)cluster_push(vp, IO_SYNC | IO_CLOSE);
+    }
+
+    if ((fufh->open_count == 0) &&
+        !(fufh->fufh_flags & FUFH_MAPPED)) {
         (void)fuse_filehandle_put(vp, ap->a_context, fufh_type, 0);
     }
 
@@ -245,9 +258,10 @@ fuse_vnop_create(struct vnop_create_args *ap)
 {
     vnode_t  dvp = ap->a_dvp;
     vnode_t *vpp = ap->a_vpp;
+    vfs_context_t context = ap->a_context;
+
     struct componentname *cnp = ap->a_cnp;
     struct vnode_attr    *vap = ap->a_vap;
-    vfs_context_t context = ap->a_context;
 
     struct fuse_dispatcher  fdi;
     struct fuse_dispatcher *fdip = &fdi;
@@ -272,14 +286,14 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     // XXX: Will we ever want devices?
     if ((vap->va_type != VREG) ||
-        fusefs_get_data(mp)->dataflag & FSESS_NOCREATE) {
+        fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL_CREATE) {
         goto good_old;
     }
 
     debug_printf("parent nid = %llu, mode = %x\n", parentnid, mode);
 
     fdisp_init(fdip, sizeof(*foi) + cnp->cn_namelen + 1);
-    if (fusefs_get_data(vnode_mount(dvp))->dataflag & FSESS_NOCREATE) {
+    if (fuse_get_mpdata(vnode_mount(dvp))->noimpl & FSESS_NOIMPL_CREATE) {
         debug_printf("eh, daemon doesn't implement create?\n");
         goto good_old;
     }
@@ -298,7 +312,7 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     if (err == ENOSYS) {
         debug_printf("create: got ENOSYS from daemon\n");
-        fusefs_get_data(vnode_mount(dvp))->dataflag |= FSESS_NOCREATE;
+        fuse_get_mpdata(vnode_mount(dvp))->noimpl |= FSESS_NOIMPL_CREATE;
         fdip->tick = NULL;
         goto good_old;
     } else if (err) {
@@ -365,6 +379,7 @@ bringup:
         fufh->fh_id = x_fh_id;
         fufh->open_flags = x_open_flags;
 
+        FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_current);
 #if 0
         struct fuse_dispatcher x_fdi;
         struct fuse_release_in *x_fri;
@@ -378,7 +393,13 @@ bringup:
 #endif
     }
 
-    cache_enter(dvp, *vpp, cnp);
+    if (!fuse_isnovncache_mp(mp)) {
+        cache_enter(dvp, *vpp, cnp);
+    }
+
+    fuse_ticket_drop(fdip->tick);
+
+    FUSE_KNOTE(dvp, NOTE_WRITE);
 
     return (0);
 
@@ -438,8 +459,8 @@ fuse_vnop_fsync(struct vnop_fsync_args *ap)
     // can call vnode_isinuse().
     // can call ubc_sync_range().
 
-    if (!(fusefs_get_data(vnode_mount(vp))->dataflag &
-        vnode_vtype(vp) == VDIR ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
+    if (!(fuse_get_mpdata(vnode_mount(vp))->dataflag &
+        (vnode_vtype(vp) == VDIR) ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
         goto out;
     }
 
@@ -482,15 +503,15 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
 
     fuse_trace_printf_vnop();
 
-    dataflag = fusefs_get_data(vnode_mount(vp))->dataflag;
+    dataflag = fuse_get_mpdata(vnode_mount(vp))->dataflag;
 
     /* Note that we are not bailing out on a dead file system just yet. */
-
     /* look for cached attributes */
     nanouptime(&uptsp);
     if (fusetimespeccmp(&uptsp, &VTOFUD(vp)->cached_attrs_valid, <=)) {
         if (vap != VTOVA(vp)) {
-            memcpy(vap, VTOVA(vp), sizeof(*vap));
+            //memcpy(vap, VTOVA(vp), sizeof(*vap));
+            fuse_internal_attr_loadvap(vp, vap);
         }
         debug_printf("fuse_getattr a: returning 0\n");
         return (0);
@@ -498,7 +519,7 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
 
     if (!(dataflag & FSESS_INITED)) {
         if (!vnode_isvroot(vp)) {
-            fdata_kick_set(fusefs_get_data(vnode_mount(vp)));
+            fdata_kick_set(fuse_get_mpdata(vnode_mount(vp)));
             err = ENOTCONN;
             debug_printf("fuse_getattr b: returning ENOTCONN\n");
             return (err);
@@ -517,12 +538,17 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
     }
 
     cache_attrs(vp, (struct fuse_attr_out *)fdi.answ);
+
+    fuse_internal_attr_loadvap(vp, vap);
+
+#if 0
     if (vap != VTOVA(vp)) {
         memcpy(vap, VTOVA(vp), sizeof(*vap));
     }
+#endif
 
-    if (vnode_isreg(vp) && (dataflag & FSESS_NO_UBC)) {
-
+    /* ATTR_FUDGE_CASE */
+    if (vnode_isreg(vp) && fuse_isnoubc(vp)) {
         /*
          * This is for those cases when the file size changed without us
          * knowing, and we want to catch up.
@@ -591,6 +617,7 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
     struct fuse_dispatcher    fdi;
     struct fuse_getxattr_in  *fgxi; 
     struct fuse_getxattr_out *fgxo;
+    struct fuse_data         *data;
 
     int err = 0;
     int namelen;      
@@ -601,10 +628,19 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
         return EBADF;
     }
 
+    data = fuse_get_mpdata(vnode_mount(vp));
+    if (data->noimpl & FSESS_NOIMPL_GETXATTR) {
+        return ENOTSUP;
+    }
+
     if (ap->a_name == NULL || ap->a_name[0] == '\0') {
         return EINVAL;
     }
-    
+
+    if (fuse_is_shortcircuit_xattr(ap->a_name)) {
+        return ENOTSUP;
+    }
+
     namelen = strlen(ap->a_name);
 
     fdisp_init(&fdi, sizeof(*fgxi) + namelen + 1);
@@ -622,6 +658,10 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
 
     err = fdisp_wait_answ(&fdi);
     if (err) {
+        if (err == ENOSYS) {
+            data->noimpl |= FSESS_NOIMPL_GETXATTR;
+            return ENOTSUP;
+        }
         return err;  
     }                
                      
@@ -655,16 +695,18 @@ fuse_vnop_inactive(struct vnop_inactive_args *ap)
     vnode_t vp = ap->a_vp;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
-    int type;
+    int fufh_type;
 
     fuse_trace_printf_vnop();
 
-    for (type = 0; type < FUFH_MAXTYPE; type++) {
-        fufh = &(fvdat->fufh[type]);
+    for (fufh_type = 0; fufh_type < FUFH_MAXTYPE; fufh_type++) {
+
+        fufh = &(fvdat->fufh[fufh_type]);
+
         if (fufh->fufh_flags & FUFH_VALID) {
             fufh->fufh_flags &= ~FUFH_MAPPED;
             fufh->open_count = 0;
-            (void)fuse_filehandle_put(vp, ap->a_context, type, 0);
+            (void)fuse_filehandle_put(vp, ap->a_context, fufh_type, 0);
         }
     }
 
@@ -684,23 +726,152 @@ fuse_vnop_inactive(struct vnop_inactive_args *ap)
 static int
 fuse_vnop_ioctl(struct vnop_ioctl_args *ap)
 {
-/*
- * We'll use ubc_sync_range(vp, 0, filesize, UBC_INVALIDATE) to invalidate a
- * given file's buffer cache. Additionally, we can use one of the UBC_PUSHALL
- * or UBC_PUSHDIRTY bits. The former pushes both dirty and precious pages to
- * the backing store. The latter only cleans any dirty pages.
- *
- * ret = ubc_sync_range(vp, 0, filesize, UBC_INVALIDATE);
- *
- */
+    int ret = EINVAL;
+
+    vnode_t vp = ap->a_vp;
+    u_long cmd = ap->a_command;
+    vfs_context_t context = ap->a_context;
+
     fuse_trace_printf_vnop();
 
-    if (fuse_isdeadfs_nop(ap->a_vp)) {
+    if (fuse_isdeadfs_nop(vp)) {
         return EBADF;
     }
 
-    return EPERM;
+    switch (cmd) {
+    case FSCTLSETACLSTATE:
+        {
+            int state;
+            mount_t mp;
+            struct fuse_data *data;
+
+            if (ap->a_data == NULL) {
+                return EINVAL;
+            }
+
+            mp = vnode_mount(vp);
+            data = fuse_get_mpdata(mp);
+
+            if (!fuse_vfs_context_issuser(context) &&
+                !(fuse_match_cred(data->daemoncred,
+                                  vfs_context_ucred(context)))) {
+                return EPERM;
+            }
+
+            state = *(int *)ap->a_data;
+
+            if (state == 0) {
+                vfs_clearextendedsecurity(mp);
+            } else if (state == 1) {
+                vfs_setextendedsecurity(mp);
+            } else {
+                return EINVAL;
+            }
+
+            return 0;
+        }
+        break;
+
+    case FSCTLALTERVNODEFORINODE:
+        /*
+         * This is the fsctl() version of the AVFI device ioctl's in
+         * fuse_device.c. Since the device ioctl's must be used from
+         * within the file system (we don't allow multiple device opens),
+         * it's rather painful to test/experiment with them. The fsctl
+         * version is easier to use. To simplify things, the "path" in
+         * the fsctl() call /must/ be the root of the file system.
+         */
+        if (!vnode_isvroot(vp)) {
+            return EINVAL;
+        }
+
+        ret = fuse_internal_ioctl_avfi(vp, context,
+                                       (struct fuse_avfi_ioctl *)(ap->a_data));
+        break;
+
+    default:
+        break;
+    }
+
+    return ret;
 }
+
+
+#if MACFUSE_ENABLE_UNSUPPORTED
+
+#include "fuse_knote.h"
+
+/*
+    struct vnop_kqfilt_add_args {
+        struct vnodeop_desc  *a_desc;
+        vnode_t               a_vp;
+        struct knote         *a_kn;
+        struct proc          *p;
+        vfs_context_t         a_context;
+    };
+ */
+static int
+fuse_vnop_kqfilt_add(struct vnop_kqfilt_add_args *ap)
+{
+    vnode_t vp = ap->a_vp;
+    struct knote *kn = ap->a_kn;
+
+    fuse_trace_printf_vnop();
+
+    switch (kn->kn_filter) {
+    case EVFILT_READ:
+        if (vnode_isreg(vp)) {
+            kn->kn_fop = &fuseread_filtops;
+        } else {
+            return EINVAL;
+        }
+        break;
+
+    case EVFILT_WRITE:
+        if (vnode_isreg(vp)) {
+            kn->kn_fop = &fusewrite_filtops;
+        } else {
+            return EINVAL;
+        }
+        break;
+
+    case EVFILT_VNODE:
+        kn->kn_fop = &fusevnode_filtops;
+        break;
+
+    default:
+        return 1;
+    }
+
+    kn->kn_hook = (caddr_t)vp;
+    kn->kn_hookid = vnode_vid(vp);
+
+    /* lock */
+    KNOTE_ATTACH(&VTOFUD(vp)->c_knotes, kn);
+    /* unlock */
+
+    return 0;
+}
+
+
+/*
+    struct vnop_kqfilt_add_args {
+        struct vnodeop_desc  *a_desc;
+        vnode_t               a_vp;
+        uintptr_t             ident;
+        vfs_context_t         a_context;
+    };
+*/
+static int
+fuse_vnop_kqfilt_remove(__unused struct vnop_kqfilt_remove_args *ap)
+{
+    fuse_trace_printf_vnop();
+
+    return ENOTSUP;
+}
+
+#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+
 
 /*
     struct vnop_link_args {
@@ -719,7 +890,7 @@ fuse_vnop_link(struct vnop_link_args *ap)
     struct componentname *cnp = ap->a_cnp;
     vfs_context_t context = ap->a_context;
 
-    int err = 0;
+    int err;
     struct fuse_dispatcher fdi;
     struct fuse_entry_out *feo;
     struct fuse_link_in    fli;
@@ -750,6 +921,11 @@ fuse_vnop_link(struct vnop_link_args *ap)
     fuse_ticket_drop(fdi.tick);
     fuse_invalidate_attr(tdvp);
     fuse_invalidate_attr(vp);
+    
+    if (err == 0) {
+        FUSE_KNOTE(vp, NOTE_LINK);
+        FUSE_KNOTE(tdvp, NOTE_WRITE);
+    }
 
     return (err);
 }
@@ -777,17 +953,24 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
     };
 */
 {
+    int err = 0;
     vnode_t vp = ap->a_vp;
     uio_t uio = ap->a_uio;
-    struct fuse_dispatcher fdi;
-    struct fuse_getxattr_in *fgxi;
+
+    struct fuse_dispatcher    fdi;
+    struct fuse_getxattr_in  *fgxi;
     struct fuse_getxattr_out *fgxo;
-    int err = 0;
+    struct fuse_data         *data;
 
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(vp)) {
         return EBADF;
+    }
+
+    data = fuse_get_mpdata(vnode_mount(vp));
+    if (data->noimpl & FSESS_NOIMPL_LISTXATTR) {
+        return ENOTSUP;
     }
 
     fdisp_init(&fdi, sizeof(*fgxi));
@@ -801,6 +984,10 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
 
     err = fdisp_wait_answ(&fdi);
     if (err) {
+        if (err == ENOSYS) {
+            data->noimpl |= FSESS_NOIMPL_LISTXATTR;
+            return ENOTSUP;
+        }
         return err;
     }
 
@@ -896,11 +1083,18 @@ fuse_vnop_lookup(struct vnop_lookup_args *ap)
         switch (err) {
 
         case -1: /* positive match */
-            fuse_lookup_cache_hits++;
+            if (fuse_isnovncache(*vpp)) {
+                cache_purge(*vpp);
+                vnode_put(*vpp);
+                *vpp = NULL;
+                FUSE_OSAddAtomic(1, (SInt32 *)&fuse_lookup_cache_overrides);
+                break; /* pretend it's a miss */
+            }
+            FUSE_OSAddAtomic(1, (SInt32 *)&fuse_lookup_cache_hits);
             return 0;
 
         case 0: /* no match in cache */
-            fuse_lookup_cache_misses++;
+            FUSE_OSAddAtomic(1, (SInt32 *)&fuse_lookup_cache_misses);
             break;
 
         case ENOENT: /* negative match */
@@ -916,7 +1110,7 @@ fuse_vnop_lookup(struct vnop_lookup_args *ap)
     op = FUSE_LOOKUP;
 
 calldaemon:
-    fdisp_make(&fdi, op, vnode_mount(dvp), nid, context);
+    fdisp_make(&fdi, op, mp, nid, context);
 
     if (op == FUSE_LOOKUP) {
         memcpy(fdi.indata, cnp->cn_nameptr, cnp->cn_namelen);
@@ -1041,7 +1235,7 @@ calldaemon:
              */   
             //if ((err = fuse_vget_i(vnode_mount(dvp), nid, context,
                 //IFTOVT(fattr->mode), &vp, VG_NORMAL)))
-            if ((err  = fuse_vget_i(vnode_mount(dvp),
+            if ((err  = fuse_vget_i(mp,
                                     nid,
                                     context,
                                     dvp,
@@ -1081,7 +1275,7 @@ calldaemon:
                 goto out;
             }
 
-            if ((err  = fuse_vget_i(vnode_mount(dvp),
+            if ((err  = fuse_vget_i(mp,
                                     nid,
                                     context,
                                     dvp,
@@ -1113,7 +1307,7 @@ calldaemon:
             if (err == 0)
                 *vpp = dvp;
         } else {
-            if ((err  = fuse_vget_i(vnode_mount(dvp),
+            if ((err  = fuse_vget_i(mp,
                                     nid,
                                     context,
                                     dvp,
@@ -1132,10 +1326,25 @@ calldaemon:
             *vpp = vp;
         }
 
-        if (op == FUSE_GETATTR)
+        if (op == FUSE_GETATTR) {
+
+            /* ATTR_FUDGE_CASE */
+            if (vnode_isreg(*vpp) && fuse_isnoubc(vp)) {
+                VTOFUD(*vpp)->filesize =
+                    ((struct fuse_attr_out *)fdi.answ)->attr.size;
+            }
+
             cache_attrs(*vpp, (struct fuse_attr_out *)fdi.answ);
-        else
+        } else {
+
+            /* ATTR_FUDGE_CASE */
+            if (vnode_isreg(*vpp) && fuse_isnoubc(vp)) {
+                VTOFUD(*vpp)->filesize =
+                    ((struct fuse_entry_out *)fdi.answ)->attr.size;
+            }
+
             cache_attrs(*vpp, (struct fuse_entry_out *)fdi.answ);
+        }
 
         /* Insert name into cache if appropriate. */
 
@@ -1257,6 +1466,7 @@ out:
 static int
 fuse_vnop_mkdir(struct vnop_mkdir_args *ap)
 {
+    int err = 0;
     vnode_t dvp = ap->a_dvp;
     vnode_t *vpp = ap->a_vpp;
     struct componentname *cnp = ap->a_cnp;
@@ -1273,8 +1483,14 @@ fuse_vnop_mkdir(struct vnop_mkdir_args *ap)
 
     fmdi.mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-    return fuse_internal_newentry(dvp, vpp, cnp, FUSE_MKDIR, &fmdi,
-                                  sizeof(fmdi), VDIR, context);
+    err = fuse_internal_newentry(dvp, vpp, cnp, FUSE_MKDIR, &fmdi,
+                                 sizeof(fmdi), VDIR, context);
+
+    if (err == 0) {
+        FUSE_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
+    }
+
+    return err;
 }
 
 /*
@@ -1290,6 +1506,7 @@ fuse_vnop_mkdir(struct vnop_mkdir_args *ap)
 static int
 fuse_vnop_mknod(struct vnop_mknod_args *ap)
 {
+    int err;
     vnode_t dvp = ap->a_dvp;
     vnode_t *vpp = ap->a_vpp;
     struct componentname *cnp = ap->a_cnp;
@@ -1307,8 +1524,14 @@ fuse_vnop_mknod(struct vnop_mknod_args *ap)
     fmni.mode = MAKEIMODE(vap->va_type, vap->va_mode);
     fmni.rdev = vap->va_rdev;
 
-    return fuse_internal_newentry(dvp, vpp, cnp, FUSE_MKNOD, &fmni,
-                                  sizeof(fmni), vap->va_type, context);
+    err = fuse_internal_newentry(dvp, vpp, cnp, FUSE_MKNOD, &fmni,
+                                 sizeof(fmni), vap->va_type, context);
+
+    if (err== 0) {
+        FUSE_KNOTE(dvp, NOTE_WRITE);
+    }
+
+    return err;
 }
 
 /*
@@ -1344,12 +1567,14 @@ fuse_vnop_mmap(struct vnop_mmap_args *ap)
     fufh = &(fvdat->fufh[fufh_type]);
 
     if (fufh->fufh_flags & FUFH_VALID) {
+        FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_reuse_count);
         goto out;
     }
 
     err = fuse_filehandle_get(vp, ap->a_context, fufh_type);
     if (err) {
-        printf("Whoa! failed to get filehandle (err %d) in mmap\n", err);
+        IOLog("MacFUSE: filehandle_get failed in mmap (type=%d, err=%d)\n",
+              fufh_type, err);
         return err;
     }
 
@@ -1379,6 +1604,14 @@ fuse_vnop_mnomap(struct vnop_mnomap_args *ap)
     if (fuse_isdeadfs_nop(vp)) {
         return 0;
     }
+
+#if 0
+    /*
+     * sync() is not going to help here. What behavior do we want?
+     */
+
+    ubc_sync_range(vp, (off_t)0, ubc_getsize(vp), UBC_PUSHDIRTY);
+#endif
 
     for (type = 0; type < FUFH_MAXTYPE; type++) {
         fufh = &(fvdat->fufh[type]);
@@ -1420,7 +1653,7 @@ fuse_vnop_offtoblk(struct vnop_offtoblk_args *ap)
         return EIO;
     }
 
-    data = fusefs_get_data(vnode_mount(vp));
+    data = fuse_get_mpdata(vnode_mount(vp));
 
     *lblknoPtr = offset / data->blocksize;
 
@@ -1508,7 +1741,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
                 wakeup((caddr_t)fvdat->creator); // wake up all
                 goto ok; /* return 0 */
             } else {
-                printf("contender going to sleep\n");
+                debug_printf("contender going to sleep\n");
                 error = msleep(fvdat->creator, fvdat->createlock,
                                PDROP | PINOD | PCATCH, "fuse_open", 0);
                 /*
@@ -1534,6 +1767,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
 
     if (fufh->fufh_flags & FUFH_VALID) {
         fufh->open_count++;
+        FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_reuse_count);
         goto ok; /* return 0 */
     }
 
@@ -1543,20 +1777,37 @@ fuse_vnop_open(struct vnop_open_args *ap)
     }
 
 ok:
-    {
-        /*
-         * Doing this here because when a vnode goes inactive, no-cache and
-         * no-readahead are cleared by the kernel.
+    /*
+     * Doing this here because when a vnode goes inactive, things like
+     * no-cache and no-readahead are cleared by the kernel.
+     */
+
+    if ((fufh->fuse_open_flags & FOPEN_DIRECT_IO) || (fuse_isdirectio(vp))) {
+        /* 
+         * direct_io for a vnode implies:
+         * - no ubc for the vnode
+         * - no readahead for the vnode
+         * - nosyncwrites disabled FOR THE ENTIRE MOUNT
+         * - no vncache for the vnode (handled in lookup)
          */
-        int dataflag = fusefs_get_data(vnode_mount(vp))->dataflag;
-        if (dataflag & FSESS_NO_READAHEAD) {
-            vnode_setnoreadahead(vp);
-        }
-        if (dataflag & FSESS_NO_UBC) {
-            vnode_setnocache(vp);
-        }
+        ubc_sync_range(vp, (off_t)0, ubc_getsize(vp),
+                       UBC_PUSHALL | UBC_INVALIDATE);
+        vnode_setnocache(vp);
+        vnode_setnoreadahead(vp);
+        fuse_clearnosyncwrites_mp(vnode_mount(vp));
+        fvdat->flag |= FN_DIRECT_IO;
+        goto out;
     }
 
+    if (fuse_isnoreadahead(vp)) {
+        vnode_setnoreadahead(vp);
+    }
+
+    if (fuse_isnoubc(vp)) {
+        vnode_setnocache(vp);
+    }
+
+out:
     return 0;
 }
 
@@ -1681,7 +1932,7 @@ fuse_vnop_pathconf(struct vnop_pathconf_args *ap)
     err = 0;
     switch (name) {
         case _PC_LINK_MAX:
-            *retvalPtr = 1;     // no hard link support
+            *retvalPtr = FUSE_LINK_MAX;
             break;
         case _PC_NAME_MAX:
             *retvalPtr = __DARWIN_MAXNAMLEN;
@@ -1693,7 +1944,7 @@ fuse_vnop_pathconf(struct vnop_pathconf_args *ap)
             *retvalPtr = PIPE_BUF;
             break;
         case _PC_CHOWN_RESTRICTED:
-            *retvalPtr = 1;     // it would be if we supported it (-:
+            *retvalPtr = 1;
             break;
         case _PC_NO_TRUNC:
             *retvalPtr = 0;
@@ -1708,18 +1959,16 @@ fuse_vnop_pathconf(struct vnop_pathconf_args *ap)
             *retvalPtr = 1;
             break;
 
-        // The following are implemented by VFS:
-
-        case _PC_EXTENDED_SECURITY_NP:
-        case _PC_AUTH_OPAQUE_NP:
-            assert(FALSE);
+        /*
+         * _PC_EXTENDED_SECURITY_NP and _PC_AUTH_OPAQUE_NP are handled
+         * by the VFS.
+         */
 
         // The following are terminal device stuff that we don't support:
 
         case _PC_MAX_CANON:
         case _PC_MAX_INPUT:
         case _PC_VDISABLE:
-
         default:
             err = EINVAL;
             break;
@@ -1731,24 +1980,25 @@ fuse_vnop_pathconf(struct vnop_pathconf_args *ap)
 /*
     struct vnop_read_args {
         struct vnodeop_desc *a_desc;
-        vnode_t a_vp;
-        struct uio *a_uio;
-        int a_ioflag;
-        vfs_context_t a_context;
+        vnode_t              a_vp;
+        struct uio          *a_uio;
+        int                  a_ioflag;
+        vfs_context_t        a_context;
     };
 */
 static int
 fuse_vnop_read(struct vnop_read_args *ap)
 {
-    int             err;
     vnode_t         vp;
     uio_t           uio;
     int             ioflag;
     vfs_context_t   context;
     off_t           orig_resid;
     off_t           orig_offset;
+    int             err = EIO;
 
     struct fuse_vnode_data *fvdat;
+    struct fuse_data       *data;
 
     /*
      * XXX: Locking
@@ -1773,6 +2023,14 @@ fuse_vnop_read(struct vnop_read_args *ap)
             return EIO;
         } else {
             return 0;
+        }
+    }
+
+    if (!vnode_isreg(vp)) {
+        if (vnode_isdir(vp)) {
+            return EISDIR;
+        } else {
+            return EPERM;
         }
     }
 
@@ -1803,27 +2061,84 @@ fuse_vnop_read(struct vnop_read_args *ap)
 
     /* Protect against size change here. */
 
-    if (vnode_isreg(vp)) {
-        err = cluster_read(vp, uio, fvdat->filesize, 0);
-    } else if (vnode_isdir(vp)) {
-        err = EISDIR;
-    } else {
-        err = EPERM;
+    data = fuse_get_mpdata(vnode_mount(vp));
+
+    if (!fuse_isdirectio(vp)) {
+        return cluster_read(vp, uio, fvdat->filesize, 0);
     }
 
-    /*
-     * XXX
-     *
-     * Experiment to see if the following works as expected.
-     * Make this an fcntl or fsctl. When the user daemon tells us to
-     * do this for a file (which means the file got changed "somewhere else",
-     * we should invalidate the buffer cache, redo getattr, see if the size
-     * changed, set fvdat->filesize, call ubc_setsize(), etc.
-     *
-     * ubc_sync_range(vp, 0, fvdat->filesize, UBC_INVALIDATE);
-     */
+    /* direct_io */
+    {
+        fufh_type_t             fufh_type = FUFH_RDONLY;
+        struct fuse_dispatcher  fdi;
+        struct fuse_filehandle *fufh = NULL;
+        struct fuse_read_in    *fri = NULL;
+        off_t                   rounded_iolength;
+        off_t                   total_xfersize;
 
-    return err;
+        fufh = &(fvdat->fufh[fufh_type]);
+        if (!(fufh->fufh_flags & FUFH_VALID)) {
+            fufh_type = FUFH_RDWR;
+            fufh = &(fvdat->fufh[fufh_type]);
+            if (!(fufh->fufh_flags & FUFH_VALID)) {
+                fufh = NULL;
+            } else {
+                debug_printf("read falling back to FUFH_RDWR ... OK\n");
+            }
+        }
+
+        if (!fufh) {
+            debug_printf("READ: no fufh: failing direct I/O\n");
+            return EIO;
+        } else {
+           debug_printf("READ: using existing fufh of type %d\n", fufh_type);
+        }
+
+        rounded_iolength = (off_t)round_page_64(uio_offset(uio) +
+                                                uio_resid(uio));
+        if (uio_offset(uio) > (off_t)fvdat->filesize) {
+            total_xfersize = 0;
+        } else {
+            total_xfersize = min(uio_resid(uio),
+                                 ((off_t)fvdat->filesize - uio_offset(uio)));
+            if (total_xfersize < 0) {
+                total_xfersize = 0;
+            }
+        }
+
+        if (total_xfersize == 0) {
+            return 0;
+        }
+
+        fdisp_init(&fdi, 0);
+
+        while (uio_resid(uio) > 0) {
+            fdi.iosize = sizeof(*fri);
+            fdisp_make_vp(&fdi, FUSE_READ, vp, context);
+            fri = fdi.indata;
+            fri->fh = fufh->fh_id;
+            fri->offset = uio_offset(uio);
+            fri->size = min(uio_resid(uio), data->iosize);
+
+            if ((err = fdisp_wait_answ(&fdi))) {
+                return err;
+            }
+
+            if ((err = uiomove(fdi.answ, min(fri->size, fdi.iosize), uio))) {
+                break;
+            }
+
+            if (fdi.iosize < fri->size) {
+                err = -1;
+                break;
+            }
+        }
+
+        fuse_ticket_drop(fdi.tick);
+
+    } /* direct_io */
+
+    return ((err == -1) ? 0 : err);
 }
 
 /*
@@ -1893,6 +2208,8 @@ fuse_vnop_readdir(struct vnop_readdir_args *ap)
             return err;
         }
         freefufh = 1;
+    } else {
+        FUSE_OSAddAtomic(1, (SInt32 *)&fuse_fh_reuse_count);
     }
 
 #define DIRCOOKEDSIZE FUSE_DIRENT_ALIGN(FUSE_NAME_OFFSET + MAXNAMLEN + 1)
@@ -1958,7 +2275,7 @@ fuse_vnop_readlink(struct vnop_readlink_args *ap)
     }
 
     if (((char *)fdi.answ)[0] == '/' &&
-        fusefs_get_data(vnode_mount(vp))->dataflag & FSESS_PUSH_SYMLINKS_IN) {
+        fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_PUSH_SYMLINKS_IN) {
             char *mpth = vfs_statfs(vnode_mount(vp))->f_mntonname;
             err = uiomove(mpth, strlen(mpth), uio);
     }
@@ -2008,9 +2325,9 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
                  * This is not a forced unmount. So why is the vnode being
                  * reclaimed if a fufh is valid? Well, unless we are dead.
                  */
-                if (!fuse_isdeadfs(vp)) {
-                    panic("MacFUSE: vnode reclaimed with valid fufh (type=%d)",
-                          type);
+                if (!fuse_isdeadfs(vp) && !(fvdat->flag & FN_REVOKING)) {
+                    panic("MacFUSE: vnode reclaimed with valid fufh "
+                          "(type=%d, vtype=%d)", type, vnode_vtype(vp));
                 }
             }
         }
@@ -2029,6 +2346,7 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
     if (HNodeDetachVNode(hn, vp)) {
         FSNodeScrub(fvdat);
         HNodeScrubDone(hn);
+        FUSE_OSAddAtomic(-1, (SInt32 *)&fuse_vnodes_current);
     }
 
     return 0;
@@ -2047,6 +2365,7 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
 static int
 fuse_vnop_remove(struct vnop_remove_args *ap)
 {
+    int err;
     vnode_t dvp = ap->a_dvp;
     vnode_t vp = ap->a_vp;
     struct componentname *cnp = ap->a_cnp;
@@ -2069,7 +2388,14 @@ fuse_vnop_remove(struct vnop_remove_args *ap)
 
     cache_purge(vp);
 
-    return (fuse_internal_remove(dvp, vp, cnp, FUSE_UNLINK, context));
+    err = fuse_internal_remove(dvp, vp, cnp, FUSE_UNLINK, context);
+
+    if (err == 0) {
+        FUSE_KNOTE(vp, NOTE_DELETE);
+        FUSE_KNOTE(dvp, NOTE_WRITE);
+    }
+
+    return err;
 }
 
 /*
@@ -2087,6 +2413,8 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
     int err = 0;
     int namelen;
     struct fuse_dispatcher fdi;
+    struct fuse_data      *data;
+
     vnode_t vp = ap->a_vp;
 
     fuse_trace_printf_vnop();
@@ -2095,8 +2423,17 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
         return EBADF;
     }
 
+    data = fuse_get_mpdata(vnode_mount(vp));
+    if (data->noimpl & FSESS_NOIMPL_REMOVEXATTR) {
+        return ENOTSUP;
+    }
+
     if (ap->a_name == NULL || ap->a_name[0] == '\0') {
         return (EINVAL);  /* invalid name */
+    }
+
+    if (fuse_is_shortcircuit_xattr(ap->a_name)) {
+        return ENOTSUP;
     }
 
     namelen = strlen(ap->a_name);
@@ -2110,6 +2447,11 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
     err = fdisp_wait_answ(&fdi);
     if (!err) {
         fuse_ticket_drop(fdi.tick);
+    } else {
+        if (err == ENOSYS) {
+            data->noimpl |= FSESS_NOIMPL_REMOVEXATTR;
+            return ENOTSUP;
+        }
     }
 
     return err;
@@ -2148,16 +2490,44 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
 
     err = fuse_internal_rename(fdvp, fcnp, tdvp, tcnp, ap->a_context);
 
+    if (err == 0) {
+        FUSE_KNOTE(fdvp, NOTE_WRITE);
+        if (tdvp != fdvp) {
+            FUSE_KNOTE(tdvp, NOTE_WRITE);
+        }
+    }
+
     if (tvp != NULLVP) {
         if (tvp != fvp) {
             cache_purge(tvp);
+            FUSE_KNOTE(tvp, NOTE_DELETE);
         }
         if (err == 0) {
             vnode_recycle(tvp);
         }
     }
 
+    if (err == 0) {
+        FUSE_KNOTE(fvp, NOTE_RENAME);
+    }
+
     return err;
+}
+
+/*
+ *  struct vnop_revoke_args {
+ *      struct vnodeop_desc  *a_desc;
+ *      vnode_t               a_vp;
+ *      int                   a_flags;
+ *      vfs_context_t         a_context;
+ *  };
+ */
+static int
+fuse_vnop_revoke(struct vnop_revoke_args *ap)
+{
+    fuse_trace_printf_vnop();
+
+    return fuse_internal_revoke(ap->a_vp, ap->a_flags, ap->a_context);
 }
 
 /*
@@ -2172,6 +2542,8 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
 static int
 fuse_vnop_rmdir(struct vnop_rmdir_args *ap)
 {
+    int err;
+
     fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs_nop(ap->a_vp)) {
@@ -2184,8 +2556,15 @@ fuse_vnop_rmdir(struct vnop_rmdir_args *ap)
 
     cache_purge(ap->a_vp);
 
-    return (fuse_internal_remove(ap->a_dvp, ap->a_vp, ap->a_cnp,
-                                 FUSE_RMDIR, ap->a_context));
+    err = fuse_internal_remove(ap->a_dvp, ap->a_vp, ap->a_cnp,
+                               FUSE_RMDIR, ap->a_context);
+
+    if (err == 0) {
+        FUSE_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
+        FUSE_KNOTE(ap->a_vp, NOTE_DELETE);
+    }
+
+    return err;
 }
 
 /*
@@ -2199,7 +2578,7 @@ struct vnop_select_args {
 };
 */
 static int
-fuse_vnop_select(struct vnop_select_args *ap)
+fuse_vnop_select(__unused struct vnop_select_args *ap)
 {
     fuse_trace_printf_vnop();
     return (1);
@@ -2443,6 +2822,10 @@ out:
         ubc_setsize(vp, (off_t)newsize);
     }
 
+    if (err == 0) {
+        FUSE_KNOTE(vp, NOTE_ATTRIB);
+    }
+
     return (err);
 }
 
@@ -2459,13 +2842,18 @@ out:
 static int
 fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
 {
-    vnode_t vp = ap->a_vp;
-    uio_t uio = ap->a_uio;
+    int err = 0;
+    int iov_err = 0;
+    int i, iov_cnt, namelen;
     size_t attrsize;
+    user_addr_t a_baseaddr[FUSE_UIO_BACKUP_MAX];
+    user_size_t a_length[FUSE_UIO_BACKUP_MAX];
     struct fuse_dispatcher   fdi;
     struct fuse_setxattr_in *fsxi;
-    int err = 0;
-    int namelen;
+    struct fuse_data        *data;
+
+    vnode_t vp = ap->a_vp;
+    uio_t uio = ap->a_uio;
 
     fuse_trace_printf_vnop();
 
@@ -2473,17 +2861,36 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
         return EBADF;
     }
 
+    data = fuse_get_mpdata(vnode_mount(vp));
+    if (data->noimpl & FSESS_NOIMPL_SETXATTR) {
+        return ENOTSUP;
+    }
+
     if (ap->a_name == NULL || ap->a_name[0] == '\0') {
         return EINVAL;
     }
 
+    if (fuse_is_shortcircuit_xattr(ap->a_name)) {
+        return ENOTSUP;
+    }
+
     attrsize = uio_resid(uio);
+
+    iov_cnt = uio_iovcnt(uio);
+    if (iov_cnt > FUSE_UIO_BACKUP_MAX) {
+        /* no need to make it more complicated */
+        iov_cnt = FUSE_UIO_BACKUP_MAX;
+    }
+
+    for (i = 0; i < iov_cnt; i++) {
+        iov_err = uio_getiov(uio, i, &(a_baseaddr[i]), &(a_length[i]));
+    }
 
     /*
      * Check attrsize for some sane maximum: otherwise, we can fail malloc()
      * in fdisp_make_vp().
      */
-    if (attrsize > 3082) { // Heh.
+    if (attrsize > FUSE_MAXATTRIBUTESIZE) {
         return E2BIG;
     }
 
@@ -2507,6 +2914,28 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
 
     if (!err) {
         fuse_ticket_drop(fdi.tick);
+    } else {
+        if (err == ENOSYS) {
+
+            int a_spacetype = UIO_USERSPACE;
+
+            data->noimpl |= FSESS_NOIMPL_SETXATTR;
+
+            if (iov_err) {
+                return EAGAIN;
+            }
+
+            if (!uio_isuserspace(uio)) {
+                a_spacetype = UIO_SYSSPACE;
+            }
+
+            uio_reset(uio, (off_t)0, a_spacetype, uio_rw(uio));
+            for (i = 0; i < iov_cnt; i++) {
+                uio_addiov(uio, CAST_USER_ADDR_T(a_baseaddr[i]), a_length[i]);
+            }
+
+            return ENOTSUP;
+        }
     }
 
     return err;
@@ -2580,6 +3009,10 @@ fuse_vnop_symlink(struct vnop_symlink_args *ap)
 
     err = fuse_internal_newentry_core(dvp, vpp, cnp, VLNK, &fdi, context);
     fuse_invalidate_attr(dvp);
+
+    if (err == 0) {
+        FUSE_KNOTE(dvp, NOTE_WRITE);
+    }
 
     return (err);
 }       
@@ -2718,8 +3151,10 @@ fuse_vnop_write(struct vnop_write_args *ap)
         fvdat->filesize = uio_offset(uio);
         ubc_setsize(vp, (off_t)fvdat->filesize);
         fuse_invalidate_attr(vp);
+        FUSE_KNOTE(vp, NOTE_WRITE | NOTE_EXTEND);
     } else {
         fvdat->filesize = original_size;
+        FUSE_KNOTE(vp, NOTE_WRITE);
     }
 
 #if 0
@@ -2732,7 +3167,8 @@ fuse_vnop_write(struct vnop_write_args *ap)
      * If the write failed and they want us to, truncate the file back
      * to the size it was before the write was attempted.
      */
-errexit:
+
+/* errexit: */
     if (error) {
         debug_printf("WRITE: we had a failed write (%d)\n", error);
         if (ioflag & IO_UNIT) {
@@ -2756,57 +3192,68 @@ errexit:
         ;
     }
 
+#if 0
+    if ((original_resid > uio_resid(uio)) &&
+        !fuse_vfs_context_issuser(context)) {
+        /* clear setuid/setgid here */
+    }
+#endif
+
     return error;
 }
 
 struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
-    { &vnop_access_desc,        (fuse_vnode_op_t) fuse_vnop_access      },
-//  { &vnop_advlock_desc,       (fuse_vnode_op_t) fuse_vnop_advlock     },
-//  { &vnop_allocate_desc,      (fuse_vnode_op_t) fuse_vnop_allocate    },
-    { &vnop_blktooff_desc,      (fuse_vnode_op_t) fuse_vnop_blktooff    },
-    { &vnop_blockmap_desc,      (fuse_vnode_op_t) fuse_vnop_blockmap    },
-//  { &vnop_bwrite_desc,        (fuse_vnode_op_t) fuse_vnop_bwrite      },
-    { &vnop_close_desc,         (fuse_vnode_op_t) fuse_vnop_close       },
-//  { &vnop_copyfile_desc,      (fuse_vnode_op_t) fuse_vnop_copyfile    },
-    { &vnop_create_desc,        (fuse_vnode_op_t) fuse_vnop_create      },
-    { &vnop_default_desc,       (fuse_vnode_op_t) vn_default_error      },
-//  { &vnop_exchange_desc,      (fuse_vnode_op_t) fuse_vnop_exchange    },
-    { &vnop_fsync_desc,         (fuse_vnode_op_t) fuse_vnop_fsync       },
-    { &vnop_getattr_desc,       (fuse_vnode_op_t) fuse_vnop_getattr     },
-//  { &vnop_getattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_getattrlist },
-    { &vnop_getxattr_desc,      (fuse_vnode_op_t) fuse_vnop_getxattr    },
-    { &vnop_inactive_desc,      (fuse_vnode_op_t) fuse_vnop_inactive    },
-    { &vnop_ioctl_desc,         (fuse_vnode_op_t) fuse_vnop_ioctl       },
-    { &vnop_link_desc,          (fuse_vnode_op_t) fuse_vnop_link        },
-    { &vnop_listxattr_desc,     (fuse_vnode_op_t) fuse_vnop_listxattr   },
-    { &vnop_lookup_desc,        (fuse_vnode_op_t) fuse_vnop_lookup      },
-    { &vnop_mkdir_desc,         (fuse_vnode_op_t) fuse_vnop_mkdir       },
-    { &vnop_mknod_desc,         (fuse_vnode_op_t) fuse_vnop_mknod       },
-    { &vnop_mmap_desc,          (fuse_vnode_op_t) fuse_vnop_mmap        },
-    { &vnop_mnomap_desc,        (fuse_vnode_op_t) fuse_vnop_mnomap      },
-    { &vnop_offtoblk_desc,      (fuse_vnode_op_t) fuse_vnop_offtoblk    },
-    { &vnop_open_desc,          (fuse_vnode_op_t) fuse_vnop_open        },
-    { &vnop_pagein_desc,        (fuse_vnode_op_t) fuse_vnop_pagein      },
-    { &vnop_pageout_desc,       (fuse_vnode_op_t) fuse_vnop_pageout     },
-    { &vnop_pathconf_desc,      (fuse_vnode_op_t) fuse_vnop_pathconf    },
-    { &vnop_read_desc,          (fuse_vnode_op_t) fuse_vnop_read        },
-    { &vnop_readdir_desc,       (fuse_vnode_op_t) fuse_vnop_readdir     },
-//  { &vnop_readdirattr_desc,   (fuse_vnode_op_t) fuse_vnop_readdirattr },
-    { &vnop_readlink_desc,      (fuse_vnode_op_t) fuse_vnop_readlink    },
-    { &vnop_reclaim_desc,       (fuse_vnode_op_t) fuse_vnop_reclaim     },
-    { &vnop_remove_desc,        (fuse_vnode_op_t) fuse_vnop_remove      },
-    { &vnop_removexattr_desc,   (fuse_vnode_op_t) fuse_vnop_removexattr },
-    { &vnop_rename_desc,        (fuse_vnode_op_t) fuse_vnop_rename      },
-    { &vnop_revoke_desc,        (fuse_vnode_op_t) nop_revoke            },
-    { &vnop_rmdir_desc,         (fuse_vnode_op_t) fuse_vnop_rmdir       },
-//  { &vnop_searchfs_desc,      (fuse_vnode_op_t) fuse_vnop_searchfs    },
-    { &vnop_select_desc,        (fuse_vnode_op_t) fuse_vnop_select      },
-    { &vnop_setattr_desc,       (fuse_vnode_op_t) fuse_vnop_setattr     },
-//  { &vnop_setattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_setattrlist }, 
-    { &vnop_setxattr_desc,      (fuse_vnode_op_t) fuse_vnop_setxattr    },
-    { &vnop_strategy_desc,      (fuse_vnode_op_t) fuse_vnop_strategy    },
-    { &vnop_symlink_desc,       (fuse_vnode_op_t) fuse_vnop_symlink     },
-//  { &vnop_whiteout_desc,      (fuse_vnode_op_t) fuse_vnop_whiteout    },
-    { &vnop_write_desc,         (fuse_vnode_op_t) fuse_vnop_write       },
+    { &vnop_access_desc,        (fuse_vnode_op_t) fuse_vnop_access        },
+    { &vnop_advlock_desc,       (fuse_vnode_op_t) err_advlock             },
+//  { &vnop_allocate_desc,      (fuse_vnode_op_t) fuse_vnop_allocate      },
+    { &vnop_blktooff_desc,      (fuse_vnode_op_t) fuse_vnop_blktooff      },
+    { &vnop_blockmap_desc,      (fuse_vnode_op_t) fuse_vnop_blockmap      },
+//  { &vnop_bwrite_desc,        (fuse_vnode_op_t) fuse_vnop_bwrite        },
+    { &vnop_close_desc,         (fuse_vnode_op_t) fuse_vnop_close         },
+//  { &vnop_copyfile_desc,      (fuse_vnode_op_t) fuse_vnop_copyfile      },
+    { &vnop_create_desc,        (fuse_vnode_op_t) fuse_vnop_create        },
+    { &vnop_default_desc,       (fuse_vnode_op_t) vn_default_error        },
+//  { &vnop_exchange_desc,      (fuse_vnode_op_t) fuse_vnop_exchange      },
+    { &vnop_fsync_desc,         (fuse_vnode_op_t) fuse_vnop_fsync         },
+    { &vnop_getattr_desc,       (fuse_vnode_op_t) fuse_vnop_getattr       },
+//  { &vnop_getattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_getattrlist   },
+    { &vnop_getxattr_desc,      (fuse_vnode_op_t) fuse_vnop_getxattr      },
+    { &vnop_inactive_desc,      (fuse_vnode_op_t) fuse_vnop_inactive      },
+    { &vnop_ioctl_desc,         (fuse_vnode_op_t) fuse_vnop_ioctl         },
+    { &vnop_link_desc,          (fuse_vnode_op_t) fuse_vnop_link          },
+    { &vnop_listxattr_desc,     (fuse_vnode_op_t) fuse_vnop_listxattr     },
+    { &vnop_lookup_desc,        (fuse_vnode_op_t) fuse_vnop_lookup        },
+#if MACFUSE_ENABLE_UNSUPPORTED
+    { &vnop_kqfilt_add_desc,    (fuse_vnode_op_t) fuse_vnop_kqfilt_add    },
+    { &vnop_kqfilt_remove_desc, (fuse_vnode_op_t) fuse_vnop_kqfilt_remove },
+#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+    { &vnop_mkdir_desc,         (fuse_vnode_op_t) fuse_vnop_mkdir         },
+    { &vnop_mknod_desc,         (fuse_vnode_op_t) fuse_vnop_mknod         },
+    { &vnop_mmap_desc,          (fuse_vnode_op_t) fuse_vnop_mmap          },
+    { &vnop_mnomap_desc,        (fuse_vnode_op_t) fuse_vnop_mnomap        },
+    { &vnop_offtoblk_desc,      (fuse_vnode_op_t) fuse_vnop_offtoblk      },
+    { &vnop_open_desc,          (fuse_vnode_op_t) fuse_vnop_open          },
+    { &vnop_pagein_desc,        (fuse_vnode_op_t) fuse_vnop_pagein        },
+    { &vnop_pageout_desc,       (fuse_vnode_op_t) fuse_vnop_pageout       },
+    { &vnop_pathconf_desc,      (fuse_vnode_op_t) fuse_vnop_pathconf      },
+    { &vnop_read_desc,          (fuse_vnode_op_t) fuse_vnop_read          },
+    { &vnop_readdir_desc,       (fuse_vnode_op_t) fuse_vnop_readdir       },
+//  { &vnop_readdirattr_desc,   (fuse_vnode_op_t) fuse_vnop_readdirattr   },
+    { &vnop_readlink_desc,      (fuse_vnode_op_t) fuse_vnop_readlink      },
+    { &vnop_reclaim_desc,       (fuse_vnode_op_t) fuse_vnop_reclaim       },
+    { &vnop_remove_desc,        (fuse_vnode_op_t) fuse_vnop_remove        },
+    { &vnop_removexattr_desc,   (fuse_vnode_op_t) fuse_vnop_removexattr   },
+    { &vnop_rename_desc,        (fuse_vnode_op_t) fuse_vnop_rename        },
+    { &vnop_revoke_desc,        (fuse_vnode_op_t) fuse_vnop_revoke        },
+    { &vnop_rmdir_desc,         (fuse_vnode_op_t) fuse_vnop_rmdir         },
+//  { &vnop_searchfs_desc,      (fuse_vnode_op_t) fuse_vnop_searchfs      },
+    { &vnop_select_desc,        (fuse_vnode_op_t) fuse_vnop_select        },
+    { &vnop_setattr_desc,       (fuse_vnode_op_t) fuse_vnop_setattr       },
+//  { &vnop_setattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_setattrlist   }, 
+    { &vnop_setxattr_desc,      (fuse_vnode_op_t) fuse_vnop_setxattr      },
+    { &vnop_strategy_desc,      (fuse_vnode_op_t) fuse_vnop_strategy      },
+    { &vnop_symlink_desc,       (fuse_vnode_op_t) fuse_vnop_symlink       },
+//  { &vnop_whiteout_desc,      (fuse_vnode_op_t) fuse_vnop_whiteout      },
+    { &vnop_write_desc,         (fuse_vnode_op_t) fuse_vnop_write         },
     { NULL, NULL }
 };

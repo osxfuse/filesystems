@@ -43,7 +43,7 @@ do {                                                   \
     (spc2) = (char *)(fiov)->base + (sizeof(*(spc1))); \
 } while (0)
 
-#define FU_AT_LEAST(siz) max((siz), 128)
+#define FU_AT_LEAST(siz) max((siz), 160)
 
 struct fuse_ticket;
 struct fuse_data;
@@ -81,35 +81,40 @@ struct fuse_ticket {
 #define FT_INVAL 0x02  // ticket is invalidated
 #define FT_DIRTY 0x04  // ticket has been used
 
-static __inline__ struct fuse_iov *
+static __inline__
+struct fuse_iov *
 fticket_resp(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     return (&tick->tk_aw_fiov);
 }
 
-static __inline__ int
+static __inline__
+int
 fticket_answered(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     return (tick->tk_flag & FT_ANSW);
 }
 
-static __inline__ void
+static __inline__
+void
 fticket_set_answered(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     tick->tk_flag |= FT_ANSW;
 }
 
-static __inline__ enum fuse_opcode
+static __inline__
+enum fuse_opcode
 fticket_opcode(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     return (((struct fuse_in_header *)(tick->tk_ms_fiov.base))->opcode);
 }
 
-static __inline__ void
+static __inline__
+void
 fticket_invalidate(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
@@ -130,6 +135,7 @@ struct fuse_data {
     mount_t                    mp;
     kauth_cred_t               daemoncred;
     int                        dataflag;
+    uint64_t                   noimpl;
 
     lck_mtx_t                 *ms_mtx;
     STAILQ_HEAD(, fuse_ticket) ms_head;
@@ -160,42 +166,95 @@ struct fuse_data {
     char                       volname[MAXPATHLEN];
 };
 
+/* Not-Implemented Bits */
+
+#define FSESS_NOIMPL_ACCESS      (1LL << 1)
+#define FSESS_NOIMPL_ADVLOCK     (1LL << 2)
+#define FSESS_NOIMPL_ALLOCATE    (1LL << 3)
+#define FSESS_NOIMPL_BLKTOOFF    (1LL << 4)
+#define FSESS_NOIMPL_BLOCKMAP    (1LL << 5)
+#define FSESS_NOIMPL_BWRITE      (1LL << 6)
+#define FSESS_NOIMPL_CLOSE       (1LL << 7)
+#define FSESS_NOIMPL_COPYFILE    (1LL << 8)
+#define FSESS_NOIMPL_CREATE      (1LL << 9)
+#define FSESS_NOIMPL_EXCHANGE    (1LL << 10)
+#define FSESS_NOIMPL_FSYNC       (1LL << 11)
+#define FSESS_NOIMPL_GETATTR     (1LL << 12)
+#define FSESS_NOIMPL_GETATTRLIST (1LL << 13)
+#define FSESS_NOIMPL_GETXATTR    (1LL << 14)
+#define FSESS_NOIMPL_INACTIVE    (1LL << 15)
+#define FSESS_NOIMPL_IOCTL       (1LL << 16)
+#define FSESS_NOIMPL_LINK        (1LL << 17)
+#define FSESS_NOIMPL_LISTXATTR   (1LL << 18)
+#define FSESS_NOIMPL_LOOKUP      (1LL << 19)
+#define FSESS_NOIMPL_MKDIR       (1LL << 20)
+#define FSESS_NOIMPL_MKNOD       (1LL << 21)
+#define FSESS_NOIMPL_MMAP        (1LL << 22)
+#define FSESS_NOIMPL_MNOMAP      (1LL << 23)
+#define FSESS_NOIMPL_OFFTOBLK    (1LL << 24)
+#define FSESS_NOIMPL_OPEN        (1LL << 25)
+#define FSESS_NOIMPL_PAGEIN      (1LL << 26)
+#define FSESS_NOIMPL_PAGEOUT     (1LL << 27)
+#define FSESS_NOIMPL_PATHCONF    (1LL << 28)
+#define FSESS_NOIMPL_READ        (1LL << 29)
+#define FSESS_NOIMPL_READDIR     (1LL << 30)
+#define FSESS_NOIMPL_READDIRATTR (1LL << 31)
+#define FSESS_NOIMPL_READLINK    (1LL << 32)
+#define FSESS_NOIMPL_RECLAIM     (1LL << 33)
+#define FSESS_NOIMPL_REMOVE      (1LL << 34)
+#define FSESS_NOIMPL_REMOVEXATTR (1LL << 35)
+#define FSESS_NOIMPL_RENAME      (1LL << 36)
+#define FSESS_NOIMPL_REVOKE      (1LL << 37)
+#define FSESS_NOIMPL_RMDIR       (1LL << 38)
+#define FSESS_NOIMPL_SEARCHFS    (1LL << 39)
+#define FSESS_NOIMPL_SELECT      (1LL << 40)
+#define FSESS_NOIMPL_SETATTR     (1LL << 41)
+#define FSESS_NOIMPL_SETATTRLIST (1LL << 42)
+#define FSESS_NOIMPL_SETXATTR    (1LL << 43)
+#define FSESS_NOIMPL_STRATEGY    (1LL << 44)
+#define FSESS_NOIMPL_SYMLINK     (1LL << 45)
+#define FSESS_NOIMPL_WHITEOUT    (1LL << 46)
+#define FSESS_NOIMPL_WRITE       (1LL << 47)
+
 #define FSESS_KICK                0x0001 // session is to be closed
 #define FSESS_OPENED              0x0002 // session device has been opened
 #define FSESS_NOFSYNC             0x0004 // daemon doesn't implement fsync
 #define FSESS_NOFSYNCDIR          0x0008 // daemon doesn't implement fsyncdir
-#define FSESS_NOACCESS            0x0010 // daemon doesn't implement access
-#define FSESS_NOCREATE            0x0020 // daemon doesn't implement create
-#define FSESS_INITED              0x0040 // session has been inited
-#define FSESS_DAEMON_CAN_SPY      0x0080 // let non-owners access this fs
+#define FSESS_INITED              0x0010 // session has been inited
+#define FSESS_DAEMON_CAN_SPY      0x0020 // let non-owners access this fs
                                          // (and being observed by the daemon)
-#define FSESS_NEGLECT_SHARES      0x0100 // presence of secondary mount is not
+#define FSESS_NEGLECT_SHARES      0x0040 // presence of secondary mount is not
                                          // considered as "fs is busy"
-#define FSESS_PRIVATE             0x0200 // don't allow secondary mounts
-#define FSESS_PUSH_SYMLINKS_IN    0x0400 // prefix absolute symlinks with mp
-#define FSESS_DEFAULT_PERMISSIONS 0x0800 // kernel does permission checking
+#define FSESS_PRIVATE             0x0080 // don't allow secondary mounts
+#define FSESS_PUSH_SYMLINKS_IN    0x0100 // prefix absolute symlinks with mp
+#define FSESS_DEFAULT_PERMISSIONS 0x0200 // kernel does permission checking
 
-#define FSESS_NO_ATTRCACHE        0x1000 // no attribute caching
-#define FSESS_NO_READAHEAD        0x2000 // no readaheads
-#define FSESS_NO_UBC              0x4000 // no caching
-#define FSESS_NO_SYNCWRITES       0x8000 // no synchronous writes
+#define FSESS_NO_ATTRCACHE        0x0400 // no attribute caching
+#define FSESS_NO_READAHEAD        0x0800 // no readaheads
+#define FSESS_NO_SYNCWRITES       0x1000 // no synchronous writes
+#define FSESS_NO_VNCACHE          0x2000 // no vnode name cache
+#define FSESS_NO_UBC              0x4000 // no unified buffer cache
+#define FSESS_DIRECT_IO           0x8000 // use directio for the entire mount
 
-static __inline__ struct fuse_data *
-fusefs_get_data(mount_t mp)
+static __inline__
+struct fuse_data *
+fuse_get_mpdata(mount_t mp)
 {
     struct fuse_data *data = vfs_fsprivate(mp);
     kdebug_printf("-> mp=%p\n", mp);
     return (data->mpri == FM_PRIMARY ? data : NULL);
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_ms_push(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     STAILQ_INSERT_TAIL(&tick->tk_data->ms_head, tick, tk_ms_link);
 }
 
-static __inline__ struct fuse_ticket *
+static __inline__
+struct fuse_ticket *
 fuse_ms_pop(struct fuse_data *data)
 {
     struct fuse_ticket *tick = NULL;
@@ -209,21 +268,24 @@ fuse_ms_pop(struct fuse_data *data)
     return (tick);
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_aw_push(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     TAILQ_INSERT_TAIL(&tick->tk_data->aw_head, tick, tk_aw_link);
 }
 
-static __inline__ void
+static __inline__
+void
 fuse_aw_remove(struct fuse_ticket *tick)
 {
     kdebug_printf("-> tick=%p\n", tick);
     TAILQ_REMOVE(&tick->tk_data->aw_head, tick, tk_aw_link);
 }
 
-static __inline__ struct fuse_ticket *
+static __inline__
+struct fuse_ticket *
 fuse_aw_pop(struct fuse_data *data)
 {
     struct fuse_ticket *tick = NULL;
@@ -243,11 +305,13 @@ void fuse_ticket_drop_invalid(struct fuse_ticket *tick);
 void fuse_insert_callback(struct fuse_ticket *tick, fuse_handler_t *handler);
 void fuse_insert_message(struct fuse_ticket *tick);
 
-static __inline__ int
-fuse_libabi_geq(struct fuse_data *data, uint32_t maj, uint32_t min)
+static __inline__
+int
+fuse_libabi_geq(struct fuse_data *data, uint32_t abi_maj, uint32_t abi_min)
 {
-    return (data->fuse_libabi_major > maj ||
-            (data->fuse_libabi_major == maj && data->fuse_libabi_minor >= min));
+    return (data->fuse_libabi_major > abi_maj ||
+            (data->fuse_libabi_major == abi_maj &&
+             data->fuse_libabi_minor >= abi_min));
 }
 
 struct fuse_secondary_data {
@@ -258,8 +322,9 @@ struct fuse_secondary_data {
     LIST_ENTRY(fuse_secondary_data) slaves_link;
 };
 
-static __inline__ struct fuse_secondary_data *
-fusefs_get_secondarydata(mount_t mp)
+static __inline__
+struct fuse_secondary_data *
+fuse_get_secondary_mpdata(mount_t mp)
 {
     struct fuse_secondary_data *fsdat = vfs_fsprivate(mp);
     return (fsdat->mpri == FM_SECONDARY ? fsdat : NULL);
@@ -282,7 +347,8 @@ struct fuse_dispatcher {
     void    *answ;
 };
 
-static __inline__ void
+static __inline__
+void
 fdisp_init(struct fuse_dispatcher *fdisp, size_t iosize)
 {
     kdebug_printf("-> fdisp=%p, iosize=%x\n", fdisp, iosize);
@@ -298,7 +364,8 @@ void fdisp_make_vp(struct fuse_dispatcher *fdip, enum fuse_opcode op,
 
 int  fdisp_wait_answ(struct fuse_dispatcher *fdip);
 
-static __inline__ int
+static __inline__
+int
 fdisp_simple_putget_vp(struct fuse_dispatcher *fdip, enum fuse_opcode op,
                        vnode_t vp, vfs_context_t context)
 {
@@ -308,7 +375,8 @@ fdisp_simple_putget_vp(struct fuse_dispatcher *fdip, enum fuse_opcode op,
     return (fdisp_wait_answ(fdip));
 }
 
-static __inline__ int
+static __inline__
+int
 fdisp_simple_vfs_getattr(struct fuse_dispatcher *fdip,
                          mount_t                 mp,
                          vfs_context_t           context)

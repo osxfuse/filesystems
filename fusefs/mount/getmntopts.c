@@ -73,12 +73,11 @@ getmntopts(options, m0, flagp, altflagp)
 	const char *options;
 	const struct mntopt *m0;
 	int *flagp;
-	int *altflagp;
+	uint64_t *altflagp;
 {
 	const struct mntopt *m;
 	int negative, len;
 	char *opt, *optbuf, *p;
-	int *thisflagp;
 
 	/* Copy option string, since it is about to be torn asunder... */
 	if ((optbuf = strdup(options)) == NULL)
@@ -112,11 +111,18 @@ getmntopts(options, m0, flagp, altflagp)
 
 		/* Save flag, or fail if option is not recognized. */
 		if (m->m_option) {
-			thisflagp = m->m_altloc ? altflagp : flagp;
-			if (negative == m->m_inverse)
-				*thisflagp |= m->m_flag;
-			else
-				*thisflagp &= ~m->m_flag;
+			if (m->m_altloc) {
+				if (negative == m->m_inverse)
+					*altflagp |= m->m_flag;
+				else
+					*altflagp &= ~m->m_flag;
+			} else {
+				int m_flag32 = m->m_flag & 0xFFFFFFFF;
+				if (negative == m->m_inverse)
+					*flagp |= m_flag32;
+				else
+					*flagp &= ~m_flag32;
+			}
 		} else if (!getmnt_silent) {
 			errx(1, "-o %s: option not supported", opt);
 		}

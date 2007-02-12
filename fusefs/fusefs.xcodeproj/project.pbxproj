@@ -55,6 +55,8 @@
 		5411E2EE0B2D644F00B8F324 /* fuse_locking.c in Sources */ = {isa = PBXBuildFile; fileRef = 5411E2EC0B2D644F00B8F324 /* fuse_locking.c */; };
 		5411E2EF0B2D644F00B8F324 /* fuse_locking.h in Headers */ = {isa = PBXBuildFile; fileRef = 5411E2ED0B2D644F00B8F324 /* fuse_locking.h */; };
 		541780C10B6413CA003DE6C0 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 541780C00B6413CA003DE6C0 /* CoreFoundation.framework */; };
+		5434066C0B79C3AA00471672 /* fuse_knote.c in Sources */ = {isa = PBXBuildFile; fileRef = 5434066A0B79C3AA00471672 /* fuse_knote.c */; };
+		5434066D0B79C3AA00471672 /* fuse_knote.h in Headers */ = {isa = PBXBuildFile; fileRef = 5434066B0B79C3AA00471672 /* fuse_knote.h */; };
 		5489083B0ACC7D1B00D891F8 /* fuse_sysctl.c in Sources */ = {isa = PBXBuildFile; fileRef = 548908390ACC7D1B00D891F8 /* fuse_sysctl.c */; };
 		5489083C0ACC7D1B00D891F8 /* fuse_sysctl.h in Headers */ = {isa = PBXBuildFile; fileRef = 5489083A0ACC7D1B00D891F8 /* fuse_sysctl.h */; };
 		548FDFF80B3202A80008D620 /* fuse_file.c in Sources */ = {isa = PBXBuildFile; fileRef = 548FDFF30B3202A80008D620 /* fuse_file.c */; };
@@ -71,6 +73,8 @@
 		54BBC8F60B4C379500A17C8A /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54BBC8F50B4C379500A17C8A /* DiskArbitration.framework */; };
 		54C6DE6C0B5EEDD1002D9FD9 /* Contents in CopyFiles */ = {isa = PBXBuildFile; fileRef = 54C6DE6B0B5EEDD1002D9FD9 /* Contents */; };
 		54D47BC10B4F62A200A8FE1C /* load_fusefs.c in Sources */ = {isa = PBXBuildFile; fileRef = 54D47BC00B4F62A200A8FE1C /* load_fusefs.c */; };
+		54F862630B8029A400416A6F /* fuse_kludges.c in Sources */ = {isa = PBXBuildFile; fileRef = 54F862610B8029A400416A6F /* fuse_kludges.c */; };
+		54F862640B8029A400416A6F /* fuse_kludges.h in Headers */ = {isa = PBXBuildFile; fileRef = 54F862620B8029A400416A6F /* fuse_kludges.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -138,6 +142,8 @@
 		5411E2EC0B2D644F00B8F324 /* fuse_locking.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_locking.c; sourceTree = "<group>"; };
 		5411E2ED0B2D644F00B8F324 /* fuse_locking.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_locking.h; sourceTree = "<group>"; };
 		541780C00B6413CA003DE6C0 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		5434066A0B79C3AA00471672 /* fuse_knote.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_knote.c; sourceTree = "<group>"; };
+		5434066B0B79C3AA00471672 /* fuse_knote.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_knote.h; sourceTree = "<group>"; };
 		548908390ACC7D1B00D891F8 /* fuse_sysctl.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_sysctl.c; sourceTree = "<group>"; };
 		5489083A0ACC7D1B00D891F8 /* fuse_sysctl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_sysctl.h; sourceTree = "<group>"; };
 		548FDFF30B3202A80008D620 /* fuse_file.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_file.c; sourceTree = "<group>"; };
@@ -245,11 +251,13 @@
 		54C6DE3D0B5EEB75002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
 		54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fusefs.fs; sourceTree = "<group>"; };
 		54C6DE6B0B5EEDD1002D9FD9 /* Contents */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Contents; path = fusefs.fs/Contents; sourceTree = "<group>"; };
-		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		54D47B930B4F614C00A8FE1C /* load */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = folder; path = load; sourceTree = "<group>"; };
 		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
 		54D47BBC0B4F628200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
 		54D47BC00B4F62A200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = load_fusefs.c; path = load/load_fusefs.c; sourceTree = "<group>"; };
+		54F862610B8029A400416A6F /* fuse_kludges.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_kludges.c; sourceTree = "<group>"; };
+		54F862620B8029A400416A6F /* fuse_kludges.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_kludges.h; sourceTree = "<group>"; };
 		D27513B306A6225300ADB3A4 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = /System/Library/Frameworks/Kernel.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -283,6 +291,10 @@
 		089C166AFE841209C02AAC07 /* fusefs */ = {
 			isa = PBXGroup;
 			children = (
+				54F862610B8029A400416A6F /* fuse_kludges.c */,
+				54F862620B8029A400416A6F /* fuse_kludges.h */,
+				5434066A0B79C3AA00471672 /* fuse_knote.c */,
+				5434066B0B79C3AA00471672 /* fuse_knote.h */,
 				541780C00B6413CA003DE6C0 /* CoreFoundation.framework */,
 				54B69E740B62B34400C44B25 /* fuse_ioctl.h */,
 				54C6DE6B0B5EEDD1002D9FD9 /* Contents */,
@@ -666,6 +678,8 @@
 				548FDFFB0B3202A80008D620 /* fuse_vfsops.h in Headers */,
 				548FDFFC0B3202A80008D620 /* fuse_vnops.h in Headers */,
 				54B69E750B62B34400C44B25 /* fuse_ioctl.h in Headers */,
+				5434066D0B79C3AA00471672 /* fuse_knote.h in Headers */,
+				54F862640B8029A400416A6F /* fuse_kludges.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -816,6 +830,8 @@
 				548FDFF80B3202A80008D620 /* fuse_file.c in Sources */,
 				548FDFF90B3202A80008D620 /* fuse_internal.c in Sources */,
 				548FE0400B322A540008D620 /* fuse_node.c in Sources */,
+				5434066C0B79C3AA00471672 /* fuse_knote.c in Sources */,
+				54F862630B8029A400416A6F /* fuse_kludges.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -917,6 +933,27 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = NO;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_PREPROCESS = YES;
@@ -925,7 +962,7 @@
 				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
-				MODULE_VERSION = 1.0.0d1;
+				MODULE_VERSION = 0.2.0;
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-D__FreeBSD__=10",
@@ -945,6 +982,27 @@
 				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = NO;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_PREPROCESS = YES;
@@ -953,7 +1011,7 @@
 				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
-				MODULE_VERSION = 1.0.0d1;
+				MODULE_VERSION = 0.2.0;
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-D__FreeBSD__=10",
@@ -966,6 +1024,10 @@
 		1DEB91C808733DAC0010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
@@ -979,6 +1041,10 @@
 		1DEB91C908733DAC0010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_EXPAND_BUILD_SETTINGS = YES;
@@ -1002,6 +1068,27 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = NO;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = mount_fusefs;
@@ -1020,6 +1107,27 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = NO;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = mount_fusefs;
@@ -1084,6 +1192,27 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = load_fusefs;
@@ -1102,6 +1231,27 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
+				GCC_TREAT_NONCONFORMANT_CODE_ERRORS_AS_WARNINGS = YES;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_EFFECTIVE_CPLUSPLUS_VIOLATIONS = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_PEDANTIC = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = YES;
+				GCC_WARN_UNUSED_VALUE = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				PREBINDING = NO;
 				PRODUCT_NAME = load_fusefs;

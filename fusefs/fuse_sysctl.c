@@ -8,58 +8,110 @@
 #include <sys/sysctl.h>
 
 #include "fuse_kernel.h"
+#include "fuse_sysctl.h"
 #include <fuse_param.h>
 #include <fuse_version.h>
 
-int32_t  fuse_api_major             = FUSE_KERNEL_VERSION;                // r
-int32_t  fuse_api_minor             = FUSE_KERNEL_MINOR_VERSION;          // r
-int32_t  fuse_max_freetickets       = FUSE_DEFAULT_MAX_FREE_TICKETS;      // rw
-int32_t  fuse_iov_credit            = FUSE_DEFAULT_IOV_CREDIT;            // rw
-int32_t  fuse_iov_permanent_bufsize = FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE; // rw
-uint64_t fuse_vnodes               = 0;                                   // r
-uint64_t fuse_lookup_cache_hits    = 0;                                   // r
-uint64_t fuse_lookup_cache_misses  = 0;                                   // r
-uint64_t fuse_fh_current           = 0;                                   // r
-uint64_t fuse_fh_upcall_count      = 0;                                   // r
-uint64_t fuse_fh_reuse_count       = 0;                                   // r
+/* NB: none of these are bigger than unsigned 32-bit. */
 
-SYSCTL_DECL(_fuse);
-SYSCTL_NODE(, OID_AUTO, fuse, CTLFLAG_RW, 0, "");
-SYSCTL_STRING(_fuse, OID_AUTO, version, CTLFLAG_RD, MACFUSE_VERSION, 0, "");
-SYSCTL_INT(_fuse, OID_AUTO, api_major, CTLFLAG_RD, &fuse_api_major, 0, "");
-SYSCTL_INT(_fuse, OID_AUTO, api_minor, CTLFLAG_RD, &fuse_api_minor, 0, "");
-SYSCTL_INT(_fuse, OID_AUTO, max_freetickets, CTLFLAG_RW,
-           &fuse_max_freetickets, 0, "");
-SYSCTL_INT(_fuse, OID_AUTO, iov_credit, CTLFLAG_RW,
+uint32_t fuse_api_major              = FUSE_KERNEL_VERSION;                // r
+uint32_t fuse_api_minor              = FUSE_KERNEL_MINOR_VERSION;          // r
+int32_t  fuse_dev_use_count          = 0;                                  // r
+int32_t  fuse_fh_current             = 0;                                  // r
+uint32_t fuse_fh_reuse_count         = 0;                                  // r
+uint32_t fuse_fh_upcall_count        = 0;                                  // r
+int32_t  fuse_iov_credit             = FUSE_DEFAULT_IOV_CREDIT;            // rw
+int32_t  fuse_iov_current            = 0;                                  // r
+uint32_t fuse_iov_permanent_bufsize  = FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE; // rw
+uint32_t fuse_lookup_cache_hits      = 0;                                  // r
+uint32_t fuse_lookup_cache_misses    = 0;                                  // r
+uint32_t fuse_lookup_cache_overrides = 0;                                  // r
+uint32_t fuse_max_freetickets        = FUSE_DEFAULT_MAX_FREE_TICKETS;      // rw
+int32_t  fuse_memory_allocated       = 0;                                  // r
+int32_t  fuse_realloc_count          = 0;                                  // r
+int32_t  fuse_tickets_current        = 0;                                  // r
+int32_t  fuse_vnodes_current         = 0;                                  // r
+
+SYSCTL_DECL(_macfuse);
+SYSCTL_NODE(, OID_AUTO, macfuse, CTLFLAG_RW, 0, "MacFUSE Statistics");
+SYSCTL_NODE(_macfuse, OID_AUTO, counters, CTLFLAG_RW, 0,
+            "MacFUSE Statistics: Monotonic Counters");
+SYSCTL_NODE(_macfuse, OID_AUTO, resourceusage, CTLFLAG_RW, 0,
+            "MacFUSE Statistics: Resource Usage");
+SYSCTL_NODE(_macfuse, OID_AUTO, tunables, CTLFLAG_RW, 0,
+            "MacFUSE Statistics: Tunables");
+SYSCTL_NODE(_macfuse, OID_AUTO, version, CTLFLAG_RW, 0,
+            "MacFUSE Statistics: Version Information");
+
+/* fuse.counters */
+SYSCTL_INT(_macfuse_counters, OID_AUTO, device_use, CTLFLAG_RD,
+           &fuse_dev_use_count, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, filehandle_reuse, CTLFLAG_RD,
+           &fuse_fh_reuse_count, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, filehandle_upcalls, CTLFLAG_RD,
+           &fuse_fh_upcall_count, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, lookup_cache_hits, CTLFLAG_RD,
+           &fuse_lookup_cache_hits, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, lookup_cache_misses, CTLFLAG_RD,
+           &fuse_lookup_cache_misses, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, lookup_cache_overrides,
+           CTLFLAG_RD, &fuse_lookup_cache_overrides, 0, "");
+SYSCTL_INT(_macfuse_counters, OID_AUTO, memory_reallocs, CTLFLAG_RD,
+           &fuse_realloc_count, 0, "");
+
+/* fuse.resourceusage */
+SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, filehandles, CTLFLAG_RD,
+           &fuse_fh_current, 0, "");
+SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, ipc_iovs, CTLFLAG_RD,
+           &fuse_iov_current, 0, "");
+SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, ipc_tickets, CTLFLAG_RD,
+           &fuse_tickets_current, 0, "");
+SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, memory_bytes, CTLFLAG_RD,
+           &fuse_memory_allocated, 0, "");
+SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, vnodes, CTLFLAG_RD,
+           &fuse_vnodes_current, 0, "");
+
+/* fuse.tunables */
+SYSCTL_INT(_macfuse_tunables, OID_AUTO, iov_credit, CTLFLAG_RW,
            &fuse_iov_credit, 0, "");
-SYSCTL_INT(_fuse, OID_AUTO, iov_permanent_bufsize, CTLFLAG_RW,
+SYSCTL_INT(_macfuse_tunables, OID_AUTO, iov_permanent_bufsize, CTLFLAG_RW,
            &fuse_iov_permanent_bufsize, 0, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, vnodes, CTLFLAG_RD, &fuse_vnodes, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, lookup_cache_hits, CTLFLAG_RD,
-            &fuse_lookup_cache_hits, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, lookup_cache_misses, CTLFLAG_RD,
-            &fuse_lookup_cache_misses, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, fh_current, CTLFLAG_RD, &fuse_fh_current, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, fh_upcall_count, CTLFLAG_RD,
-            &fuse_fh_upcall_count, "");
-SYSCTL_QUAD(_fuse, OID_AUTO, fh_reuse_count, CTLFLAG_RD,
-            &fuse_fh_reuse_count, "");
+SYSCTL_INT(_macfuse_tunables, OID_AUTO, max_freetickets, CTLFLAG_RW,
+           &fuse_max_freetickets, 0, "");
+
+/* fuse.version */
+SYSCTL_INT(_macfuse_version, OID_AUTO, api_major, CTLFLAG_RD,
+           &fuse_api_major, 0, "");
+SYSCTL_INT(_macfuse_version, OID_AUTO, api_minor, CTLFLAG_RD,
+           &fuse_api_minor, 0, "");
+SYSCTL_STRING(_macfuse_version, OID_AUTO, string, CTLFLAG_RD,
+              MACFUSE_VERSION ", " MACFUSE_TIMESTAMP, 0, "");
 
 static struct sysctl_oid *fuse_sysctl_list[] =
 {
-    &sysctl__fuse_version,
-    &sysctl__fuse_api_major,
-    &sysctl__fuse_api_minor,
-    &sysctl__fuse_max_freetickets,
-    &sysctl__fuse_iov_credit,
-    &sysctl__fuse_iov_permanent_bufsize,
-    &sysctl__fuse_vnodes,
-    &sysctl__fuse_lookup_cache_hits,
-    &sysctl__fuse_lookup_cache_misses,
-    &sysctl__fuse_fh_current,
-    &sysctl__fuse_fh_upcall_count,
-    &sysctl__fuse_fh_reuse_count,
-    (struct sysctl_oid *) 0
+    &sysctl__macfuse_counters,
+    &sysctl__macfuse_resourceusage,
+    &sysctl__macfuse_tunables,
+    &sysctl__macfuse_version,
+    &sysctl__macfuse_counters_device_use,
+    &sysctl__macfuse_counters_filehandle_reuse,
+    &sysctl__macfuse_counters_filehandle_upcalls,
+    &sysctl__macfuse_counters_lookup_cache_hits,
+    &sysctl__macfuse_counters_lookup_cache_misses,
+    &sysctl__macfuse_counters_lookup_cache_overrides,
+    &sysctl__macfuse_counters_memory_reallocs,
+    &sysctl__macfuse_resourceusage_filehandles,
+    &sysctl__macfuse_resourceusage_ipc_iovs,
+    &sysctl__macfuse_resourceusage_ipc_tickets,
+    &sysctl__macfuse_resourceusage_memory_bytes,
+    &sysctl__macfuse_resourceusage_vnodes,
+    &sysctl__macfuse_tunables_iov_credit,
+    &sysctl__macfuse_tunables_iov_permanent_bufsize,
+    &sysctl__macfuse_tunables_max_freetickets,
+    &sysctl__macfuse_version_api_major,
+    &sysctl__macfuse_version_api_minor,
+    &sysctl__macfuse_version_string,
+    (struct sysctl_oid *)0
 };
 
 void
@@ -67,7 +119,7 @@ fuse_sysctl_start(void)
 {
     int i;
 
-    sysctl_register_oid(&sysctl__fuse);
+    sysctl_register_oid(&sysctl__macfuse);
     for (i = 0; fuse_sysctl_list[i]; i++) {
        sysctl_register_oid(fuse_sysctl_list[i]);
     }
@@ -81,5 +133,5 @@ fuse_sysctl_stop(void)
     for (i = 0; fuse_sysctl_list[i]; i++) {
        sysctl_unregister_oid(fuse_sysctl_list[i]);
     }
-    sysctl_unregister_oid(&sysctl__fuse);
+    sysctl_unregister_oid(&sysctl__macfuse);
 }

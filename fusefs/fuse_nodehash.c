@@ -1,3 +1,4 @@
+#include "fuse.h"
 #include "fuse_nodehash.h"
 #include <sys/vnode.h>
 
@@ -222,7 +223,7 @@ extern uint64_t HNodeGetInodeNumber(HNodeRef hnode)
     return hnode->ino;
 }
 
-extern vnode_t HNodeGetVNodeForForkAtIndex(HNodeRef hnode, size_t forkIndex)
+extern vnode_t HNodeGetVNodeForForkAtIndex(HNodeRef hnode, __unused size_t forkIndex)
     // See comments in header.
 {
     vnode_t     vn;
@@ -336,7 +337,7 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
 
                 // Allocate a new node.
                 
-                newNode = OSMalloc(sizeof(*newNode) + gFSNodeSize, gOSMallocTag);
+                newNode = FUSE_OSMalloc(sizeof(*newNode) + gFSNodeSize, gOSMallocTag);
                 if (newNode == NULL) {
                     err = ENOMEM;
                 } else {
@@ -357,7 +358,7 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
                         newNode->forkVNodesStorage.internal = NULL;
                     } else {
                         newNode->forkVNodesSize = forkIndex + 1;
-                        newNode->forkVNodesStorage.external = OSMalloc(sizeof(*newNode->forkVNodesStorage.external) * (forkIndex + 1), gOSMallocTag);
+                        newNode->forkVNodesStorage.external = FUSE_OSMalloc(sizeof(*newNode->forkVNodesStorage.external) * (forkIndex + 1), gOSMallocTag);
                         newNode->forkVNodes = newNode->forkVNodesStorage.external;
                         if (newNode->forkVNodesStorage.external == NULL) {
                             // If this allocation fails, we don't have to clean up newNode, 
@@ -423,7 +424,7 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
 
                     lck_mtx_unlock(gHashMutex);
 
-                    newForkBuffer = OSMalloc(sizeof(*newForkBuffer) * (forkIndex + 1), gOSMallocTag);
+                    newForkBuffer = FUSE_OSMalloc(sizeof(*newForkBuffer) * (forkIndex + 1), gOSMallocTag);
                     if (newForkBuffer == NULL) {
                         err = ENOMEM;
                     } else {
@@ -466,7 +467,7 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
                     lck_mtx_unlock(gHashMutex);
                     
                     if (oldForkBuffer != NULL) {
-                        OSFree(oldForkBuffer, sizeof(*oldForkBuffer) * oldForkBufferSize, gOSMallocTag);
+                        FUSE_OSFree(oldForkBuffer, sizeof(*oldForkBuffer) * oldForkBufferSize, gOSMallocTag);
                     }
                     
                     lck_mtx_lock(gHashMutex);                       
@@ -542,13 +543,13 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
     // Free newForkBuffer if we allocated it but didn't use it.
     
     if (newForkBuffer != NULL) {
-        OSFree(newForkBuffer, sizeof(*newForkBuffer) * (forkIndex + 1), gOSMallocTag);
+        FUSE_OSFree(newForkBuffer, sizeof(*newForkBuffer) * (forkIndex + 1), gOSMallocTag);
     }
 
     // Free newNode if we allocated it but didn't put it into the table.
     
     if (newNode != NULL) {
-        OSFree(newNode, sizeof(*newNode) + gFSNodeSize, gOSMallocTag); 
+        FUSE_OSFree(newNode, sizeof(*newNode) + gFSNodeSize, gOSMallocTag); 
     }
     
     assert( (err == 0) == (*hnodePtr != NULL) );
@@ -629,7 +630,7 @@ extern void HNodeAttachVNodeSucceeded(HNodeRef hnode, size_t forkIndex, vnode_t 
     lck_mtx_unlock(gHashMutex);
 }
 
-extern boolean_t HNodeAttachVNodeFailed(HNodeRef hnode, size_t forkIndex)
+extern boolean_t HNodeAttachVNodeFailed(HNodeRef hnode, __unused size_t forkIndex)
     // See comments in header.
 {
     boolean_t   scrubIt;
@@ -701,7 +702,7 @@ extern void HNodeScrubDone(HNodeRef hnode)
     assert(hnode->magic == gMagic);
     
     if (hnode->forkVNodesSize > 1) {
-        OSFree(hnode->forkVNodesStorage.external, sizeof(*hnode->forkVNodesStorage.external) * hnode->forkVNodesSize, gOSMallocTag);
+        FUSE_OSFree(hnode->forkVNodesStorage.external, sizeof(*hnode->forkVNodesStorage.external) * hnode->forkVNodesSize, gOSMallocTag);
     }
 
     // If anyone is waiting on this HNode, that would be bad.
@@ -711,7 +712,7 @@ extern void HNodeScrubDone(HNodeRef hnode)
     // just add it blindly.
 
     assert( ! hnode->waiting );
-    OSFree(hnode, sizeof(*hnode) + gFSNodeSize, gOSMallocTag);
+    FUSE_OSFree(hnode, sizeof(*hnode) + gFSNodeSize, gOSMallocTag);
 }
 
 extern void HNodePrintState(void)
@@ -735,7 +736,7 @@ extern void HNodePrintState(void)
         
         nodeCount = gHashNodeCount;
         
-        nodes = OSMalloc(sizeof(*nodes) * nodeCount, gOSMallocTag);
+        nodes = FUSE_OSMalloc(sizeof(*nodes) * nodeCount, gOSMallocTag);
         if (nodes == NULL) {
             err = ENOMEM;
         }
@@ -745,7 +746,7 @@ extern void HNodePrintState(void)
             
             if (gHashNodeCount > nodeCount) {
                 // Whoops, it changed size, let's try again.
-                OSFree(nodes, sizeof(*nodes) * nodeCount, gOSMallocTag);
+                FUSE_OSFree(nodes, sizeof(*nodes) * nodeCount, gOSMallocTag);
                 err = EAGAIN;
             } else {
                 nodeIndex = 0;
@@ -794,6 +795,84 @@ extern void HNodePrintState(void)
     }
 
     if (nodes != NULL) {
-        OSFree(nodes, sizeof(*nodes) * nodeCount, gOSMallocTag);
+        FUSE_OSFree(nodes, sizeof(*nodes) * nodeCount, gOSMallocTag);
     }
+}
+
+// == XXX ==
+
+extern errno_t
+HNodeLookupRealQuickIfExists(dev_t     dev,
+                             uint64_t  ino,
+                             size_t    forkIndex,
+                             HNodeRef *hnodePtr,
+                             vnode_t  *vnPtr)
+{
+    errno_t   err = EAGAIN;
+    HNodeRef  thisNode;
+    boolean_t needsUnlock;
+    vnode_t   resultVN;
+    uint32_t  vid;
+    
+    assert(hnodePtr != NULL);
+    assert(*hnodePtr == NULL);
+    assert(vnPtr != NULL);
+    assert(*vnPtr == NULL);
+    assert(gHashMutex != NULL);
+
+    needsUnlock = TRUE;
+    resultVN = NULL;
+    
+    lck_mtx_lock(gHashMutex);
+    
+    LCK_MTX_ASSERT(gHashMutex, LCK_MTX_ASSERT_OWNED);
+
+    thisNode = LIST_FIRST(HNodeGetFirstFromHashTable(dev, ino));
+
+    while (thisNode != NULL) {
+        assert(thisNode->magic == gMagic);
+        if ((thisNode->dev == dev) && (thisNode->ino == ino)) {
+            break;
+        }
+        thisNode = LIST_NEXT(thisNode, hashLink);
+    }
+        
+    if (thisNode == NULL) {
+        return ENOENT;
+    } else {
+        if (thisNode->attachOutstanding) {
+            return EAGAIN;
+        } else if (forkIndex >= thisNode->forkVNodesSize) {
+            return ENOENT;
+        } else if (thisNode->forkVNodes[forkIndex] == NULL) {
+            return ENOENT;
+        } else {
+            vnode_t candidateVN = thisNode->forkVNodes[forkIndex];
+            assert(candidateVN != NULL);
+            vid = vnode_vid(candidateVN);
+            lck_mtx_unlock(gHashMutex);
+            err = vnode_getwithvid(candidateVN, vid);
+            if (err == 0) {
+                assert(thisNode != NULL);
+                assert(resultVN == NULL);
+                resultVN = candidateVN;
+                needsUnlock = FALSE;
+            } else {
+                return EAGAIN;
+            }
+        }
+    }
+
+    if (err == 0) {
+        *hnodePtr = thisNode;
+        *vnPtr    = resultVN;
+    }
+    
+    if (needsUnlock) {
+        lck_mtx_unlock(gHashMutex);
+    }
+
+    assert((err == 0) == (*hnodePtr != NULL));
+    
+    return err;
 }

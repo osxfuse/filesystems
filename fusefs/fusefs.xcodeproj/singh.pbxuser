@@ -5,7 +5,7 @@
 		activeExecutable = 54D47B810B4F610000A8FE1C /* load_fusefs */;
 		activeTarget = 54C6DD290B5EE606002D9FD9 /* All */;
 		addToTargets = (
-			5494A9410ACA5BF10020068B /* mount_fusefs */,
+			32A4FEB80562C75700D090E7 /* fusefs */,
 		);
 		breakpoints = (
 			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
@@ -36,7 +36,7 @@
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
-					408,
+					602,
 					20,
 					48,
 					43,
@@ -59,7 +59,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					20,
 					200,
-					228,
+					422,
 					20,
 					48,
 					43,
@@ -75,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 191710248;
-			PBXWorkspaceStateSaveDate = 191710248;
+			PBXPerProjectTemplateStateSaveDate = 192948620;
+			PBXWorkspaceStateSaveDate = 192948620;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -92,9 +92,9 @@
 	};
 	1A224C3CFF42312311CA2CB7 /* fuse_main.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2338}}";
-			sepNavSelRange = "{3497, 0}";
-			sepNavVisRect = "{{0, 615}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2310}}";
+			sepNavSelRange = "{3510, 0}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
 		};
 	};
 	32A4FEB80562C75700D090E7 /* fusefs */ = {
@@ -209,6 +209,13 @@
 			sepNavVisRect = "{{0, 0}, {702, 269}}";
 		};
 	};
+	5434066A0B79C3AA00471672 /* fuse_knote.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1792}}";
+			sepNavSelRange = "{1500, 77}";
+			sepNavVisRect = "{{0, 456}, {702, 269}}";
+		};
+	};
 	548908390ACC7D1B00D891F8 /* fuse_sysctl.c */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {702, 1106}}";
@@ -292,14 +299,134 @@
 		sourceDirectories = (
 		);
 	};
+	5494A94B0ACA5C220020068B /* mount_fusefs.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 11760}}";
+			sepNavSelRange = "{24293, 0}";
+			sepNavVisRect = "{{0, 10219}, {702, 269}}";
+		};
+	};
+	54B69E740B62B34400C44B25 /* fuse_ioctl.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 784}}";
+			sepNavSelRange = "{1451, 0}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
 	54C6DD290B5EE606002D9FD9 /* All */ = {
 		activeExec = 0;
 	};
+	54C6DDB20B5EEB44002D9FD9 /* fuse_mount.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1666}}";
+			sepNavSelRange = "{400, 61}";
+			sepNavVisRect = "{{0, 153}, {702, 269}}";
+		};
+	};
+	54C6DDB70B5EEB44002D9FD9 /* fuse.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2058}}";
+			sepNavSelRange = "{3747, 0}";
+			sepNavVisRect = "{{0, 1775}, {702, 269}}";
+		};
+	};
+	54C6DDB80B5EEB44002D9FD9 /* fuse_device.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 7448}}";
+			sepNavSelRange = "{12303, 0}";
+			sepNavVisRect = "{{0, 6397}, {702, 269}}";
+		};
+	};
+	54C6DDBB0B5EEB44002D9FD9 /* fuse_file.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1316}}";
+			sepNavSelRange = "{2115, 0}";
+			sepNavVisRect = "{{0, 949}, {702, 269}}";
+		};
+	};
+	54C6DDBC0B5EEB44002D9FD9 /* fuse_internal.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 16772}}";
+			sepNavSelRange = "{31077, 0}";
+			sepNavVisRect = "{{0, 15007}, {702, 269}}";
+			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
+		};
+	};
+	54C6DDBD0B5EEB44002D9FD9 /* fuse_internal.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 6244}}";
+			sepNavSelRange = "{11715, 0}";
+			sepNavVisRect = "{{0, 5319}, {702, 269}}";
+		};
+	};
+	54C6DDBE0B5EEB44002D9FD9 /* fuse_ipc.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 13020}}";
+			sepNavSelRange = "{2494, 56}";
+			sepNavVisRect = "{{0, 1021}, {702, 269}}";
+		};
+	};
+	54C6DDBF0B5EEB44002D9FD9 /* fuse_ipc.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 5236}}";
+			sepNavSelRange = "{11806, 0}";
+			sepNavVisRect = "{{0, 4031}, {702, 269}}";
+		};
+	};
 	54C6DDC40B5EEB44002D9FD9 /* fuse_node.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2548}}";
-			sepNavSelRange = "{5064, 0}";
-			sepNavVisRect = "{{0, 475}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {702, 2618}}";
+			sepNavSelRange = "{5195, 0}";
+			sepNavVisRect = "{{0, 1875}, {702, 269}}";
+		};
+	};
+	54C6DDC50B5EEB44002D9FD9 /* fuse_node.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1918}}";
+			sepNavSelRange = "{236, 30}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
+	54C6DDC60B5EEB44002D9FD9 /* fuse_nodehash.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {914, 12292}}";
+			sepNavSelRange = "{30784, 0}";
+			sepNavVisRect = "{{0, 8707}, {702, 269}}";
+		};
+	};
+	54C6DDC80B5EEB44002D9FD9 /* fuse_sysctl.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1428}}";
+			sepNavSelRange = "{3854, 0}";
+			sepNavVisRect = "{{0, 167}, {702, 269}}";
+		};
+	};
+	54C6DDC90B5EEB44002D9FD9 /* fuse_sysctl.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 364}}";
+			sepNavSelRange = "{517, 39}";
+			sepNavVisRect = "{{0, 0}, {702, 269}}";
+		};
+	};
+	54C6DDCA0B5EEB44002D9FD9 /* fuse_vfsops.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 12124}}";
+			sepNavSelRange = "{23712, 0}";
+			sepNavVisRect = "{{0, 10415}, {702, 269}}";
+		};
+	};
+	54C6DDCC0B5EEB44002D9FD9 /* fuse_vnops.c */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 43834}}";
+			sepNavSelRange = "{84925, 0}";
+			sepNavVisRect = "{{0, 10653}, {702, 269}}";
+		};
+	};
+	54C6DDCD0B5EEB44002D9FD9 /* fuse_vnops.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 840}}";
+			sepNavSelRange = "{3045, 0}";
+			sepNavVisRect = "{{0, 571}, {702, 269}}";
 		};
 	};
 	54C6DE650B5EED9E002D9FD9 /* fusefs.fs */ = {
@@ -348,6 +475,13 @@
 			sepNavSelRange = "{0, 0}";
 			sepNavVisRect = "{{0, 0}, {904, 627}}";
 			sepNavWindowFrame = "{{38, 96}, {949, 756}}";
+		};
+	};
+	54F862620B8029A400416A6F /* fuse_kludges.h */ = {
+		uiCtxt = {
+			sepNavIntBoundsRect = "{{0, 0}, {702, 546}}";
+			sepNavSelRange = "{758, 0}";
+			sepNavVisRect = "{{0, 195}, {702, 269}}";
 		};
 	};
 	54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */ = {

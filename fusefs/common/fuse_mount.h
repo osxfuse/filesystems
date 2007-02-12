@@ -14,14 +14,15 @@
 #endif
 
 #include <fuse_param.h>
+#include <fuse_version.h>
 
-#define FUSE_FS_TYPE "fusefs"
-
-// shared between the kernel and user spaces
+/*
+ * Shared between the kernel and user spaces.
+ */
 struct fuse_mount_args {
     char     mntpath[MAXPATHLEN]; // path to the mount point
 
-    uint32_t altflags;            // see mount-time flags below
+    uint64_t altflags;            // see mount-time flags below
     uint32_t blocksize;           // fictitious block size of our "storage"
     uint32_t daemon_timeout;      // timeout in seconds for upcalls to daemon
     uint32_t fsid;                // optional custom value for part of fsid[0]
@@ -29,12 +30,12 @@ struct fuse_mount_args {
     uint32_t index;               // the N in /dev/fuseN
     uint32_t iosize;              // maximum size for reading or writing
     dev_t    rdev;                // dev_t for the /dev/fuseN in question
-    uint32_t subtype;             // the file system's sub type (type is FUSE)
+    uint32_t subtype;             // file system sub type (type is FUSE)
     char     volname[MAXPATHLEN]; // volume name
 };
 typedef struct fuse_mount_args fuse_mount_args;
 
-// file system subtypes
+/* file system subtypes */
 enum {
     FUSE_FSSUBTYPE_UNKNOWN = 0,
     FUSE_FSSUBTYPE_XMPFS,
@@ -50,39 +51,44 @@ enum {
     FUSE_FSSUBTYPE_MAX,
 };
 
-// mount-time flags
-#define FUSE_MOPT_IGNORE                0x00000000
-#define FUSE_MOPT_ALLOW_OTHER           0x00000001
-#define FUSE_MOPT_ALLOW_ROOT            0x00000002
-#define FUSE_MOPT_BLOCKSIZE             0x00000004
-#define FUSE_MOPT_DAEMON_TIMEOUT        0x00000008
-#define FUSE_MOPT_DEBUG                 0x00000010
-#define FUSE_MOPT_DEFAULT_PERMISSIONS   0x00000020
-#define FUSE_MOPT_DIRECT_IO             0x00000040
-#define FUSE_MOPT_FD                    0x00000080
-#define FUSE_MOPT_FSID                  0x00000100
-#define FUSE_MOPT_FSNAME                0x00000200
-#define FUSE_MOPT_GID                   0x00000400
-#define FUSE_MOPT_HARD_REMOVE           0x00000800
-#define FUSE_MOPT_INIT_TIMEOUT          0x00001000
-#define FUSE_MOPT_IOSIZE                0x00002000
-#define FUSE_MOPT_JAIL_SYMLINKS         0x00004000
-#define FUSE_MOPT_KERNEL_CACHE          0x00008000
-#define FUSE_MOPT_NO_ATTRCACHE          0x00010000
-#define FUSE_MOPT_NO_AUTH_OPAQUE        0x00020000
-#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x00040000
-#define FUSE_MOPT_NO_BROWSE             0x00080000
-#define FUSE_MOPT_NO_READAHEAD          0x00100000
-#define FUSE_MOPT_NO_SYNCWRITES         0x00200000
-#define FUSE_MOPT_NO_UBC                0x00400000
-#define FUSE_MOPT_PING_DISKARB          0x00800000
-#define FUSE_MOPT_READDIR_INO           0x01000000
-#define FUSE_MOPT_ROOTMODE              0x02000000
-#define FUSE_MOPT_SUBTYPE               0x04000000
-#define FUSE_MOPT_UID                   0x08000000
-#define FUSE_MOPT_UMASK                 0x10000000
-#define FUSE_MOPT_USE_INO               0x20000000
-#define FUSE_MOPT_VOLNAME               0x40000000
+/* mount-time flags */
+#define FUSE_MOPT_IGNORE                0x0000000000000000ULL
+#define FUSE_MOPT_ALLOW_OTHER           0x0000000000000001ULL
+#define FUSE_MOPT_ALLOW_ROOT            0x0000000000000002ULL
+#define FUSE_MOPT_BLOCKSIZE             0x0000000000000004ULL
+#define FUSE_MOPT_DAEMON_TIMEOUT        0x0000000000000008ULL
+#define FUSE_MOPT_DEBUG                 0x0000000000000010ULL
+#define FUSE_MOPT_DEFAULT_PERMISSIONS   0x0000000000000020ULL
+#define FUSE_MOPT_DIRECT_IO             0x0000000000000040ULL
+#define FUSE_MOPT_FD                    0x0000000000000080ULL
+#define FUSE_MOPT_FSID                  0x0000000000000100ULL
+#define FUSE_MOPT_FSNAME                0x0000000000000200ULL
+#define FUSE_MOPT_GID                   0x0000000000000400ULL
+#define FUSE_MOPT_HARD_REMOVE           0x0000000000000800ULL
+#define FUSE_MOPT_INIT_TIMEOUT          0x0000000000001000ULL
+#define FUSE_MOPT_IOSIZE                0x0000000000002000ULL
+#define FUSE_MOPT_JAIL_SYMLINKS         0x0000000000004000ULL
+#define FUSE_MOPT_KERNEL_CACHE          0x0000000000008000ULL
+#define FUSE_MOPT_NO_ATTRCACHE          0x0000000000010000ULL
+#define FUSE_MOPT_NO_AUTH_OPAQUE        0x0000000000020000ULL
+#define FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS 0x0000000000040000ULL
+#define FUSE_MOPT_NO_BROWSE             0x0000000000080000ULL
+#define FUSE_MOPT_NO_LOCALCACHES        0x0000000000100000ULL
+#define FUSE_MOPT_NO_READAHEAD          0x0000000000200000ULL
+#define FUSE_MOPT_NO_SYNCWRITES         0x0000000000400000ULL
+#define FUSE_MOPT_NO_UBC                0x0000000000800000ULL
+#define FUSE_MOPT_NO_VNCACHE            0x0000000001000000ULL
+#define FUSE_MOPT_PING_DISKARB          0x0000000002000000ULL
+#define FUSE_MOPT_READDIR_INO           0x0000000004000000ULL
+#define FUSE_MOPT_ROOTMODE              0x0000000008000000ULL
+#define FUSE_MOPT_SUBTYPE               0x0000000010000000ULL
+#define FUSE_MOPT_UID                   0x0000000020000000ULL
+#define FUSE_MOPT_UMASK                 0x0000000040000000ULL
+#define FUSE_MOPT_USE_INO               0x0000000080000000ULL
+#define FUSE_MOPT_VOLNAME               0x0000000100000000ULL
+
+/* Next 32 bits */
+#define FUSE_MOPT_EXTENDED_SECURITY     0x0000000100000000ULL
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF
@@ -93,19 +99,18 @@ enum {
 
 /* The object. */
 
-#define FUSE_UNOTIFICATIONS_OBJECT              \
-    "com.google.filesystems.fusefs.unotifications"
+#define FUSE_UNOTIFICATIONS_OBJECT MACFUSE_BUNDLE_IDENTIFIER ".unotifications"
 
 /* The notifications themselves. */
 
 #define FUSE_UNOTIFICATIONS_NOTIFY_MOUNTED      \
-    "com.google.filesystems.fusefs.unotifications.mounted"
+    FUSE_UNOTIFICATIONS_OBJECT ".mounted"
 
 #define FUSE_UNOTIFICATIONS_NOTIFY_INITED       \
-    "com.google.filesystems.fusefs.unotifications.inited"
+    FUSE_UNOTIFICATIONS_OBJECT ".inited"
 
 #define FUSE_UNOTIFICATIONS_NOTIFY_INITTIMEDOUT \
-    "com.google.filesystems.fusefs.unotifications.inittimedout"
+    FUSE_UNOTIFICATIONS_OBJECT ".inittimedout"
 
 /* User data keys. */
 
