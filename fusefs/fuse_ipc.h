@@ -236,6 +236,8 @@ struct fuse_data {
 #define FSESS_NO_UBC              0x4000 // no unified buffer cache
 #define FSESS_DIRECT_IO           0x8000 // use directio for the entire mount
 
+#define FSESS_EXTENDED_SECURITY   0x00010000
+
 static __inline__
 struct fuse_data *
 fuse_get_mpdata(mount_t mp)

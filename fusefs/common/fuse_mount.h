@@ -85,10 +85,10 @@ enum {
 #define FUSE_MOPT_UID                   0x0000000020000000ULL
 #define FUSE_MOPT_UMASK                 0x0000000040000000ULL
 #define FUSE_MOPT_USE_INO               0x0000000080000000ULL
-#define FUSE_MOPT_VOLNAME               0x0000000100000000ULL
 
 /* Next 32 bits */
-#define FUSE_MOPT_EXTENDED_SECURITY     0x0000000100000000ULL
+#define FUSE_MOPT_VOLNAME               0x0000000100000000ULL
+#define FUSE_MOPT_EXTENDED_SECURITY     0x0000000200000000ULL
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF

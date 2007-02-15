@@ -452,7 +452,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +#include <sys/mount.h>
 +#include <AssertMacros.h>
 +
-+static const char *MacFUSE = "MacFUSE version 0.2.0, " __DATE__ ", " __TIME__;
++static const char *MacFUSE = "MacFUSE version 0.2.1, " __DATE__ ", " __TIME__;
 +
 +static int
 +checkloadable(void)

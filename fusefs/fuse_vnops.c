@@ -2604,6 +2604,7 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
     struct fuse_access_param facp;
 
     int err = 0;
+    int action;
     enum vtype vtyp;
     uid_t nuid;
     gid_t ngid;
@@ -2757,8 +2758,9 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
 
 #undef FUSEATTR
 
-    if (!fsai->valid)
+    if (!fsai->valid) {
         goto out;
+    }
 
     vtyp = vnode_vtype(vp);
 
@@ -2780,10 +2782,16 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
 
     facp.facc_flags &= ~FACCESS_XQUERIES;
 
+    action = KAUTH_VNODE_WRITE_ATTRIBUTES;
+    if (VATTR_IS_ACTIVE(vap, va_acl)    ||
+        VATTR_IS_ACTIVE(vap, va_uuuid)  ||
+        VATTR_IS_ACTIVE(vap, va_guuid)) {
+        action |= KAUTH_VNODE_WRITE_SECURITY;
+    }
+
     if (err && !(fsai->valid & ~(FATTR_ATIME | FATTR_MTIME)) &&
         vap->va_vaflags & VA_UTIMES_NULL) {
-        err = fuse_internal_access(vp, KAUTH_VNODE_WRITE_ATTRIBUTES,
-                                   context, &facp);
+        err = fuse_internal_access(vp, action, context, &facp);
     }
 
     if (err) {

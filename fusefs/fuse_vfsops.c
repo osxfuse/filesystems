@@ -7,6 +7,7 @@
 #include "fuse_device.h"
 #include "fuse_internal.h"
 #include "fuse_ipc.h"
+#include "fuse_kludges.h"
 #include "fuse_locking.h"
 #include "fuse_node.h"
 #include "fuse_vfsops.h"
@@ -93,7 +94,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         return ENOTSUP;
     }
 
-    vfs_setlocklocal(mp); /* USES_KLUDGE */
+    FUSE_KL_vfs_setlocklocal(mp);
 
     err = copyin(udata, &fusefs_args, sizeof(fusefs_args));
     if (err) {
@@ -256,6 +257,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     }
 
     if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
+        mntopts |= FSESS_EXTENDED_SECURITY;
         vfs_setextendedsecurity(mp);
     }
 

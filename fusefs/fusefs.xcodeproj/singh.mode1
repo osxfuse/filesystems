@@ -366,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>54F8625E0B80298D00416A6F</string>
+				<string>548610830B8286CE007A3E34</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>54F8625F0B80298D00416A6F</string>
+				<string>548610840B8286CE007A3E34</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -535,7 +535,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>fuse.h</string>
+								<string></string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -552,8 +552,6 @@
 							<string>301pt</string>
 						</dict>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -593,7 +591,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>54F862680B8029E000416A6F</string>
+				<string>548610850B8286CE007A3E34</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>

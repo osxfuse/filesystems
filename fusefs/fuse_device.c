@@ -533,9 +533,12 @@ fuse_devices_stop(void)
         return KERN_SUCCESS;
     }
 
+    FUSE_LOCK();
+
     for (i = 0; i < FUSE_NDEVICES; i++) {
         if ((fuse_softc_table[i].data != NULL) ||
             (fuse_softc_table[i].usecount != 0)) {
+            FUSE_UNLOCK();
             debug_printf("/dev/fuse%d seems to be still active\n", i);
             return KERN_FAILURE;
         }
@@ -549,6 +552,8 @@ fuse_devices_stop(void)
     }
 
     fuse_cdev_major = -1;
+
+    FUSE_UNLOCK();
 
     return KERN_SUCCESS;
 }

@@ -30,7 +30,7 @@
 #define FUSE_DEFAULT_BLOCKSIZE             4096
 
 #define FUSE_MIN_BLOCKSIZE                 512
-#define FUSE_MAX_BLOCKSIZE                 65536
+#define FUSE_MAX_BLOCKSIZE                 MAXPHYS
 
 /*
  * This is default I/O size used while accessing the virtual storage devices.
@@ -39,7 +39,7 @@
 #define FUSE_DEFAULT_IOSIZE                4096
 
 #define FUSE_MIN_IOSIZE                    512
-#define FUSE_MAX_IOSIZE                    65536
+#define FUSE_MAX_IOSIZE                    MAXPHYS
 
 #ifdef KERNEL
 

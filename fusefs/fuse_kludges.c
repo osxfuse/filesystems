@@ -5,13 +5,15 @@
 
 #include "fuse_kludges.h"
 
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < MAC_OS_X_VERSION_10_5
+
 #define MNT_KERN_FLAG_OFFSET 64
 
-#define MNTK_LOCK_LOCAL      0x00100000
-#define MNTK_UNMOUNT         0x01000000
+#define MNTK_LOCK_LOCAL 0x00100000
+#define MNTK_UNMOUNT    0x01000000
 
 void
-vfs_setlocklocal(mount_t mp)
+FUSE_KL_vfs_setlocklocal(mount_t mp)
 {
     /*
      * Horrible, horrible kludge. Dangerous to boot. "Boot", heh.
@@ -36,7 +38,9 @@ vfs_setlocklocal(mount_t mp)
 }
 
 int
-fuse_is_unmount_in_progress(mount_t mp)
+FUSE_KL_vfs_unmount_in_progress(mount_t mp)
 {
     return (*(int *)((char *)mp + MNT_KERN_FLAG_OFFSET) & MNTK_UNMOUNT);
 }
+
+#endif
