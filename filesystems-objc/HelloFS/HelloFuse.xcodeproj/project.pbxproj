@@ -230,7 +230,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "umount /Volumes/Hello\numount /Volumes/Hello\nmkdir -p /Volumes/Hello\nexit 0";
+			shellScript = "umount /Volumes/Hello\nmkdir -p /Volumes/Hello\nexit 0";
 		};
 /* End PBXShellScriptBuildPhase section */
 

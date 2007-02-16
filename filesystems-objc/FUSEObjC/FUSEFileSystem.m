@@ -709,7 +709,7 @@ static FUSEFileSystem *manager;
 
 
 - (BOOL)shouldMountInFinder{
-  return NO;
+  return YES;
 }
 
 - (void)showInFinder {
