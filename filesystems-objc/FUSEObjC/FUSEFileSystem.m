@@ -1,6 +1,6 @@
 //
 //  FUSEFileSystem.m
-//  QSFuse
+//  FUSEObjC
 //
 //  Created by alcor on 12/6/06.
 //  Copyright 2006 Google. All rights reserved.
