@@ -301,7 +301,6 @@ static FUSEFileSystem *manager;
 
 - (GTResourceFork *)customIconResourceForkForPath:(NSString *)path {
   NSData *imageData = [self iconDataForPath:path];
-  [imageData writeToFile:@"/test.icns" atomically:NO];
   if (imageData) {
     GTResourceFork *fork = [[[GTResourceFork alloc] init] autorelease];
     [fork setData:imageData
