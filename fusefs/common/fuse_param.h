@@ -32,14 +32,20 @@
 #define FUSE_MIN_BLOCKSIZE                 512
 #define FUSE_MAX_BLOCKSIZE                 MAXPHYS
 
+#ifndef MAX_UPL_TRANSFER
+#define MAX_UPL_TRANSFER 256
+#endif
+
 /*
  * This is default I/O size used while accessing the virtual storage devices.
  * This can be changed on a per-mount basis.
+ *
+ * Nevertheless, the I/O size must be at least as big as the block size.
  */
-#define FUSE_DEFAULT_IOSIZE                4096
+#define FUSE_DEFAULT_IOSIZE                (16 * PAGE_SIZE)
 
 #define FUSE_MIN_IOSIZE                    512
-#define FUSE_MAX_IOSIZE                    MAXPHYS
+#define FUSE_MAX_IOSIZE                    (MAX_UPL_TRANSFER * PAGE_SIZE)
 
 #ifdef KERNEL
 

@@ -51,7 +51,7 @@ struct mntopt mopts[] = {
     { "fd=",                 0, FUSE_MOPT_FD,                    1 },
     { "fsid=" ,              0, FUSE_MOPT_FSID,                  1 }, // used
     { "fsname=",             0, FUSE_MOPT_FSNAME,                1 }, // used
-    { "gid=",                0, FUSE_MOPT_GID,                   1 },
+    { "gid=",                0, FUSE_MOPT_GID,                   1 }, // used
     { "hard_remove",         0, FUSE_MOPT_HARD_REMOVE,           1 },
     { "init_timeout=",       0, FUSE_MOPT_INIT_TIMEOUT,          1 }, // used
     { "iosize=",             0, FUSE_MOPT_IOSIZE,                1 }, // used
@@ -61,19 +61,21 @@ struct mntopt mopts[] = {
     { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,           1 },
     { "rootmode=",           0, FUSE_MOPT_ROOTMODE,              1 },
     { "subtype=",            0, FUSE_MOPT_SUBTYPE,               1 }, // used
-    { "uid=",                0, FUSE_MOPT_UID,                   1 },
+    { "uid=",                0, FUSE_MOPT_UID,                   1 }, // used
     { "umask=",              0, FUSE_MOPT_UMASK,                 1 },
     { "use_ino",             0, FUSE_MOPT_USE_INO,               1 },
     { "volname=",            0, FUSE_MOPT_VOLNAME,               1 }, // used
 
     /* negative ones */
 
+    { "applespecial",        1, FUSE_MOPT_NO_APPLESPECIAL,       1 }, // used
     { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,          1 }, // used
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
     { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS, 1 }, // used
     { "browse",              1, FUSE_MOPT_NO_BROWSE,             1 }, // used
     { "localcaches",         1, FUSE_MOPT_NO_LOCALCACHES,        1 }, // used
     { "readahead",           1, FUSE_MOPT_NO_READAHEAD,          1 }, // used
+    { "synconclose",         1, FUSE_MOPT_NO_SYNCONCLOSE,        1 }, // used
     { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,         1 }, // used
     { "ubc",                 1, FUSE_MOPT_NO_UBC,                1 }, // used
     { "vncache",             1, FUSE_MOPT_NO_VNCACHE,            1 }, // used
@@ -661,6 +663,14 @@ main(int argc, char **argv)
         errx(1, "disabling local caching is not allowed with 'nosyncwrites'");
     }
 
+    /*
+     * 'nosynconclose' only allowed if 'nosyncwrites' is also there.
+     */
+    if ((altflags & FUSE_MOPT_NO_SYNCONCLOSE) &&
+        !(altflags & FUSE_MOPT_NO_SYNCWRITES)) {
+        errx(1, "the 'nosynconclose' option requires 'nosyncwrites'");
+    }
+
     errno = 0;
     fd = strtol(fdnam, NULL, 10);
     if ((errno == EINVAL) || (errno == ERANGE)) {
@@ -826,11 +836,13 @@ showhelp()
       "    -o init_timeout=<s>    timeout in seconds for the init method to complete\n"
       "    -o iosize=<size>       specify maximum I/O size in bytes\n" 
       "    -o jail_symlinks       contain symbolic links within the mount\n"
+      "    -o noapplespecial      ignore Apple Double (._) and .DS_Store files entirely\n"
       "    -o noauthopaque        set MNTK_AUTH_OPAQUE in the kernel\n"
       "    -o noauthopaqueaccess  set MNTK_AUTH_OPAQUE_ACCESS in the kernel\n"
       "    -o nobrowse            set MNT_DONTBROWSE in the kernel\n"
       "    -o nolocalcaches       meta option equivalent to noreadahead,noubc,novncache\n"
       "    -o noreadahead         disable I/O read-ahead behavior for this file system\n"
+      "    -o nosynconclose       disable sync-on-close behavior (enabled by default)\n"
       "    -o nosyncwrites        disable synchronous-writes behavior (dangerous)\n"
       "    -o noubc               disable the unified buffer cache for this file system\n"
       "    -o novncache           disable the vnode name cache for this file system\n"

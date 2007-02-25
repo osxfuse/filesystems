@@ -32,4 +32,8 @@ int  FUSE_KL_vfs_unmount_in_progress(mount_t mp);
 
 #endif
 
+#define FUSE_KL_create_with_acl_in_finder(mp, cnp) \
+        (fuse_isextendedsecurity_mp((mp)) &&       \
+         ((cnp)->cn_nameptr[0] == '.' && (cnp)->cn_nameptr[1] == '_'))
+
 #endif /* _FUSE_KLUDGES_H_ */

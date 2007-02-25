@@ -41,7 +41,7 @@ fiov_init(struct fuse_iov *fiov, size_t size)
 {
     uint32_t msize = FU_AT_LEAST(size);
 
-    debug_printf("fiov=%p, size=%x\n", fiov, size);
+    debug_printf("fiov=%p, size=%lx\n", fiov, size);
 
     fiov->len = 0;
 
@@ -72,7 +72,7 @@ fiov_teardown(struct fuse_iov *fiov)
 void
 fiov_adjust(struct fuse_iov *fiov, size_t size)
 {
-    debug_printf("fiov=%p, size=%x\n", fiov, size);
+    debug_printf("fiov=%p, size=%lx\n", fiov, size);
 
     if (fiov->allocated_size < size ||
         (fuse_iov_permanent_bufsize >= 0 &&
@@ -247,7 +247,7 @@ fticket_aw_pull_uio(struct fuse_ticket *tick, uio_t uio)
             fiov_adjust(fticket_resp(tick), len);
             err = uiomove(fticket_resp(tick)->base, len, uio);
             if (err) {
-                debug_printf("FT_A_FIOV: error is %d (%p, %d, %p)\n",
+                debug_printf("FT_A_FIOV: error is %d (%p, %ld, %p)\n",
                              err, fticket_resp(tick)->base, len, uio);
             }
             break;
@@ -256,7 +256,7 @@ fticket_aw_pull_uio(struct fuse_ticket *tick, uio_t uio)
             tick->tk_aw_bufsize = len;
             err = uiomove(tick->tk_aw_bufdata, len, uio);
             if (err) {
-                debug_printf("FT_A_BUF: error is %d (%p, %d, %p)\n",
+                debug_printf("FT_A_BUF: error is %d (%p, %ld, %p)\n",
                              err, tick->tk_aw_bufdata, len, uio);
             }
             break;
@@ -584,7 +584,7 @@ fuse_body_audit(struct fuse_ticket *tick, size_t blen)
     int err = 0;
     enum fuse_opcode opcode;
 
-    debug_printf("tick=%p, blen = %x\n", tick, blen);
+    debug_printf("tick=%p, blen = %lx\n", tick, blen);
 
     opcode = fticket_opcode(tick);
 
@@ -768,7 +768,7 @@ fuse_setup_ihead(struct fuse_in_header *ihead,
     ihead->nodeid = nid;
     ihead->opcode = op;
 
-    debug_printf("ihead=%p, tick=%p, nid=%llx, op=%d, blen=%x, context=%p\n",
+    debug_printf("ihead=%p, tick=%p, nid=%llx, op=%d, blen=%lx, context=%p\n",
                  ihead, tick, nid, op, blen, context);
 
     if (context) {
@@ -822,7 +822,7 @@ fdisp_make(struct fuse_dispatcher *fdip,
     struct fuse_data *data = vfs_fsprivate(mp);
 
     debug_printf("fdip=%p, op=%d, mp=%p, nid=%llx, context=%p\n",
-                 op, mp, nid, context);
+                 fdip, op, mp, nid, context);
 
     if (fdip->tick) {
         fticket_refresh(fdip->tick);

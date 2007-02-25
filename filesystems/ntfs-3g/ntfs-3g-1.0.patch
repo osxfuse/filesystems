@@ -1,0 +1,43 @@
+diff -Naur old/configure new/configure
+--- old/configure	2007-02-06 13:42:59.000000000 -0800
++++ new/configure	2007-02-17 03:54:18.000000000 -0800
+@@ -19804,7 +19804,7 @@
+ 
+ 
+ case "$target_os" in
+-linux*)
++linux*|darwin*)
+ 
+   succeeded=no
+ 
+diff -Naur old/src/ntfs-3g.c new/src/ntfs-3g.c
+--- old/src/ntfs-3g.c	2007-02-06 11:08:16.000000000 -0800
++++ new/src/ntfs-3g.c	2007-02-17 03:53:57.000000000 -0800
+@@ -136,7 +136,11 @@
+ } opts;
+ 
+ static const char *EXEC_NAME = "ntfs-3g";
++#if (__FreeBSD__ >= 10)
++static char def_opts[] = "silent,";
++#else
+ static char def_opts[] = "silent,allow_other,";
++#endif
+ static ntfs_fuse_context_t *ctx;
+ static u32 ntfs_sequence;
+ 
+@@ -2117,11 +2121,15 @@
+ 		goto err_out;
+ 	}
+ 
++#if (__FreeBSD__ >= 10)
++	fstype = FSTYPE_FUSE;
++#else
+ 	fstype = get_fuse_fstype();
+ 	if (fstype == FSTYPE_NONE || fstype == FSTYPE_UNKNOWN)
+ 		fstype = load_fuse_module();
+ 	
+ 	create_dev_fuse();
++#endif
+ 	
+ 	if (stat(opts.device, &sbuf)) {
+ 		ntfs_log_perror("Failed to access '%s'", opts.device);

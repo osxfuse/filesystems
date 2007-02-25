@@ -236,7 +236,8 @@ fuse_internal_readdir(vnode_t                 vp,
                       struct fuse_iov        *cookediov);
 
 int
-fuse_internal_readdir_processdata(uio_t            uio,
+fuse_internal_readdir_processdata(vnode_t          vp,
+                                  uio_t            uio,
                                   size_t           reqsize,
                                   void            *buf,
                                   size_t           bufsize,
@@ -443,14 +444,16 @@ fuse_isnoreadahead(vnode_t vp)
     return fuse_isdirectio(vp);
 }
 
-#if 0
 static __inline__
 int
-fuse_isnoreadahead_mp(mount_t mp)
+fuse_isnosynconclose(vnode_t vp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_READAHEAD);
+    if (fuse_isdirectio(vp)) {
+        return 0;
+    }
+
+    return (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_SYNCONCLOSE);
 }
-#endif
 
 static __inline__
 int
@@ -525,6 +528,21 @@ fuse_isnovncache_mp(mount_t mp)
 }
 
 static __inline__
+int
+fuse_isextendedsecurity(vnode_t vp)
+{
+    return (fuse_get_mpdata(vnode_mount(vp))->dataflag & \
+            FSESS_EXTENDED_SECURITY);
+}
+
+static __inline__
+int
+fuse_isextendedsecurity_mp(mount_t mp)
+{
+    return (fuse_get_mpdata(mp)->dataflag & FSESS_EXTENDED_SECURITY);
+}
+
+static __inline__
 uint32_t
 fuse_round_powerof2(uint32_t size)
 {
@@ -554,6 +572,29 @@ fuse_round_size(uint32_t size, uint32_t b_min, uint32_t b_max)
     }
 
     return candidate;
+}
+
+static __inline__
+int
+fuse_skip_apple_special_mp(mount_t mp, char *nameptr, long namelen)
+{
+#define DS_STORE ".DS_Store"
+    int ismpoption = fuse_get_mpdata(mp)->dataflag & FSESS_NO_APPLESPECIAL;
+
+    if (ismpoption && nameptr) {
+        /* This _will_ allow just "._", that is, a namelen of 2. */
+        if (namelen > 2) {
+            if (namelen == ((sizeof(DS_STORE)/sizeof(char)) - 1)) {
+                if (bcmp(nameptr, DS_STORE, sizeof(DS_STORE)) == 0) {
+                    return 1;
+                }
+            } else if (nameptr[0] == '.' && nameptr[1] == '_') {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 #endif /* _FUSE_INTERNAL_H_ */

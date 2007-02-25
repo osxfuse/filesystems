@@ -285,7 +285,7 @@
 							<real>186</real>
 						</array>
 						<key>RubberWindowFrame</key>
-						<string>160 271 1049 607 0 0 1440 878 </string>
+						<string>294 213 1049 607 0 0 1440 878 </string>
 					</dict>
 					<key>Module</key>
 					<string>PBXSmartGroupTreeModule</string>
@@ -322,7 +322,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {841, 0}}</string>
 								<key>RubberWindowFrame</key>
-								<string>160 271 1049 607 0 0 1440 878 </string>
+								<string>294 213 1049 607 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -342,7 +342,7 @@
 								<key>Frame</key>
 								<string>{{0, 5}, {841, 561}}</string>
 								<key>RubberWindowFrame</key>
-								<string>160 271 1049 607 0 0 1440 878 </string>
+								<string>294 213 1049 607 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>XCDetailModule</string>
@@ -366,9 +366,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>548610830B8286CE007A3E34</string>
+				<string>54EB71FB0B923E5F0019D10B</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>548610840B8286CE007A3E34</string>
+				<string>54EB71FC0B923E5F0019D10B</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -514,7 +514,7 @@
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
-	<string>160 271 1049 607 0 0 1440 878 </string>
+	<string>294 213 1049 607 0 0 1440 878 </string>
 	<key>WindowTools</key>
 	<array>
 		<dict>
@@ -544,7 +544,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {749, 301}}</string>
 								<key>RubberWindowFrame</key>
-								<string>671 137 749 583 0 0 1440 878 </string>
+								<string>37 148 749 583 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -568,7 +568,7 @@
 								<key>Frame</key>
 								<string>{{0, 306}, {749, 236}}</string>
 								<key>RubberWindowFrame</key>
-								<string>671 137 749 583 0 0 1440 878 </string>
+								<string>37 148 749 583 0 0 1440 878 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXBuildResultsModule</string>
@@ -591,14 +591,14 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>548610850B8286CE007A3E34</string>
+				<string>54EB72010B923E720019D10B</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.build</string>
 			<key>WindowString</key>
-			<string>671 137 749 583 0 0 1440 878 </string>
+			<string>37 148 749 583 0 0 1440 878 </string>
 			<key>WindowToolGUID</key>
 			<string>5403C7EA0ACA9BB300CD9322</string>
 			<key>WindowToolIsVisible</key>

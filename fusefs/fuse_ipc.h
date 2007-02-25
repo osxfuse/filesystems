@@ -225,18 +225,19 @@ struct fuse_data {
                                          // (and being observed by the daemon)
 #define FSESS_NEGLECT_SHARES      0x0040 // presence of secondary mount is not
                                          // considered as "fs is busy"
-#define FSESS_PRIVATE             0x0080 // don't allow secondary mounts
-#define FSESS_PUSH_SYMLINKS_IN    0x0100 // prefix absolute symlinks with mp
-#define FSESS_DEFAULT_PERMISSIONS 0x0200 // kernel does permission checking
+#define FSESS_PUSH_SYMLINKS_IN    0x0080 // prefix absolute symlinks with mp
+#define FSESS_DEFAULT_PERMISSIONS 0x0100 // kernel does permission checking
 
+#define FSESS_NO_APPLESPECIAL     0x0200 // no ._ and .DS_Store files at all
 #define FSESS_NO_ATTRCACHE        0x0400 // no attribute caching
 #define FSESS_NO_READAHEAD        0x0800 // no readaheads
 #define FSESS_NO_SYNCWRITES       0x1000 // no synchronous writes
-#define FSESS_NO_VNCACHE          0x2000 // no vnode name cache
-#define FSESS_NO_UBC              0x4000 // no unified buffer cache
-#define FSESS_DIRECT_IO           0x8000 // use directio for the entire mount
+#define FSESS_NO_SYNCONCLOSE      0x2000 // no sync on close (with async writes)
+#define FSESS_NO_VNCACHE          0x4000 // no vnode name cache
+#define FSESS_NO_UBC              0x8000 // no unified buffer cache
 
-#define FSESS_EXTENDED_SECURITY   0x00010000
+#define FSESS_DIRECT_IO           0x00010000 // direct_io for the entire mount
+#define FSESS_EXTENDED_SECURITY   0x00020000 // enable extended security (ACLs)
 
 static __inline__
 struct fuse_data *
@@ -353,7 +354,7 @@ static __inline__
 void
 fdisp_init(struct fuse_dispatcher *fdisp, size_t iosize)
 {
-    kdebug_printf("-> fdisp=%p, iosize=%x\n", fdisp, iosize);
+    kdebug_printf("-> fdisp=%p, iosize=%lx\n", fdisp, iosize);
     fdisp->iosize = iosize;
     fdisp->tick = NULL;
 }

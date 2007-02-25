@@ -94,8 +94,6 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         return ENOTSUP;
     }
 
-    FUSE_KL_vfs_setlocklocal(mp);
-
     err = copyin(udata, &fusefs_args, sizeof(fusefs_args));
     if (err) {
         debug_printf("copyin failed\n");
@@ -123,6 +121,8 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
 
     err = ENOTSUP;
 
+    FUSE_KL_vfs_setlocklocal(mp);
+
     /* Option Processing. */
 
     if ((fusefs_args.daemon_timeout > FUSE_MAX_DAEMON_TIMEOUT) ||
@@ -142,7 +142,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
 
     if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCWRITES) {
 
-        /* Cannot mix nosyncwrites with noubc or noreadahead. */
+        /* Cannot mix 'nosyncwrites' with 'noubc' or 'noreadahead'. */
         if (fusefs_args.altflags &
             (FUSE_MOPT_NO_UBC | FUSE_MOPT_NO_READAHEAD)) {
             return EINVAL;
@@ -151,6 +151,12 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         mntopts |= FSESS_NO_SYNCWRITES;
         vfs_clearflags(mp, MNT_SYNCHRONOUS);
         vfs_setflags(mp, MNT_ASYNC);
+
+        /* We check for this only if we have nosyncwrites in the first place. */
+        if (fusefs_args.altflags & FUSE_MOPT_NO_SYNCONCLOSE) {
+            mntopts |= FSESS_NO_SYNCONCLOSE;
+        }
+
     } else {
         vfs_clearflags(mp, MNT_ASYNC);
         vfs_setflags(mp, MNT_SYNCHRONOUS);
@@ -166,6 +172,48 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         // This sets MNTK_AUTH_OPAQUE_ACCESS in the mount point's mnt_kern_flag.
         vfs_setauthopaqueaccess(mp);
         err = 0;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_JAIL_SYMLINKS) {
+        mntopts |= FSESS_PUSH_SYMLINKS_IN;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_ALLOW_OTHER) {
+        mntopts |= FSESS_DAEMON_CAN_SPY;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_DEFAULT_PERMISSIONS) {
+        mntopts |= FSESS_DEFAULT_PERMISSIONS;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_APPLESPECIAL) {
+        mntopts |= FSESS_NO_APPLESPECIAL;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_ATTRCACHE) {
+        mntopts |= FSESS_NO_ATTRCACHE;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_READAHEAD) {
+        mntopts |= FSESS_NO_READAHEAD;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_UBC) {
+        mntopts |= FSESS_NO_UBC;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
+        if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
+            /* 'novncache' and 'extende_security' don't mix well. */
+            return EINVAL;
+        }
+        mntopts |= FSESS_NO_VNCACHE;
+        mntopts |= (FSESS_NO_ATTRCACHE | FSESS_NO_READAHEAD | FSESS_NO_UBC);
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
+        mntopts |= FSESS_EXTENDED_SECURITY;
+        vfs_setextendedsecurity(mp);
     }
 
     err = 0;
@@ -190,46 +238,13 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     }
     FUSE_UNLOCK();
 
-    if (fusefs_args.altflags & FUSE_MOPT_JAIL_SYMLINKS) {
-        mntopts |= FSESS_PUSH_SYMLINKS_IN;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_ALLOW_OTHER) {
-        mntopts |= FSESS_DAEMON_CAN_SPY;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_DEFAULT_PERMISSIONS) {
-        mntopts |= FSESS_DEFAULT_PERMISSIONS;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_NO_ATTRCACHE) {
-        mntopts |= FSESS_NO_ATTRCACHE;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_NO_READAHEAD) {
-        mntopts |= FSESS_NO_READAHEAD;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_NO_UBC) {
-        mntopts |= FSESS_NO_UBC;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
-        mntopts |= FSESS_NO_VNCACHE;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
-        mntopts |= (FSESS_NO_ATTRCACHE | FSESS_NO_READAHEAD | FSESS_NO_UBC |
-                    FSESS_NO_VNCACHE);
-    }
-
     max_read_set = 0;
 
     if (fdata_kick_get(data)) {
         err = ENOTCONN;
     }
 
-    if ((mntopts & FSESS_DAEMON_CAN_SPY) &&
+    if (!err && (mntopts & FSESS_DAEMON_CAN_SPY) &&
         !fuse_vfs_context_issuser(context)) {
         debug_printf("only root can use \"allow_other\"\n");
         err = EPERM;
@@ -254,11 +269,6 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         debug_printf("not allowed to do the first mount\n");
         err = EPERM;
         goto out;
-    }
-
-    if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
-        mntopts |= FSESS_EXTENDED_SECURITY;
-        vfs_setextendedsecurity(mp);
     }
 
     if ((fusefs_args.altflags & FUSE_MOPT_FSID) && (fusefs_args.fsid != 0)) {

@@ -3,7 +3,7 @@
 	089C1669FE841209C02AAC07 /* Project object */ = {
 		activeBuildConfigurationName = Release;
 		activeExecutable = 54D47B810B4F610000A8FE1C /* load_fusefs */;
-		activeTarget = 54C6DD290B5EE606002D9FD9 /* All */;
+		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
 		addToTargets = (
 			32A4FEB80562C75700D090E7 /* fusefs */,
 		);
@@ -75,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 193103560;
-			PBXWorkspaceStateSaveDate = 193103560;
+			PBXPerProjectTemplateStateSaveDate = 194133597;
+			PBXWorkspaceStateSaveDate = 194133597;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -93,7 +93,7 @@
 	1A224C3CFF42312311CA2CB7 /* fuse_main.c */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {702, 2310}}";
-			sepNavSelRange = "{3510, 0}";
+			sepNavSelRange = "{342, 22}";
 			sepNavVisRect = "{{0, 0}, {702, 269}}";
 		};
 	};
@@ -362,15 +362,15 @@
 	54C6DDBE0B5EEB44002D9FD9 /* fuse_ipc.c */ = {
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {702, 13020}}";
-			sepNavSelRange = "{2494, 56}";
-			sepNavVisRect = "{{0, 1021}, {702, 269}}";
+			sepNavSelRange = "{23052, 0}";
+			sepNavVisRect = "{{0, 10653}, {702, 269}}";
 		};
 	};
 	54C6DDBF0B5EEB44002D9FD9 /* fuse_ipc.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 5236}}";
-			sepNavSelRange = "{11806, 0}";
-			sepNavVisRect = "{{0, 4031}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {702, 5488}}";
+			sepNavSelRange = "{11854, 0}";
+			sepNavVisRect = "{{0, 4843}, {702, 269}}";
 		};
 	};
 	54C6DDC40B5EEB44002D9FD9 /* fuse_node.c */ = {
@@ -417,9 +417,9 @@
 	};
 	54C6DDCC0B5EEB44002D9FD9 /* fuse_vnops.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 43834}}";
-			sepNavSelRange = "{84925, 0}";
-			sepNavVisRect = "{{0, 10653}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {702, 45752}}";
+			sepNavSelRange = "{88162, 0}";
+			sepNavVisRect = "{{0, 2463}, {702, 269}}";
 		};
 	};
 	54C6DDCD0B5EEB44002D9FD9 /* fuse_vnops.h */ = {

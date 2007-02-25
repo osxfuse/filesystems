@@ -295,8 +295,12 @@ fuse_internal_readdir(vnode_t                 vp,
             goto out;
         }
 
-        if ((err = fuse_internal_readdir_processdata(uio, fri->size, fdi.answ,
-                                                     fdi.iosize, cookediov))) {
+        if ((err = fuse_internal_readdir_processdata(vp,
+                                                     uio,
+                                                     fri->size,
+                                                     fdi.answ,
+                                                     fdi.iosize,
+                                                     cookediov))) {
             break;
         }
     }
@@ -310,7 +314,8 @@ out:
 
 __private_extern__
 int
-fuse_internal_readdir_processdata(uio_t            uio,
+fuse_internal_readdir_processdata(vnode_t          vp,
+                                  uio_t            uio,
                          __unused size_t           reqsize,
                                   void            *buf,
                                   size_t           bufsize,
@@ -335,22 +340,24 @@ fuse_internal_readdir_processdata(uio_t            uio,
             break;
         }
 
-        cou++;
-
         fudge = (struct fuse_dirent *)buf;
         freclen = FUSE_DIRENT_SIZE(fudge);
+
+        cou++;
 
         if (bufsize < freclen) {
             err = ((cou == 1) ? -1 : 0);
             break;
         }
 
-#ifdef ZERO_PAD_INCOMPLETE_BUFS
-        if (isbzero(buf), FUSE_NAME_OFFSET) {
-            err = -1;
-            break;
-        }
-#endif
+        /*
+         * if (isbzero(buf, FUSE_NAME_OFFSET)) {
+         *     // zero-pad incomplete buffer
+         *     ...
+         *     err = -1;
+         *     break;
+         * }
+         */
 
         if (!fudge->namelen || fudge->namelen > MAXNAMLEN) {
             err = EINVAL;
@@ -375,6 +382,14 @@ fuse_internal_readdir_processdata(uio_t            uio,
         de->d_reclen = bytesavail;
         de->d_type = fudge->type; 
         de->d_namlen = fudge->namelen;
+
+        /* Filter out any ._* files if the mount is configured as such. */
+        if (fuse_skip_apple_special_mp(vnode_mount(vp),
+                                       fudge->name, fudge->namelen)) {
+            de->d_fileno = 0;
+            de->d_type = DT_WHT;
+        }
+
         memcpy((char *)cookediov->base + sizeof(struct dirent) - MAXNAMLEN - 1,
                (char *)buf + FUSE_NAME_OFFSET, fudge->namelen);
         ((char *)cookediov->base)[bytesavail] = '\0';
@@ -669,7 +684,6 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
         while (buf_resid(bp) > 0) {
 
-            // TODO: this is configurable; use it configurably.
             chunksize = min(buf_resid(bp), data->iosize);
 
             fdi.iosize = sizeof(*fri);
@@ -697,37 +711,37 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
             fdi.tick->tk_aw_bufdata = bufdat;
         
             if ((err = fdisp_wait_answ(&fdi))) {
+                /* There was a problem with reading. */
                 goto out;
             }
 
             respsize = fdi.tick->tk_aw_bufsize;
+
+            if (respsize < 0) { /* Cannot really happen... */
+                err = EIO;
+                goto out;
+            }
+
             buf_setresid(bp, buf_resid(bp) - respsize);
             bufdat += respsize;
             offset += respsize;
 
-            if (respsize < chunksize) {
-
-#ifdef ZERO_PAD_INCOMPLETE_BUFS
-                /*
-                 * If we don't get enough data, just fill the rest with zeros.
-                 * In NFS context this would mean a hole in the file.
-                 */
-                 //bzero(bufdat + buf_count(bp) - buf_resid(bp), buf_resid(bp));
-                 bzero(bufdat, buf_resid(bp));
-                 buf_setresid(bp, 0);
-                 break;
-#else
+            /* Did we hit EOF before being done? */
+            if ((respsize == 0) && (buf_resid(bp) > 0)) {
                  /*
-                  * Well, the same thing here for now.
+                  * Historical note:
+                  * If we don't get enough data, just fill the rest with zeros.
+                  * In NFS context, this would mean a hole in the file.
                   */
+
+                 /* Zero-pad the incomplete buffer. */
                  bzero(bufdat, buf_resid(bp));
                  buf_setresid(bp, 0);
                  break;
-#endif
             }
-        }
+        } /* while (buf_resid(bp) > 0) */
     } else {
-
+        /* write */
         struct fuse_write_in  *fwi;
         struct fuse_write_out *fwo;
         int merr = 0;
@@ -1065,12 +1079,17 @@ fuse_internal_newentry(vnode_t               dvp,
 {   
     int err;
     struct fuse_dispatcher fdi;
+    mount_t mp = vnode_mount(dvp);
     
     debug_printf("context=%p\n", context);
+
+    if (fuse_skip_apple_special_mp(mp, cnp->cn_nameptr, cnp->cn_namelen)) {
+        return EACCES;
+    }
     
     fdisp_init(&fdi, 0);
-    fuse_internal_newentry_makerequest(vnode_mount(dvp), VTOI(dvp), cnp,
-                                       op, buf, bufsize, &fdi, context);
+    fuse_internal_newentry_makerequest(mp, VTOI(dvp), cnp, op, buf,
+                                       bufsize, &fdi, context);
     err = fuse_internal_newentry_core(dvp, vpp, cnp, vtype, &fdi, context);
     fuse_invalidate_attr(dvp);            
                    

@@ -32,6 +32,7 @@
 #include "fuse_internal.h"
 #include <fuse_ioctl.h>
 #include "fuse_ipc.h"
+#include "fuse_kludges.h"
 #include "fuse_knote.h"
 #include "fuse_node.h"
 #include "fuse_nodehash.h"
@@ -183,7 +184,7 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
         *poffPtr = 0;
     }
 
-    debug_printf("offset=%lld, size=%ld, bpn=%lld, run=%d, filesize=%lld\n",
+    debug_printf("offset=%lld, size=%ld, bpn=%lld, run=%ld, filesize=%lld\n",
                  foffset, size, *bpnPtr, *runPtr, fvdat->filesize);
 
     return 0;
@@ -211,13 +212,16 @@ fuse_vnop_close(struct vnop_close_args *ap)
         return 0;
     }
 
+    /* vclean() calls VNOP_CLOSE with fflag set to IO_NDELAY. */
+    if (ap->a_fflag == IO_NDELAY) {
+        return 0;
+    }
+
     if (vnode_vtype(vp) == VDIR) {
         fufh_type = FUFH_RDONLY;
     } else {
         fufh_type = fuse_filehandle_xlate_from_fflags(ap->a_fflag);
     }
-
-    /* vclean() calls VNOP_CLOSE with fflag set to IO_NDELAY. TBD: handle. */
 
     fufh = &(fvdat->fufh[fufh_type]);
 
@@ -231,7 +235,8 @@ fuse_vnop_close(struct vnop_close_args *ap)
 
     fufh->open_count--;
 
-    if (vnode_hasdirtyblks(vp)) {
+    /* Enforce sync on close unless explicitly told not to. */
+    if (vnode_hasdirtyblks(vp) && !fuse_isnosynconclose(vp)) {
         (void)cluster_push(vp, IO_SYNC | IO_CLOSE);
     }
 
@@ -280,6 +285,10 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     if (fuse_isdeadfs_nop(dvp)) {
         panic("MacFUSE: fuse_vnop_create(): called on a dead file system");
+    }
+
+    if (fuse_skip_apple_special_mp(mp, cnp->cn_nameptr, cnp->cn_namelen)) {
+        return EACCES;
     }
 
     bzero(&fdi, sizeof(fdi));
@@ -393,7 +402,19 @@ bringup:
 #endif
     }
 
-    if (!fuse_isnovncache_mp(mp)) {
+    if (fuse_isnovncache_mp(mp) ||
+        /*
+         * This is to work around the Finder giving up with error -43 when
+         * you try to copy a folder into a MacFUSE volume that has extended
+         * security (ACLs) enabled. The Finder doesn't do this in the case
+         * of non-directories. The following "fix" fixes the problem. Well,
+         * what can I say?
+         */
+        FUSE_KL_create_with_acl_in_finder(mp, cnp)) {
+
+        /* no name cache */
+
+    } else {
         cache_enter(dvp, *vpp, cnp);
     }
 
@@ -1048,6 +1069,10 @@ fuse_vnop_lookup(struct vnop_lookup_args *ap)
         return ENXIO;
     }
 
+    if (fuse_skip_apple_special_mp(mp, cnp->cn_nameptr, cnp->cn_namelen)) {
+        return ENOENT;
+    }
+
     if (vnode_vtype(dvp) != VDIR) {
         return ENOTDIR;
     }
@@ -1178,7 +1203,7 @@ calldaemon:
 #if 0
         if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE) {
             DEBUG("inserting NULL into cache\n");
-            cache_enter(dvp, NULL, cnp);
+            cxche_enter(dvp, NULL, cnp);
         }
 #endif
         err = ENOENT;
@@ -1371,7 +1396,7 @@ calldaemon:
          */    
 #if 0
         if (cnp->cn_flags & MAKEENTRY) {
-            cache_enter(dvp, *vpp, cnp);
+            cxche_enter(dvp, *vpp, cnp);
         }
 #endif
     }
@@ -2503,7 +2528,19 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
             FUSE_KNOTE(tvp, NOTE_DELETE);
         }
         if (err == 0) {
-            vnode_recycle(tvp);
+
+            /*
+             * If we want the file to just "disappear" from the standpoint
+             * of those who might have it open, we can do a revoke/recycle
+             * here. Otherwise, don't do anything. Only doing a recycle will
+             * make our fufh-checking code in reclaim unhappy, leading us to
+             * proactively panic.
+             */
+
+            /*
+            (void)fuse_internal_revoke(tvp, REVOKEALL, ap->a_context);
+            (void)vnode_recycle(tvp);
+            */
         }
     }
 
@@ -2959,16 +2996,16 @@ static int
 fuse_vnop_strategy(struct vnop_strategy_args *ap)
 {
     buf_t   bp;
-    vnode_t vn;
+    vnode_t vp;
     struct fuse_vnode_data *fvdat;
 
     fuse_trace_printf_vnop();
 
     bp = ap->a_bp;
-    vn = buf_vnode(bp);
-    fvdat = VTOFUD(vn);
+    vp = buf_vnode(bp);
+    fvdat = VTOFUD(vp);
 
-    if ((vn == NULL) || (fuse_isdeadfs(vn))) {
+    if (!vp || (fuse_isdeadfs(vp))) {
         buf_seterror(bp, EIO);
         buf_biodone(bp);
         return EIO;
