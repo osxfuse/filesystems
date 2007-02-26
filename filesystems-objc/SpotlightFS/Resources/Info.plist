@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>CFBundleGetInfoString</key>
+	<string>SpotlightFS 0.1.0</string>
+	<key>CFBundleIconFile</key>
+	<string>SpotlightFSApp</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.google.fuse.SpotlightFS</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+	<key>FUSEFileSystemClass</key>
+	<string>SpotlightFS</string>
+	<key>LSUIElement</key>
+	<string>1</string>
+	<key>NSMainNibFile</key>
+	<string>MainMenu</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSUserDefaults</key>
+	<dict>
+		<key>FUSEMountName</key>
+		<string>SpotlightFS</string>
+		<key>FUSEMountPath</key>
+		<string>/Volumes/SpotlightFS</string>
+	</dict>
+</dict>
+</plist>

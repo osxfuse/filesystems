@@ -1,0 +1,375 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
+		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
+		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		F927CD000B6405DC00AF272E /* DynamicFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */; };
+		F927CD040B64063A00AF272E /* SmartFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD030B64063A00AF272E /* SmartFolderBlue.icns */; };
+		F927CD570B640C8F00AF272E /* SmartFolder.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD560B640C8F00AF272E /* SmartFolder.icns */; };
+		F946437F0B935ECF00220464 /* GTResourceFork.m in Sources */ = {isa = PBXBuildFile; fileRef = F946436F0B935ECF00220464 /* GTResourceFork.m */; };
+		F94643820B935ECF00220464 /* IconFamily.m in Sources */ = {isa = PBXBuildFile; fileRef = F94643750B935ECF00220464 /* IconFamily.m */; };
+		F94643830B935ECF00220464 /* NSString+CarbonFSRefCreation.m in Sources */ = {isa = PBXBuildFile; fileRef = F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */; };
+		F94643850B935ECF00220464 /* FUSEFileSystem.m in Sources */ = {isa = PBXBuildFile; fileRef = F946437A0B935ECF00220464 /* FUSEFileSystem.m */; };
+		F965C17A0B6538CD00BE978D /* SpotlightFSApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = F965C1780B6538CD00BE978D /* SpotlightFSApp.icns */; };
+		F965C17B0B6538CD00BE978D /* SpotlightFSMount.icns in Resources */ = {isa = PBXBuildFile; fileRef = F965C1790B6538CD00BE978D /* SpotlightFSMount.icns */; };
+		F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEF7D0B617DCE0044EAA6 /* main.m */; };
+		F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */; };
+		F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */; };
+		F9CEF0D80B61A09C0044EAA6 /* libfuse.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */; };
+		F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
+		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
+		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
+		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		32CA4F630368D1EE00C91783 /* SpotlightFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFS_Prefix.pch; sourceTree = "<group>"; };
+		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D1107320486CEB800E47090 /* SpotlightFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpotlightFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = DynamicFolderBlue.icns; sourceTree = "<group>"; };
+		F927CD030B64063A00AF272E /* SmartFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolderBlue.icns; sourceTree = "<group>"; };
+		F927CD560B640C8F00AF272E /* SmartFolder.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolder.icns; sourceTree = "<group>"; };
+		F946436E0B935ECF00220464 /* GTResourceFork.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GTResourceFork.h; sourceTree = "<group>"; };
+		F946436F0B935ECF00220464 /* GTResourceFork.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = GTResourceFork.m; sourceTree = "<group>"; };
+		F94643740B935ECF00220464 /* IconFamily.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IconFamily.h; sourceTree = "<group>"; };
+		F94643750B935ECF00220464 /* IconFamily.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = IconFamily.m; sourceTree = "<group>"; };
+		F94643760B935ECF00220464 /* NSString+CarbonFSRefCreation.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "NSString+CarbonFSRefCreation.h"; sourceTree = "<group>"; };
+		F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = "NSString+CarbonFSRefCreation.m"; sourceTree = "<group>"; };
+		F94643790B935ECF00220464 /* FUSEFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FUSEFileSystem.h; sourceTree = "<group>"; };
+		F946437A0B935ECF00220464 /* FUSEFileSystem.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = FUSEFileSystem.m; sourceTree = "<group>"; };
+		F965C1780B6538CD00BE978D /* SpotlightFSApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SpotlightFSApp.icns; sourceTree = "<group>"; };
+		F965C1790B6538CD00BE978D /* SpotlightFSMount.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SpotlightFSMount.icns; sourceTree = "<group>"; };
+		F9CEEF7D0B617DCE0044EAA6 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		F9CEEFD40B6198610044EAA6 /* SpotlightFS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFS.h; sourceTree = "<group>"; };
+		F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpotlightFS.m; sourceTree = "<group>"; };
+		F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
+		F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfuse.dylib; path = /usr/local/lib/libfuse.dylib; sourceTree = "<absolute>"; };
+		F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D11072E0486CEB800E47090 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
+				F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */,
+				F9CEF0D80B61A09C0044EAA6 /* libfuse.dylib in Frameworks */,
+				F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
+			);
+			name = "Linked Frameworks";
+			sourceTree = "<group>";
+		};
+		1058C7A2FEA54F0111CA2CBB /* Other Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */,
+				F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */,
+				F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */,
+				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
+				13E42FB307B3F0F600E4EEF1 /* CoreData.framework */,
+				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
+			);
+			name = "Other Frameworks";
+			sourceTree = "<group>";
+		};
+		19C28FACFE9D520D11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8D1107320486CEB800E47090 /* SpotlightFS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		29B97314FDCFA39411CA2CEA /* SpotlightFS */ = {
+			isa = PBXGroup;
+			children = (
+				32CA4F630368D1EE00C91783 /* SpotlightFS_Prefix.pch */,
+				F9CEEF7C0B617DB00044EAA6 /* Source */,
+				F946436B0B935ECF00220464 /* FUSEObjC */,
+				29B97317FDCFA39411CA2CEA /* Resources */,
+				29B97323FDCFA39411CA2CEA /* Frameworks */,
+				19C28FACFE9D520D11CA2CBB /* Products */,
+			);
+			name = SpotlightFS;
+			sourceTree = "<group>";
+		};
+		29B97317FDCFA39411CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F965C1780B6538CD00BE978D /* SpotlightFSApp.icns */,
+				F965C1790B6538CD00BE978D /* SpotlightFSMount.icns */,
+				F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */,
+				F927CD030B64063A00AF272E /* SmartFolderBlue.icns */,
+				F927CD560B640C8F00AF272E /* SmartFolder.icns */,
+				8D1107310486CEB800E47090 /* Info.plist */,
+				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
+				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
+				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F946436B0B935ECF00220464 /* FUSEObjC */ = {
+			isa = PBXGroup;
+			children = (
+				F946436C0B935ECF00220464 /* external */,
+				F94643790B935ECF00220464 /* FUSEFileSystem.h */,
+				F946437A0B935ECF00220464 /* FUSEFileSystem.m */,
+			);
+			name = FUSEObjC;
+			path = ../FUSEObjC;
+			sourceTree = SOURCE_ROOT;
+		};
+		F946436C0B935ECF00220464 /* external */ = {
+			isa = PBXGroup;
+			children = (
+				F946436D0B935ECF00220464 /* GTResourceFork */,
+				F94643700B935ECF00220464 /* IconFamily */,
+			);
+			path = external;
+			sourceTree = "<group>";
+		};
+		F946436D0B935ECF00220464 /* GTResourceFork */ = {
+			isa = PBXGroup;
+			children = (
+				F946436E0B935ECF00220464 /* GTResourceFork.h */,
+				F946436F0B935ECF00220464 /* GTResourceFork.m */,
+			);
+			path = GTResourceFork;
+			sourceTree = "<group>";
+		};
+		F94643700B935ECF00220464 /* IconFamily */ = {
+			isa = PBXGroup;
+			children = (
+				F94643740B935ECF00220464 /* IconFamily.h */,
+				F94643750B935ECF00220464 /* IconFamily.m */,
+				F94643760B935ECF00220464 /* NSString+CarbonFSRefCreation.h */,
+				F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */,
+			);
+			path = IconFamily;
+			sourceTree = "<group>";
+		};
+		F9CEEF7C0B617DB00044EAA6 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				F9CEEFD40B6198610044EAA6 /* SpotlightFS.h */,
+				F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */,
+				F9CEEF7D0B617DCE0044EAA6 /* main.m */,
+			);
+			path = Source;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D1107260486CEB800E47090 /* SpotlightFS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SpotlightFS" */;
+			buildPhases = (
+				8D1107290486CEB800E47090 /* Resources */,
+				8D11072C0486CEB800E47090 /* Sources */,
+				8D11072E0486CEB800E47090 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SpotlightFS;
+			productInstallPath = "$(HOME)/Applications";
+			productName = SpotlightFS;
+			productReference = 8D1107320486CEB800E47090 /* SpotlightFS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		29B97313FDCFA39411CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SpotlightFS" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 29B97314FDCFA39411CA2CEA /* SpotlightFS */;
+			projectDirPath = "";
+			targets = (
+				8D1107260486CEB800E47090 /* SpotlightFS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D1107290486CEB800E47090 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
+				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
+				F927CD000B6405DC00AF272E /* DynamicFolderBlue.icns in Resources */,
+				F927CD040B64063A00AF272E /* SmartFolderBlue.icns in Resources */,
+				F927CD570B640C8F00AF272E /* SmartFolder.icns in Resources */,
+				F965C17A0B6538CD00BE978D /* SpotlightFSApp.icns in Resources */,
+				F965C17B0B6538CD00BE978D /* SpotlightFSMount.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D11072C0486CEB800E47090 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */,
+				F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */,
+				F946437F0B935ECF00220464 /* GTResourceFork.m in Sources */,
+				F94643820B935ECF00220464 /* IconFamily.m in Sources */,
+				F94643830B935ECF00220464 /* NSString+CarbonFSRefCreation.m in Sources */,
+				F94643850B935ECF00220464 /* FUSEFileSystem.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		089C165CFE840E0CC02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				089C165DFE840E0CC02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		29B97318FDCFA39411CA2CEA /* MainMenu.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				29B97319FDCFA39411CA2CEA /* English */,
+			);
+			name = MainMenu.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C01FCF4B08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INFOPLIST_FILE = Resources/Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				PRODUCT_NAME = SpotlightFS;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Debug;
+		};
+		C01FCF4C08A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				INFOPLIST_FILE = Resources/Info.plist;
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = /usr/local/lib;
+				PRODUCT_NAME = SpotlightFS;
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		C01FCF4F08A954540054247B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_CFLAGS = "-D_FILE_OFFSET_BITS=64";
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Debug;
+		};
+		C01FCF5008A954540054247B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					i386,
+					ppc,
+				);
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_CFLAGS = "-D_FILE_OFFSET_BITS=64";
+				PREBINDING = NO;
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C01FCF4A08A954540054247B /* Build configuration list for PBXNativeTarget "SpotlightFS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4B08A954540054247B /* Debug */,
+				C01FCF4C08A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SpotlightFS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C01FCF4F08A954540054247B /* Debug */,
+				C01FCF5008A954540054247B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 29B97313FDCFA39411CA2CEA /* Project object */;
+}
