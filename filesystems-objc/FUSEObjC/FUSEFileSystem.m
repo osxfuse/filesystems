@@ -435,10 +435,11 @@ static FUSEFileSystem *manager;
 }
 
 - (BOOL)fillStatBuffer:(struct stat *)stbuf forPath:(NSString *)path{
-  NSString *realPath = [self passthroughPathForPath:path];
-  if (realPath) {
-    return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
-  }
+  // TODO: support passthrough paths for all reads/writes/stats
+  //  NSString *realPath = [self passthroughPathForPath:path];
+  //  if (realPath) {
+  //    return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
+  //  }
 
   NSString* dataPath = path;  // Default to the given path.
   BOOL isManagedResource = 
@@ -698,7 +699,7 @@ static FUSEFileSystem *manager;
 }
 
 #pragma mark Passthrough
-
+// TODO: support passthrough paths for all reads/writes/stats
 - (NSString *)passthroughPathForPath:(NSString *)path {
   return nil;
 }
