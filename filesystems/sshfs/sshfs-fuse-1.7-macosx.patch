@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2006-08-17 03:07:05.000000000 -0700
-+++ new/Makefile.in	2007-01-05 23:13:17.000000000 -0800
++++ new/Makefile.in	2007-02-27 02:28:31.000000000 -0800
 @@ -588,6 +588,9 @@
  	uninstall-local
  
@@ -21,7 +21,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2006-08-18 03:34:08.000000000 -0700
-+++ new/sshfs.c	2007-01-05 21:07:40.000000000 -0800
++++ new/sshfs.c	2007-02-27 02:28:39.000000000 -0800
 @@ -18,7 +18,9 @@
  #include <string.h>
  #include <stdint.h>
@@ -133,15 +133,3 @@ diff -Naur old/sshfs.c new/sshfs.c
      else
          err = sftp_request_iov(SSH_FXP_WRITE, iov, 2, SSH_FXP_STATUS, NULL);
      buf_free(&buf);
-@@ -2149,6 +2206,11 @@
- static int sshfs_create(const char *path, mode_t mode,
-                         struct fuse_file_info *fi)
- {
-+#if (__FreeBSD__ >= 10)
-+    if (fi) {
-+        fi->flags |= O_CREAT;
-+    }
-+#endif
-     return sshfs_open_common(path, mode, fi);
- }
- 

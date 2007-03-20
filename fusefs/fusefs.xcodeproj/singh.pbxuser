@@ -75,8 +75,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 194133597;
-			PBXWorkspaceStateSaveDate = 194133597;
+			PBXPerProjectTemplateStateSaveDate = 194779806;
+			PBXWorkspaceStateSaveDate = 194779806;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -346,9 +346,9 @@
 	};
 	54C6DDBC0B5EEB44002D9FD9 /* fuse_internal.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 16772}}";
-			sepNavSelRange = "{31077, 0}";
-			sepNavVisRect = "{{0, 15007}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {708, 17220}}";
+			sepNavSelRange = "{32172, 0}";
+			sepNavVisRect = "{{0, 15931}, {708, 269}}";
 			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
 		};
 	};
@@ -375,9 +375,9 @@
 	};
 	54C6DDC40B5EEB44002D9FD9 /* fuse_node.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2618}}";
-			sepNavSelRange = "{5195, 0}";
-			sepNavVisRect = "{{0, 1875}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {708, 2744}}";
+			sepNavSelRange = "{5516, 0}";
+			sepNavVisRect = "{{0, 1679}, {708, 269}}";
 		};
 	};
 	54C6DDC50B5EEB44002D9FD9 /* fuse_node.h */ = {

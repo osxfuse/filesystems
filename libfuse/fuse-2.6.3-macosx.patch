@@ -1,6 +1,6 @@
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-02-24 14:02:51.000000000 -0800
++++ new/README.MacFUSE	2007-02-27 02:19:32.000000000 -0800
 @@ -0,0 +1,7 @@
 +MacFUSE Project Page:
 +
@@ -11,7 +11,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +CFLAGS="-D__FreeBSD__=10 -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/configure new/configure
 --- old/configure	2007-02-04 06:30:48.000000000 -0800
-+++ new/configure	2007-02-24 14:02:51.000000000 -0800
++++ new/configure	2007-02-27 02:19:32.000000000 -0800
 @@ -11284,7 +11284,8 @@
  fi
  
@@ -24,7 +24,7 @@ diff -Naur old/configure new/configure
  echo $ECHO_N "checking for library containing clock_gettime... $ECHO_C" >&6; }
 diff -Naur old/example/fusexmp.c new/example/fusexmp.c
 --- old/example/fusexmp.c	2006-12-09 10:51:13.000000000 -0800
-+++ new/example/fusexmp.c	2007-02-24 14:02:51.000000000 -0800
++++ new/example/fusexmp.c	2007-02-27 02:19:32.000000000 -0800
 @@ -45,8 +45,25 @@
      int res;
  
@@ -102,7 +102,7 @@ diff -Naur old/example/fusexmp.c new/example/fusexmp.c
      return 0;
 diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
 --- old/example/fusexmp_fh.c	2006-12-09 10:51:13.000000000 -0800
-+++ new/example/fusexmp_fh.c	2007-02-24 14:02:51.000000000 -0800
++++ new/example/fusexmp_fh.c	2007-02-27 02:19:55.000000000 -0800
 @@ -32,8 +32,9 @@
      int res;
  
@@ -141,19 +141,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
  
      return 0;
  }
-@@ -266,7 +284,11 @@
- {
-     int fd;
- 
-+#if (__FreeBSD__ >= 10)
-+    fd = open(path, fi->flags | O_CREAT, mode);
-+#else
-     fd = open(path, fi->flags, mode);
-+#endif
-     if (fd == -1)
-         return -errno;
- 
-@@ -373,7 +395,11 @@
+@@ -373,7 +391,11 @@
  static int xmp_setxattr(const char *path, const char *name, const char *value,
                          size_t size, int flags)
  {
@@ -165,7 +153,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      if (res == -1)
          return -errno;
      return 0;
-@@ -382,7 +408,11 @@
+@@ -382,7 +404,11 @@
  static int xmp_getxattr(const char *path, const char *name, char *value,
                      size_t size)
  {
@@ -177,7 +165,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      if (res == -1)
          return -errno;
      return res;
-@@ -390,7 +420,11 @@
+@@ -390,7 +416,11 @@
  
  static int xmp_listxattr(const char *path, char *list, size_t size)
  {
@@ -189,7 +177,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      if (res == -1)
          return -errno;
      return res;
-@@ -398,7 +432,11 @@
+@@ -398,7 +428,11 @@
  
  static int xmp_removexattr(const char *path, const char *name)
  {
@@ -201,7 +189,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      if (res == -1)
          return -errno;
      return 0;
-@@ -414,7 +452,20 @@
+@@ -414,7 +448,20 @@
                         sizeof(fi->lock_owner));
  }
  
@@ -224,7 +212,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .access	= xmp_access,
 diff -Naur old/fuse.pc.in new/fuse.pc.in
 --- old/fuse.pc.in	2006-12-09 10:52:22.000000000 -0800
-+++ new/fuse.pc.in	2007-02-24 14:02:51.000000000 -0800
++++ new/fuse.pc.in	2007-02-27 02:19:32.000000000 -0800
 @@ -4,7 +4,7 @@
  includedir=@includedir@
  
@@ -237,7 +225,7 @@ diff -Naur old/fuse.pc.in new/fuse.pc.in
 +Cflags: -I${includedir}/fuse -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64
 diff -Naur old/include/fuse.h new/include/fuse.h
 --- old/include/fuse.h	2007-01-31 12:15:26.000000000 -0800
-+++ new/include/fuse.h	2007-02-24 14:02:51.000000000 -0800
++++ new/include/fuse.h	2007-02-27 02:19:32.000000000 -0800
 @@ -662,4 +662,8 @@
  }
  #endif
@@ -249,7 +237,7 @@ diff -Naur old/include/fuse.h new/include/fuse.h
  #endif /* _FUSE_H_ */
 diff -Naur old/lib/Makefile.in new/lib/Makefile.in
 --- old/lib/Makefile.in	2007-02-04 06:31:02.000000000 -0800
-+++ new/lib/Makefile.in	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/Makefile.in	2007-02-27 02:19:32.000000000 -0800
 @@ -60,8 +60,12 @@
  	fuse_loop.c fuse_loop_mt.c fuse_lowlevel.c fuse_misc.h \
  	fuse_mt.c fuse_opt.c fuse_session.c fuse_signals.c helper.c \
@@ -291,7 +279,7 @@ diff -Naur old/lib/Makefile.in new/lib/Makefile.in
  libulockmgr_la_LDFLAGS = -version-number 1:0:1
 diff -Naur old/lib/fuse.c new/lib/fuse.c
 --- old/lib/fuse.c	2007-02-02 03:57:48.000000000 -0800
-+++ new/lib/fuse.c	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/fuse.c	2007-02-27 02:19:32.000000000 -0800
 @@ -734,6 +734,16 @@
  
  static void curr_time(struct timespec *now)
@@ -319,7 +307,7 @@ diff -Naur old/lib/fuse.c new/lib/fuse.c
  static void update_stat(struct node *node, const struct stat *stbuf)
 diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
 --- old/lib/fuse_session.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_session.c	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/fuse_session.c	2007-02-27 02:19:32.000000000 -0800
 @@ -15,6 +15,9 @@
  #include <string.h>
  #include <assert.h>
@@ -374,7 +362,7 @@ diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
      struct fuse_session *se = (struct fuse_session *) malloc(sizeof(*se));
 diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
 --- old/lib/fuse_signals.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_signals.c	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/fuse_signals.c	2007-02-27 02:19:32.000000000 -0800
 @@ -13,12 +13,34 @@
  #include <signal.h>
  
@@ -412,7 +400,7 @@ diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
  static int set_one_signal_handler(int sig, void (*handler)(int))
 diff -Naur old/lib/helper.c new/lib/helper.c
 --- old/lib/helper.c	2006-12-09 10:52:22.000000000 -0800
-+++ new/lib/helper.c	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/helper.c	2007-02-27 02:19:32.000000000 -0800
 @@ -264,6 +264,10 @@
      if (fd)
          *fd = fuse_chan_fd(ch);
@@ -426,7 +414,7 @@ diff -Naur old/lib/helper.c new/lib/helper.c
   err_unmount:
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/mount_bsd.c	2007-02-24 14:03:17.000000000 -0800
++++ new/lib/mount_bsd.c	2007-02-27 02:19:32.000000000 -0800
 @@ -6,6 +6,11 @@
      See the file COPYING.LIB.
  */
@@ -452,7 +440,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +#include <sys/mount.h>
 +#include <AssertMacros.h>
 +
-+static const char *MacFUSE = "MacFUSE version 0.2.2, " __DATE__ ", " __TIME__;
++static const char *MacFUSE = "MacFUSE version 0.2.3, " __DATE__ ", " __TIME__;
 +
 +static int
 +checkloadable(void)
@@ -693,7 +681,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      return fd;
 diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
 --- old/lib/ulockmgr.c	2007-01-02 09:10:33.000000000 -0800
-+++ new/lib/ulockmgr.c	2007-02-24 14:02:51.000000000 -0800
++++ new/lib/ulockmgr.c	2007-02-27 02:19:32.000000000 -0800
 @@ -18,9 +18,19 @@
  #include <assert.h>
  #include <signal.h>

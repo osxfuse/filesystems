@@ -238,6 +238,7 @@ struct fuse_data {
 
 #define FSESS_DIRECT_IO           0x00010000 // direct_io for the entire mount
 #define FSESS_EXTENDED_SECURITY   0x00020000 // enable extended security (ACLs)
+#define FSESS_VOL_RENAME          0x00040000 // allow volume name to be changed
 
 static __inline__
 struct fuse_data *

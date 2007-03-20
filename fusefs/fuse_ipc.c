@@ -72,7 +72,7 @@ fiov_teardown(struct fuse_iov *fiov)
 void
 fiov_adjust(struct fuse_iov *fiov, size_t size)
 {
-    debug_printf("fiov=%p, size=%lx\n", fiov, size);
+    debug_printf("IN: fiov=%p, size=%lx\n", fiov, size);
 
     if (fiov->allocated_size < size ||
         (fuse_iov_permanent_bufsize >= 0 &&
@@ -87,6 +87,8 @@ fiov_adjust(struct fuse_iov *fiov, size_t size)
 
         fiov->allocated_size = FU_AT_LEAST(size);
         fiov->credit = fuse_iov_credit;
+
+        debug_printf("OUT: fiov=%p, size=%lx\n", fiov, size);
     }
 
     fiov->len = size;

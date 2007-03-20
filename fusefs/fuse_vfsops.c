@@ -434,7 +434,7 @@ alreadydead:
 }        
 
 static errno_t
-fuse_vfs_root(mount_t mp, struct vnode **vpp, __unused vfs_context_t context)
+fuse_vfs_root(mount_t mp, struct vnode **vpp, vfs_context_t context)
 {
     int err = 0;
     vnode_t vp = NULL;
@@ -442,6 +442,7 @@ fuse_vfs_root(mount_t mp, struct vnode **vpp, __unused vfs_context_t context)
     fuse_trace_printf_vfsop();
 
     err = FSNodeGetOrCreateFileVNodeByID(mp,             // mount
+                                         context,        // VFS context
                                          FUSE_ROOT_ID,   // node id
                                          NULLVP,         // parent
                                          VDIR,           // type
@@ -455,11 +456,25 @@ fuse_vfs_root(mount_t mp, struct vnode **vpp, __unused vfs_context_t context)
 }
 
 static void
-handle_capabilities_and_attributes(struct vfs_attr *attr)
+handle_capabilities_and_attributes(mount_t mp, struct vfs_attr *attr)
 {
+
+    struct fuse_data *data = fuse_get_mpdata(mp);
+    if (!data) {
+        panic("MacFUSE: no private data for mount point?");
+    }
+
     attr->f_capabilities.capabilities[VOL_CAPABILITIES_FORMAT] = 0
 //      | VOL_CAP_FMT_PERSISTENTOBJECTIDS
         | VOL_CAP_FMT_SYMBOLICLINKS
+
+        /*
+         * Note that we don't really have hard links in a MacFUSE file system
+         * unless the user file system daemon provides persistent/consistent
+         * inode numbers. Maybe instead of returning the "wrong" answer here
+         * we should just deny knowledge of this capability in the valid bits
+         * below.
+         */
         | VOL_CAP_FMT_HARDLINKS
 //      | VOL_CAP_FMT_JOURNAL
 //      | VOL_CAP_FMT_JOURNAL_ACTIVE
@@ -493,12 +508,18 @@ handle_capabilities_and_attributes(struct vfs_attr *attr)
 //      | VOL_CAP_INT_EXCHANGEDATA
 //      | VOL_CAP_INT_COPYFILE
 //      | VOL_CAP_INT_ALLOCATE
-        | VOL_CAP_INT_VOL_RENAME
+//      | VOL_CAP_INT_VOL_RENAME
         | VOL_CAP_INT_ADVLOCK
         | VOL_CAP_INT_FLOCK
         | VOL_CAP_INT_EXTENDED_SECURITY
 //      | VOL_CAP_INT_USERACCESS
         ;
+
+    if (data->dataflag & FSESS_VOL_RENAME) {
+        attr->f_capabilities.capabilities[VOL_CAPABILITIES_INTERFACES] |=
+            VOL_CAP_INT_VOL_RENAME;
+    }
+
     attr->f_capabilities.valid[VOL_CAPABILITIES_INTERFACES] = 0
         | VOL_CAP_INT_SEARCHFS
         | VOL_CAP_INT_ATTRLIST
@@ -726,7 +747,7 @@ dostatfs:
     /* f_fsid and f_owner handled elsewhere. */
 
     /* Handle capabilities and attributes. */
-    handle_capabilities_and_attributes(attr);
+    handle_capabilities_and_attributes(mp, attr);
 
     VFSATTR_RETURN(attr, f_create_time, kZeroTime);
     VFSATTR_RETURN(attr, f_modify_time, kZeroTime);
@@ -877,7 +898,13 @@ fuse_vfs_setattr(mount_t mp, struct vfs_attr *fsap, vfs_context_t context)
 
         size_t vlen;
 
+        if (!(data->dataflag & FSESS_VOL_RENAME)) {
+            error = ENOTSUP;
+            goto out;
+        }
+
         if (fsap->f_vol_name[0] == 0) {
+            error = EINVAL;
             goto out;
         }
 

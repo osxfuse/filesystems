@@ -311,7 +311,7 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     foi = fdip->indata;
     foi->mode = mode;
-    foi->flags = O_RDWR; // XXX: We /always/ creat() like this.
+    foi->flags = O_CREAT | O_RDWR; // XXX: We /always/ creat() like this.
 
     memcpy((char *)fdip->indata + sizeof(*foi), cnp->cn_nameptr,
            cnp->cn_namelen);
@@ -352,6 +352,7 @@ bringup:
     }
 
     err = FSNodeGetOrCreateFileVNodeByID(mp,
+                                         context,
                                          feo->nodeid,
                                          dvp,
                                          VREG,
@@ -596,14 +597,25 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
              * vp->vtype = vap->v_type
              */
         } else {
+
             /*
-             * TODO
+             * STALE vnode, ditch
              *
-             * STALE VNODE: Need to ditch the vnode here. Leaving it around
-             * could (?) lead to a panic later on.
+             * The vnode has changed its type "behind our back". There's
+             * nothing really we can do, so let us just force an internal
+             * revocation and tell the caller to try again, if interested.
              */
-            debug_printf("fuse_getattr d: returning ENOTCONN\n");
-            return (ENOTCONN);
+
+            fuse_internal_vnode_disappear(vp, context);
+
+            return EAGAIN;
+
+            /*
+             * Historical note:
+             *
+             * debug_printf("fuse_getattr d: returning ENOTCONN\n");
+             * return (ENOTCONN);
+             */
         }
     }
 
@@ -618,6 +630,7 @@ fake:
     return (0);
 }
 
+#ifdef MACFUSE_ENABLE_XATTR
 /*
     struct vnop_getxattr_args {
         struct vnodeop_desc *a_desc;
@@ -702,6 +715,7 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
 
     return err;
 }
+#endif /* MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_inactive_args {
@@ -951,6 +965,7 @@ fuse_vnop_link(struct vnop_link_args *ap)
     return (err);
 }
 
+#ifdef MACFUSE_ENABLE_XATTR
 /*
     struct vnop_listxattr_args {
         struct vnodeop_desc *a_desc;
@@ -1028,6 +1043,7 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
 
     return err;
 }
+#endif /* MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_lookup_args {
@@ -2423,6 +2439,7 @@ fuse_vnop_remove(struct vnop_remove_args *ap)
     return err;
 }
 
+#ifdef MACFUSE_ENABLE_XATTR
 /*
     struct vnop_removexattr_args {
         struct vnodeop_desc *a_desc;
@@ -2481,6 +2498,7 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
 
     return err;
 }
+#endif /* MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_rename_args {
@@ -2538,9 +2556,9 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
              */
 
             /*
-            (void)fuse_internal_revoke(tvp, REVOKEALL, ap->a_context);
-            (void)vnode_recycle(tvp);
-            */
+             * 1. revoke
+             * 2. recycle
+             */
         }
     }
 
@@ -2847,8 +2865,18 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
         if (vnode_vtype(vp) == VNON && vtyp != VNON) {
             debug_printf("MacFUSE: vnode_vtype is VNON and vtype isn't!\n");
         } else {
-            // XXX: should ditch vnode.
-            err = ENOTCONN;
+
+            /*
+             * STALE vnode, ditch
+             *
+             * The vnode has changed its type "behind our back". There's
+             * nothing really we can do, so let us just force an internal
+             * revocation and tell the caller to try again, if interested.
+             */
+
+            fuse_internal_vnode_disappear(vp, context);
+
+            err = EAGAIN;
         }
     }
 
@@ -2874,6 +2902,7 @@ out:
     return (err);
 }
 
+#ifdef MACFUSE_ENABLE_XATTR
 /*
     struct vnop_setxattr_args {
         struct vnodeop_desc *a_desc;
@@ -2985,6 +3014,7 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
 
     return err;
 }
+#endif /* MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_strategy_args {
@@ -3262,11 +3292,15 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_fsync_desc,         (fuse_vnode_op_t) fuse_vnop_fsync         },
     { &vnop_getattr_desc,       (fuse_vnode_op_t) fuse_vnop_getattr       },
 //  { &vnop_getattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_getattrlist   },
+#ifdef MACFUSE_ENABLE_XATTR
     { &vnop_getxattr_desc,      (fuse_vnode_op_t) fuse_vnop_getxattr      },
+#endif /* MACFUSE_ENABLE_XATTR */
     { &vnop_inactive_desc,      (fuse_vnode_op_t) fuse_vnop_inactive      },
     { &vnop_ioctl_desc,         (fuse_vnode_op_t) fuse_vnop_ioctl         },
     { &vnop_link_desc,          (fuse_vnode_op_t) fuse_vnop_link          },
+#ifdef MACFUSE_ENABLE_XATTR
     { &vnop_listxattr_desc,     (fuse_vnode_op_t) fuse_vnop_listxattr     },
+#endif /* MACFUSE_ENABLE_XATTR */
     { &vnop_lookup_desc,        (fuse_vnode_op_t) fuse_vnop_lookup        },
 #if MACFUSE_ENABLE_UNSUPPORTED
     { &vnop_kqfilt_add_desc,    (fuse_vnode_op_t) fuse_vnop_kqfilt_add    },
@@ -3287,7 +3321,9 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_readlink_desc,      (fuse_vnode_op_t) fuse_vnop_readlink      },
     { &vnop_reclaim_desc,       (fuse_vnode_op_t) fuse_vnop_reclaim       },
     { &vnop_remove_desc,        (fuse_vnode_op_t) fuse_vnop_remove        },
+#ifdef MACFUSE_ENABLE_XATTR
     { &vnop_removexattr_desc,   (fuse_vnode_op_t) fuse_vnop_removexattr   },
+#endif /* MACFUSE_ENABLE_UNSUPPORTED */
     { &vnop_rename_desc,        (fuse_vnode_op_t) fuse_vnop_rename        },
     { &vnop_revoke_desc,        (fuse_vnode_op_t) fuse_vnop_revoke        },
     { &vnop_rmdir_desc,         (fuse_vnode_op_t) fuse_vnop_rmdir         },
@@ -3295,7 +3331,9 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_select_desc,        (fuse_vnode_op_t) fuse_vnop_select        },
     { &vnop_setattr_desc,       (fuse_vnode_op_t) fuse_vnop_setattr       },
 //  { &vnop_setattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_setattrlist   }, 
+#ifdef MACFUSE_ENABLE_XATTR
     { &vnop_setxattr_desc,      (fuse_vnode_op_t) fuse_vnop_setxattr      },
+#endif /* MACFUSE_ENABLE_UNSUPPORTED */
     { &vnop_strategy_desc,      (fuse_vnode_op_t) fuse_vnop_strategy      },
     { &vnop_symlink_desc,       (fuse_vnode_op_t) fuse_vnop_symlink       },
 //  { &vnop_whiteout_desc,      (fuse_vnode_op_t) fuse_vnop_whiteout      },

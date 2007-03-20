@@ -161,7 +161,7 @@ fuse_internal_access(vnode_t                   vp,
 
     if (err == ENOENT) {
         IOLog("MacFUSE: revoking vnode %p (root=%d)\n", vp, vnode_isvroot(vp));
-        (void)fuse_internal_revoke(vp, REVOKEALL, context);
+        fuse_internal_vnode_disappear(vp, context);
     }
 
     return err;
@@ -1140,6 +1140,17 @@ fuse_internal_forget_send(mount_t                 mp,
 
     fticket_invalidate(fdip->tick);
     fuse_insert_message(fdip->tick);
+}
+
+__private_extern__
+void
+fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context)
+{   
+    cache_purge(vp);
+
+    (void)fuse_internal_revoke(vp, REVOKEALL, context);
+
+    (void)vnode_recycle(vp);
 }
 
 /* fuse start/stop */

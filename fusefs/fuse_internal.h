@@ -368,6 +368,9 @@ fuse_internal_forget_send(mount_t                 mp,
                           uint64_t                nlookup,
                           struct fuse_dispatcher *fdip);
 
+void
+fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context);
+
 /* fuse start/stop */
 
 int fuse_internal_init_callback(struct fuse_ticket *tick, uio_t uio);

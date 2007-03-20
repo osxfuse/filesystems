@@ -120,13 +120,14 @@ struct get_filehandle_param {
 #define C_ACCESS_NOOP        0x08000
 
 errno_t
-FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
-                               uint64_t   nodeid,
-                               vnode_t    dvp,
-                               enum vtype vtyp,
-                               uint64_t   insize,
-                               vnode_t   *vnPtr,
-                               int        flags);
+FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
+                               vfs_context_t context,
+                               uint64_t      nodeid,
+                               vnode_t       dvp,
+                               enum vtype    vtyp,
+                               uint64_t      insize,
+                               vnode_t      *vnPtr,
+                               int           flags);
 
 void FSNodeScrub(struct fuse_vnode_data *fvdat);
 

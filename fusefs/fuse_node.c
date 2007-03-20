@@ -20,13 +20,14 @@ FSNodeScrub(struct fuse_vnode_data *fvdat)
 }       
 
 errno_t
-FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
-                               uint64_t   nodeid,
-                               vnode_t    dvp,
-                               enum vtype vtyp,
-                               uint64_t   insize,
-                               vnode_t   *vnPtr,
-                               int        flags)
+FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
+                               vfs_context_t context,
+                               uint64_t      nodeid,
+                               vnode_t       dvp,
+                               enum vtype    vtyp,
+                               uint64_t      insize,
+                               vnode_t      *vnPtr,
+                               int           flags)
 {
     int      err;
     int      junk;
@@ -124,6 +125,14 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
     }
 
     if (err == 0) {
+        if (vnode_vtype(vn) != vtyp) {
+            fuse_internal_vnode_disappear(vn, context);
+            vnode_put(vn);
+            err = EAGAIN;
+        }
+    }
+
+    if (err == 0) {
         *vnPtr = vn;
         vnode_settag(vn, VT_KERNFS);
     }
@@ -141,7 +150,7 @@ FSNodeGetOrCreateFileVNodeByID(mount_t    mp,
 int
 fuse_vget_i(mount_t               mp,
             uint64_t              nodeid,
-   __unused vfs_context_t         context,
+            vfs_context_t         context,
             vnode_t               dvp,
             vnode_t              *vpp,
             struct componentname *cnp,
@@ -170,7 +179,8 @@ fuse_vget_i(mount_t               mp,
     }
 #endif
 
-    err = FSNodeGetOrCreateFileVNodeByID(mp, nodeid, dvp, vtyp, size, vpp, 0);
+    err = FSNodeGetOrCreateFileVNodeByID(mp, context, nodeid, dvp,
+                                         vtyp, size, vpp, 0);
     if (err) {
         return err;
     }
