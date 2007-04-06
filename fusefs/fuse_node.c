@@ -167,7 +167,7 @@ fuse_vget_i(mount_t               mp,
         return EINVAL;
     }
 
-#if 0 //XROOT
+#if M_MACFUSE_EXPERIMENTAL_JUNK
     if (nodeid == FUSE_ROOT_ID) {
         *vpp = fuse_get_mpdata(mp)->rvp; //XROOT
         err = vnode_get(*vpp);

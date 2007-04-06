@@ -201,8 +201,12 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
 static int
 fuse_vnop_close(struct vnop_close_args *ap)
 {
+    int err = 0;
     vnode_t vp = ap->a_vp;
     fufh_type_t fufh_type;
+    struct fuse_dispatcher  fdi;
+    struct fuse_flush_in   *ffi;
+    struct fuse_data       *data;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
 
@@ -235,6 +239,26 @@ fuse_vnop_close(struct vnop_close_args *ap)
 
     fufh->open_count--;
 
+    data = fuse_get_mpdata(vnode_mount(vp));
+    if (!(data->noimpl & FSESS_NOIMPL(FLUSH))) {
+        fdisp_init(&fdi, sizeof(*ffi));
+        fdisp_make_vp(&fdi, FUSE_FLUSH, vp, ap->a_context);
+        ffi = fdi.indata;
+        ffi->fh = fufh->fh_id;
+        ffi->unused = 0;
+        ffi->padding = 0;
+        ffi->lock_owner = 0;
+        err = fdisp_wait_answ(&fdi);
+        if (!err) {
+            fuse_ticket_drop(fdi.tick);
+        } else {
+            if (err == ENOSYS) {
+                data->noimpl |= FSESS_NOIMPL(FLUSH);
+                err = 0;
+            }
+        }
+    }
+
     /* Enforce sync on close unless explicitly told not to. */
     if (vnode_hasdirtyblks(vp) && !fuse_isnosynconclose(vp)) {
         (void)cluster_push(vp, IO_SYNC | IO_CLOSE);
@@ -245,7 +269,7 @@ fuse_vnop_close(struct vnop_close_args *ap)
         (void)fuse_filehandle_put(vp, ap->a_context, fufh_type, 0);
     }
 
-    return 0;
+    return err;
 }
 
 /*
@@ -295,14 +319,14 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     // XXX: Will we ever want devices?
     if ((vap->va_type != VREG) ||
-        fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL_CREATE) {
+        fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL(CREATE)) {
         goto good_old;
     }
 
     debug_printf("parent nid = %llu, mode = %x\n", parentnid, mode);
 
     fdisp_init(fdip, sizeof(*foi) + cnp->cn_namelen + 1);
-    if (fuse_get_mpdata(vnode_mount(dvp))->noimpl & FSESS_NOIMPL_CREATE) {
+    if (fuse_get_mpdata(vnode_mount(dvp))->noimpl & FSESS_NOIMPL(CREATE)) {
         debug_printf("eh, daemon doesn't implement create?\n");
         goto good_old;
     }
@@ -321,7 +345,7 @@ fuse_vnop_create(struct vnop_create_args *ap)
 
     if (err == ENOSYS) {
         debug_printf("create: got ENOSYS from daemon\n");
-        fuse_get_mpdata(vnode_mount(dvp))->noimpl |= FSESS_NOIMPL_CREATE;
+        fuse_get_mpdata(vnode_mount(dvp))->noimpl |= FSESS_NOIMPL(CREATE);
         fdip->tick = NULL;
         goto good_old;
     } else if (err) {
@@ -630,7 +654,7 @@ fake:
     return (0);
 }
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 /*
     struct vnop_getxattr_args {
         struct vnodeop_desc *a_desc;
@@ -663,7 +687,7 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
     }
 
     data = fuse_get_mpdata(vnode_mount(vp));
-    if (data->noimpl & FSESS_NOIMPL_GETXATTR) {
+    if (data->noimpl & FSESS_NOIMPL(GETXATTR)) {
         return ENOTSUP;
     }
 
@@ -693,7 +717,7 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
     err = fdisp_wait_answ(&fdi);
     if (err) {
         if (err == ENOSYS) {
-            data->noimpl |= FSESS_NOIMPL_GETXATTR;
+            data->noimpl |= FSESS_NOIMPL(GETXATTR);
             return ENOTSUP;
         }
         return err;  
@@ -715,7 +739,7 @@ fuse_vnop_getxattr(struct vnop_getxattr_args *ap)
 
     return err;
 }
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_inactive_args {
@@ -832,7 +856,7 @@ fuse_vnop_ioctl(struct vnop_ioctl_args *ap)
 }
 
 
-#if MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
 
 #include "fuse_knote.h"
 
@@ -905,7 +929,7 @@ fuse_vnop_kqfilt_remove(__unused struct vnop_kqfilt_remove_args *ap)
     return ENOTSUP;
 }
 
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_UNSUPPORTED */
 
 
 /*
@@ -965,7 +989,7 @@ fuse_vnop_link(struct vnop_link_args *ap)
     return (err);
 }
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 /*
     struct vnop_listxattr_args {
         struct vnodeop_desc *a_desc;
@@ -1005,7 +1029,7 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
     }
 
     data = fuse_get_mpdata(vnode_mount(vp));
-    if (data->noimpl & FSESS_NOIMPL_LISTXATTR) {
+    if (data->noimpl & FSESS_NOIMPL(LISTXATTR)) {
         return ENOTSUP;
     }
 
@@ -1021,7 +1045,7 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
     err = fdisp_wait_answ(&fdi);
     if (err) {
         if (err == ENOSYS) {
-            data->noimpl |= FSESS_NOIMPL_LISTXATTR;
+            data->noimpl |= FSESS_NOIMPL(LISTXATTR);
             return ENOTSUP;
         }
         return err;
@@ -1043,7 +1067,7 @@ fuse_vnop_listxattr(struct vnop_listxattr_args *ap)
 
     return err;
 }
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_lookup_args {
@@ -1612,7 +1636,7 @@ fuse_vnop_mmap(struct vnop_mmap_args *ap)
         goto out;
     }
 
-    err = fuse_filehandle_get(vp, ap->a_context, fufh_type);
+    err = fuse_filehandle_get(vp, ap->a_context, fufh_type, 0 /* mode */);
     if (err) {
         IOLog("MacFUSE: filehandle_get failed in mmap (type=%d, err=%d)\n",
               fufh_type, err);
@@ -1719,7 +1743,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
     struct fuse_filehandle *fufh = NULL;
     struct fuse_filehandle *fufh_rw = NULL;
 
-    int error, isdir = 0, mode, oflags;
+    int error, isdir = 0, mode;
 
     fuse_trace_printf_vnop();
 
@@ -1742,8 +1766,6 @@ fuse_vnop_open(struct vnop_open_args *ap)
         debug_printf("fuse_open(VREG)\n");
         fufh_type = fuse_filehandle_xlate_from_fflags(mode);
     }
-
-    oflags = fuse_filehandle_xlate_to_oflags(fufh_type);
 
     fufh = &(fvdat->fufh[fufh_type]);
 
@@ -1768,11 +1790,9 @@ fuse_vnop_open(struct vnop_open_args *ap)
                 fufh->fufh_flags |= FUFH_VALID;
                 fufh->fufh_flags &= ~FUFH_MAPPED;
                 fufh->open_count = 1;
-                fufh->open_flags = oflags;
-                fufh->type = fufh_type;
-
-                fufh->fh_id = fufh_rw->fh_id;
                 fufh->open_flags = fufh_rw->open_flags;
+                fufh->type = fufh_type;
+                fufh->fh_id = fufh_rw->fh_id;
                 debug_printf("creator picked up stashed handle, moved to %d\n",
                              fufh_type);
                 
@@ -1812,7 +1832,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
         goto ok; /* return 0 */
     }
 
-    error = fuse_filehandle_get(vp, context, fufh_type);
+    error = fuse_filehandle_get(vp, context, fufh_type, mode);
     if (error) {
         return error;
     }
@@ -2115,7 +2135,6 @@ fuse_vnop_read(struct vnop_read_args *ap)
         struct fuse_filehandle *fufh = NULL;
         struct fuse_read_in    *fri = NULL;
         off_t                   rounded_iolength;
-        off_t                   total_xfersize;
 
         fufh = &(fvdat->fufh[fufh_type]);
         if (!(fufh->fufh_flags & FUFH_VALID)) {
@@ -2137,20 +2156,6 @@ fuse_vnop_read(struct vnop_read_args *ap)
 
         rounded_iolength = (off_t)round_page_64(uio_offset(uio) +
                                                 uio_resid(uio));
-        if (uio_offset(uio) > (off_t)fvdat->filesize) {
-            total_xfersize = 0;
-        } else {
-            total_xfersize = min(uio_resid(uio),
-                                 ((off_t)fvdat->filesize - uio_offset(uio)));
-            if (total_xfersize < 0) {
-                total_xfersize = 0;
-            }
-        }
-
-        if (total_xfersize == 0) {
-            return 0;
-        }
-
         fdisp_init(&fdi, 0);
 
         while (uio_resid(uio) > 0) {
@@ -2244,7 +2249,7 @@ fuse_vnop_readdir(struct vnop_readdir_args *ap)
 
     fufh = &(fvdat->fufh[FUFH_RDONLY]);
     if (!(fufh->fufh_flags & FUFH_VALID)) {
-        err = fuse_filehandle_get(vp, context, FUFH_RDONLY);
+        err = fuse_filehandle_get(vp, context, FUFH_RDONLY, 0 /* mode */);
         if (err) {
             return err;
         }
@@ -2439,7 +2444,7 @@ fuse_vnop_remove(struct vnop_remove_args *ap)
     return err;
 }
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 /*
     struct vnop_removexattr_args {
         struct vnodeop_desc *a_desc;
@@ -2466,7 +2471,7 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
     }
 
     data = fuse_get_mpdata(vnode_mount(vp));
-    if (data->noimpl & FSESS_NOIMPL_REMOVEXATTR) {
+    if (data->noimpl & FSESS_NOIMPL(REMOVEXATTR)) {
         return ENOTSUP;
     }
 
@@ -2491,14 +2496,14 @@ fuse_vnop_removexattr(struct vnop_removexattr_args *ap)
         fuse_ticket_drop(fdi.tick);
     } else {
         if (err == ENOSYS) {
-            data->noimpl |= FSESS_NOIMPL_REMOVEXATTR;
+            data->noimpl |= FSESS_NOIMPL(REMOVEXATTR);
             return ENOTSUP;
         }
     }
 
     return err;
 }
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_rename_args {
@@ -2902,7 +2907,7 @@ out:
     return (err);
 }
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 /*
     struct vnop_setxattr_args {
         struct vnodeop_desc *a_desc;
@@ -2936,7 +2941,7 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
     }
 
     data = fuse_get_mpdata(vnode_mount(vp));
-    if (data->noimpl & FSESS_NOIMPL_SETXATTR) {
+    if (data->noimpl & FSESS_NOIMPL(SETXATTR)) {
         return ENOTSUP;
     }
 
@@ -2993,7 +2998,7 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
 
             int a_spacetype = UIO_USERSPACE;
 
-            data->noimpl |= FSESS_NOIMPL_SETXATTR;
+            data->noimpl |= FSESS_NOIMPL(SETXATTR);
 
             if (iov_err) {
                 return EAGAIN;
@@ -3014,7 +3019,7 @@ fuse_vnop_setxattr(struct vnop_setxattr_args *ap)
 
     return err;
 }
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
 
 /*
     struct vnop_strategy_args {
@@ -3104,10 +3109,10 @@ fuse_vnop_symlink(struct vnop_symlink_args *ap)
 static int
 fuse_vnop_write(struct vnop_write_args *ap)
 {
-    vnode_t vp = ap->a_vp;
-    uio_t uio = ap->a_uio;
-    int ioflag = ap->a_ioflag;
-    struct fuse_vnode_data *fvdat;
+    vnode_t       vp      = ap->a_vp;
+    uio_t         uio     = ap->a_uio;
+    int           ioflag  = ap->a_ioflag;
+    vfs_context_t context = ap->a_context;
 
     int          error;
     int          lflag;
@@ -3117,6 +3122,8 @@ fuse_vnop_write(struct vnop_write_args *ap)
     off_t        original_offset;
     off_t        original_size;
     user_ssize_t original_resid;
+
+    struct fuse_vnode_data *fvdat;
 
     /*
      * XXX: Locking
@@ -3164,7 +3171,6 @@ fuse_vnop_write(struct vnop_write_args *ap)
     }
 
     original_resid = uio_resid(uio);
-    original_size = fvdat->filesize;
     original_offset = uio_offset(uio);
     offset = original_offset;
 
@@ -3176,7 +3182,79 @@ fuse_vnop_write(struct vnop_write_args *ap)
         return EINVAL;
     }
 
+    if (fuse_isdirectio(vp)) { /* direct_io */
+        fufh_type_t             fufh_type = FUFH_WRONLY;
+        struct fuse_dispatcher  fdi;
+        struct fuse_filehandle *fufh = NULL;
+        struct fuse_write_in   *fwi = NULL;
+        struct fuse_write_out  *fwo = NULL;
+        struct fuse_data       *data = fuse_get_mpdata(vnode_mount(vp));
+
+        int chunksize;
+        off_t diff;
+
+        fufh = &(fvdat->fufh[fufh_type]);
+        if (!(fufh->fufh_flags & FUFH_VALID)) {
+            fufh_type = FUFH_RDWR;
+            fufh = &(fvdat->fufh[fufh_type]);
+            if (!(fufh->fufh_flags & FUFH_VALID)) {
+                fufh = NULL;
+            } else {
+                debug_printf("write falling back to FUFH_RDWR ... OK\n");
+            }
+        }
+
+        if (!fufh) {
+            debug_printf("WRITE: no fufh: failing direct I/O\n");
+            return EIO;
+        } else {
+           debug_printf("WRITE: using existing fufh of type %d\n", fufh_type);
+        }
+
+        fdisp_init(&fdi, 0);
+
+        while (uio_resid(uio) > 0) {
+            chunksize = min(uio_resid(uio), data->iosize);
+            fdi.iosize = sizeof(*fwi) + chunksize;
+            fdisp_make_vp(&fdi, FUSE_WRITE, vp, context);
+            fwi = fdi.indata;
+            fwi->fh = fufh->fh_id;
+            fwi->offset = uio_offset(uio);
+            fwi->size = chunksize;
+
+            error = uiomove((char *)fdi.indata + sizeof(*fwi), chunksize, uio);
+            if (error) {
+                break;
+            }
+
+            error = fdisp_wait_answ(&fdi);
+            if (error) {
+                return error;
+            }
+
+            fwo = (struct fuse_write_out *)fdi.answ;
+
+            diff = chunksize - fwo->size;
+            if (diff < 0) {
+                error = EINVAL;
+                break;
+            }
+
+            uio_setresid(uio, (uio_resid(uio) + diff));
+            uio_setoffset(uio, (uio_offset(uio) - diff));
+        } /* while */
+
+        fuse_ticket_drop(fdi.tick);
+
+        return error;
+
+    } /* direct_io */
+
+    /* !direct_io */
+
     // Be wary of a size change here.
+
+    original_size = fvdat->filesize;
 
     if (ioflag & IO_APPEND) {
         debug_printf("WRITE: arranging for append\n");
@@ -3223,9 +3301,9 @@ fuse_vnop_write(struct vnop_write_args *ap)
         
     if (uio_offset(uio) > original_size) {
         debug_printf("WRITE: updating to new size\n");
+        fuse_invalidate_attr(vp);
         fvdat->filesize = uio_offset(uio);
         ubc_setsize(vp, (off_t)fvdat->filesize);
-        fuse_invalidate_attr(vp);
         FUSE_KNOTE(vp, NOTE_WRITE | NOTE_EXTEND);
     } else {
         fvdat->filesize = original_size;
@@ -3292,20 +3370,20 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_fsync_desc,         (fuse_vnode_op_t) fuse_vnop_fsync         },
     { &vnop_getattr_desc,       (fuse_vnode_op_t) fuse_vnop_getattr       },
 //  { &vnop_getattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_getattrlist   },
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
     { &vnop_getxattr_desc,      (fuse_vnode_op_t) fuse_vnop_getxattr      },
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
     { &vnop_inactive_desc,      (fuse_vnode_op_t) fuse_vnop_inactive      },
     { &vnop_ioctl_desc,         (fuse_vnode_op_t) fuse_vnop_ioctl         },
     { &vnop_link_desc,          (fuse_vnode_op_t) fuse_vnop_link          },
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
     { &vnop_listxattr_desc,     (fuse_vnode_op_t) fuse_vnop_listxattr     },
-#endif /* MACFUSE_ENABLE_XATTR */
+#endif /* M_MACFUSE_ENABLE_XATTR */
     { &vnop_lookup_desc,        (fuse_vnode_op_t) fuse_vnop_lookup        },
-#if MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
     { &vnop_kqfilt_add_desc,    (fuse_vnode_op_t) fuse_vnop_kqfilt_add    },
     { &vnop_kqfilt_remove_desc, (fuse_vnode_op_t) fuse_vnop_kqfilt_remove },
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_UNSUPPORTED */
     { &vnop_mkdir_desc,         (fuse_vnode_op_t) fuse_vnop_mkdir         },
     { &vnop_mknod_desc,         (fuse_vnode_op_t) fuse_vnop_mknod         },
     { &vnop_mmap_desc,          (fuse_vnode_op_t) fuse_vnop_mmap          },
@@ -3321,9 +3399,9 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_readlink_desc,      (fuse_vnode_op_t) fuse_vnop_readlink      },
     { &vnop_reclaim_desc,       (fuse_vnode_op_t) fuse_vnop_reclaim       },
     { &vnop_remove_desc,        (fuse_vnode_op_t) fuse_vnop_remove        },
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
     { &vnop_removexattr_desc,   (fuse_vnode_op_t) fuse_vnop_removexattr   },
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_XATTR */
     { &vnop_rename_desc,        (fuse_vnode_op_t) fuse_vnop_rename        },
     { &vnop_revoke_desc,        (fuse_vnode_op_t) fuse_vnop_revoke        },
     { &vnop_rmdir_desc,         (fuse_vnode_op_t) fuse_vnop_rmdir         },
@@ -3331,9 +3409,9 @@ struct vnodeopv_entry_desc fuse_vnode_operation_entries[] = {
     { &vnop_select_desc,        (fuse_vnode_op_t) fuse_vnop_select        },
     { &vnop_setattr_desc,       (fuse_vnode_op_t) fuse_vnop_setattr       },
 //  { &vnop_setattrlist_desc,   (fuse_vnode_op_t) fuse_vnop_setattrlist   }, 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
     { &vnop_setxattr_desc,      (fuse_vnode_op_t) fuse_vnop_setxattr      },
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_XATTR */
     { &vnop_strategy_desc,      (fuse_vnode_op_t) fuse_vnop_strategy      },
     { &vnop_symlink_desc,       (fuse_vnode_op_t) fuse_vnop_symlink       },
 //  { &vnop_whiteout_desc,      (fuse_vnode_op_t) fuse_vnop_whiteout      },

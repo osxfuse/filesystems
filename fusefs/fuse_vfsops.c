@@ -410,9 +410,9 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
         fuse_ticket_drop(fdi.tick);
     }
 
-#if 0
-    vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_UNMOUNT, 0);
-#endif
+    /*
+     * Note that dounmount() signals a VQ_UNMOUNT VFS event.
+     */
 
     fdata_kick_set(data);
 

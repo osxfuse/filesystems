@@ -36,7 +36,7 @@ static int fuse_vnop_getattr(struct vnop_getattr_args *ap);
 
 // static int fuse_vnop_getattrlist(struct vnop_getattrlist_args *ap);
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 static int fuse_vnop_getxattr(struct vnop_getxattr_args *ap);
 #endif
 
@@ -44,7 +44,7 @@ static int fuse_vnop_inactive(struct vnop_inactive_args *ap);
 
 static int fuse_vnop_ioctl(struct vnop_ioctl_args *ap);
 
-#ifdef MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
 static int fuse_vnop_kqfilt_add(struct vnop_kqfilt_add_args *ap);
 
 static int fuse_vnop_kqfilt_remove(struct vnop_kqfilt_remove_args *ap);
@@ -52,7 +52,7 @@ static int fuse_vnop_kqfilt_remove(struct vnop_kqfilt_remove_args *ap);
 
 static int fuse_vnop_link(struct vnop_link_args *ap);
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 static int fuse_vnop_listxattr(struct vnop_listxattr_args *ap);
 #endif
 
@@ -88,7 +88,7 @@ static int fuse_vnop_reclaim(struct vnop_reclaim_args *ap);
 
 static int fuse_vnop_remove(struct vnop_remove_args *ap);
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 static int fuse_vnop_removexattr(struct vnop_removexattr_args *ap);
 #endif
 
@@ -106,7 +106,7 @@ static int fuse_vnop_setattr(struct vnop_setattr_args *ap);
 
 // static int fuse_vnop_setattrlist (struct vnop_setattrlist_args *ap);
 
-#ifdef MACFUSE_ENABLE_XATTR
+#if M_MACFUSE_ENABLE_XATTR
 static int fuse_vnop_setxattr(struct vnop_setxattr_args *ap);
 #endif
 

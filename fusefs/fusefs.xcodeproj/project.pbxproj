@@ -962,7 +962,7 @@
 				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
-				MODULE_VERSION = 0.2.3;
+				MODULE_VERSION = 0.2.4;
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-D__FreeBSD__=10",
@@ -1011,7 +1011,7 @@
 				MODULE_NAME = com.google.filesystems.fusefs;
 				MODULE_START = fusefs_start;
 				MODULE_STOP = fusefs_stop;
-				MODULE_VERSION = 0.2.3;
+				MODULE_VERSION = 0.2.4;
 				OTHER_CFLAGS = (
 					"$(inherited)",
 					"-D__FreeBSD__=10",

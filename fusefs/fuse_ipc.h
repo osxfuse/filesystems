@@ -48,7 +48,7 @@ do {                                                   \
 struct fuse_ticket;
 struct fuse_data;
 
-typedef int fuse_handler_t(struct fuse_ticket *tick, uio_t uio);
+typedef int fuse_handler_t(struct fuse_ticket *ftick, uio_t uio);
 
 struct fuse_ticket {
     uint64_t                     tk_unique;
@@ -83,45 +83,45 @@ struct fuse_ticket {
 
 static __inline__
 struct fuse_iov *
-fticket_resp(struct fuse_ticket *tick)
+fticket_resp(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    return (&tick->tk_aw_fiov);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    return (&ftick->tk_aw_fiov);
 }
 
 static __inline__
 int
-fticket_answered(struct fuse_ticket *tick)
+fticket_answered(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    return (tick->tk_flag & FT_ANSW);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    return (ftick->tk_flag & FT_ANSW);
 }
 
 static __inline__
 void
-fticket_set_answered(struct fuse_ticket *tick)
+fticket_set_answered(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    tick->tk_flag |= FT_ANSW;
+    kdebug_printf("-> ftick=%p\n", ftick);
+    ftick->tk_flag |= FT_ANSW;
 }
 
 static __inline__
 enum fuse_opcode
-fticket_opcode(struct fuse_ticket *tick)
+fticket_opcode(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    return (((struct fuse_in_header *)(tick->tk_ms_fiov.base))->opcode);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    return (((struct fuse_in_header *)(ftick->tk_ms_fiov.base))->opcode);
 }
 
 static __inline__
 void
-fticket_invalidate(struct fuse_ticket *tick)
+fticket_invalidate(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    tick->tk_flag |= FT_INVAL;
+    kdebug_printf("-> ftick=%p\n", ftick);
+    ftick->tk_flag |= FT_INVAL;
 }
 
-int fticket_pull(struct fuse_ticket *tick, uio_t uio);
+int fticket_pull(struct fuse_ticket *ftick, uio_t uio);
 
 enum mountpri { FM_NOMOUNTED, FM_PRIMARY, FM_SECONDARY };
 
@@ -149,7 +149,7 @@ struct fuse_data {
     unsigned                   freeticket_counter;
     uint64_t                   ticketer;
 
-#ifdef FUSE_EXPLICIT_RENAME_LOCK
+#if M_MACFUSE_EXPLICIT_RENAME_LOCK
     lck_rw_t                  *rename_lock;
 #endif
 
@@ -168,53 +168,7 @@ struct fuse_data {
 
 /* Not-Implemented Bits */
 
-#define FSESS_NOIMPL_ACCESS      (1LL << 1)
-#define FSESS_NOIMPL_ADVLOCK     (1LL << 2)
-#define FSESS_NOIMPL_ALLOCATE    (1LL << 3)
-#define FSESS_NOIMPL_BLKTOOFF    (1LL << 4)
-#define FSESS_NOIMPL_BLOCKMAP    (1LL << 5)
-#define FSESS_NOIMPL_BWRITE      (1LL << 6)
-#define FSESS_NOIMPL_CLOSE       (1LL << 7)
-#define FSESS_NOIMPL_COPYFILE    (1LL << 8)
-#define FSESS_NOIMPL_CREATE      (1LL << 9)
-#define FSESS_NOIMPL_EXCHANGE    (1LL << 10)
-#define FSESS_NOIMPL_FSYNC       (1LL << 11)
-#define FSESS_NOIMPL_GETATTR     (1LL << 12)
-#define FSESS_NOIMPL_GETATTRLIST (1LL << 13)
-#define FSESS_NOIMPL_GETXATTR    (1LL << 14)
-#define FSESS_NOIMPL_INACTIVE    (1LL << 15)
-#define FSESS_NOIMPL_IOCTL       (1LL << 16)
-#define FSESS_NOIMPL_LINK        (1LL << 17)
-#define FSESS_NOIMPL_LISTXATTR   (1LL << 18)
-#define FSESS_NOIMPL_LOOKUP      (1LL << 19)
-#define FSESS_NOIMPL_MKDIR       (1LL << 20)
-#define FSESS_NOIMPL_MKNOD       (1LL << 21)
-#define FSESS_NOIMPL_MMAP        (1LL << 22)
-#define FSESS_NOIMPL_MNOMAP      (1LL << 23)
-#define FSESS_NOIMPL_OFFTOBLK    (1LL << 24)
-#define FSESS_NOIMPL_OPEN        (1LL << 25)
-#define FSESS_NOIMPL_PAGEIN      (1LL << 26)
-#define FSESS_NOIMPL_PAGEOUT     (1LL << 27)
-#define FSESS_NOIMPL_PATHCONF    (1LL << 28)
-#define FSESS_NOIMPL_READ        (1LL << 29)
-#define FSESS_NOIMPL_READDIR     (1LL << 30)
-#define FSESS_NOIMPL_READDIRATTR (1LL << 31)
-#define FSESS_NOIMPL_READLINK    (1LL << 32)
-#define FSESS_NOIMPL_RECLAIM     (1LL << 33)
-#define FSESS_NOIMPL_REMOVE      (1LL << 34)
-#define FSESS_NOIMPL_REMOVEXATTR (1LL << 35)
-#define FSESS_NOIMPL_RENAME      (1LL << 36)
-#define FSESS_NOIMPL_REVOKE      (1LL << 37)
-#define FSESS_NOIMPL_RMDIR       (1LL << 38)
-#define FSESS_NOIMPL_SEARCHFS    (1LL << 39)
-#define FSESS_NOIMPL_SELECT      (1LL << 40)
-#define FSESS_NOIMPL_SETATTR     (1LL << 41)
-#define FSESS_NOIMPL_SETATTRLIST (1LL << 42)
-#define FSESS_NOIMPL_SETXATTR    (1LL << 43)
-#define FSESS_NOIMPL_STRATEGY    (1LL << 44)
-#define FSESS_NOIMPL_SYMLINK     (1LL << 45)
-#define FSESS_NOIMPL_WHITEOUT    (1LL << 46)
-#define FSESS_NOIMPL_WRITE       (1LL << 47)
+#define FSESS_NOIMPL(MSG)         (1LL << FUSE_##MSG)
 
 #define FSESS_KICK                0x0001 // session is to be closed
 #define FSESS_OPENED              0x0002 // session device has been opened
@@ -251,63 +205,63 @@ fuse_get_mpdata(mount_t mp)
 
 static __inline__
 void
-fuse_ms_push(struct fuse_ticket *tick)
+fuse_ms_push(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    STAILQ_INSERT_TAIL(&tick->tk_data->ms_head, tick, tk_ms_link);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    STAILQ_INSERT_TAIL(&ftick->tk_data->ms_head, ftick, tk_ms_link);
 }
 
 static __inline__
 struct fuse_ticket *
 fuse_ms_pop(struct fuse_data *data)
 {
-    struct fuse_ticket *tick = NULL;
+    struct fuse_ticket *ftick = NULL;
 
     kdebug_printf("-> data=%p\n", data);
 
-    if ((tick = STAILQ_FIRST(&data->ms_head))) {
+    if ((ftick = STAILQ_FIRST(&data->ms_head))) {
         STAILQ_REMOVE_HEAD(&data->ms_head, tk_ms_link);
     }
 
-    return (tick);
+    return (ftick);
 }
 
 static __inline__
 void
-fuse_aw_push(struct fuse_ticket *tick)
+fuse_aw_push(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    TAILQ_INSERT_TAIL(&tick->tk_data->aw_head, tick, tk_aw_link);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    TAILQ_INSERT_TAIL(&ftick->tk_data->aw_head, ftick, tk_aw_link);
 }
 
 static __inline__
 void
-fuse_aw_remove(struct fuse_ticket *tick)
+fuse_aw_remove(struct fuse_ticket *ftick)
 {
-    kdebug_printf("-> tick=%p\n", tick);
-    TAILQ_REMOVE(&tick->tk_data->aw_head, tick, tk_aw_link);
+    kdebug_printf("-> ftick=%p\n", ftick);
+    TAILQ_REMOVE(&ftick->tk_data->aw_head, ftick, tk_aw_link);
 }
 
 static __inline__
 struct fuse_ticket *
 fuse_aw_pop(struct fuse_data *data)
 {
-    struct fuse_ticket *tick = NULL;
+    struct fuse_ticket *ftick = NULL;
 
     kdebug_printf("-> data=%p\n", data);
 
-    if ((tick = TAILQ_FIRST(&data->aw_head))) {
-        fuse_aw_remove(tick);
+    if ((ftick = TAILQ_FIRST(&data->aw_head))) {
+        fuse_aw_remove(ftick);
     }
 
-    return (tick);
+    return (ftick);
 }
 
 struct fuse_ticket *fuse_ticket_fetch(struct fuse_data *data);
-void fuse_ticket_drop(struct fuse_ticket *tick);
-void fuse_ticket_drop_invalid(struct fuse_ticket *tick);
-void fuse_insert_callback(struct fuse_ticket *tick, fuse_handler_t *handler);
-void fuse_insert_message(struct fuse_ticket *tick);
+void fuse_ticket_drop(struct fuse_ticket *ftick);
+void fuse_ticket_drop_invalid(struct fuse_ticket *ftick);
+void fuse_insert_callback(struct fuse_ticket *ftick, fuse_handler_t *handler);
+void fuse_insert_message(struct fuse_ticket *ftick);
 
 static __inline__
 int

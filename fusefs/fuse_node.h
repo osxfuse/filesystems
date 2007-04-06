@@ -40,9 +40,9 @@ struct fuse_vnode_data {
     int        flags;
     uint32_t   c_flag;
 
-#if MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
     struct klist c_knotes;
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_UNSUPPORTED */
 
     /*
      * The nodelock must be held when data in the FUSE node is accessed or
@@ -62,7 +62,7 @@ struct fuse_vnode_data {
     vnode_t    parent;
     off_t      filesize; 
 
-    struct     fuse_filehandle fufh[3];
+    struct     fuse_filehandle fufh[FUFH_MAXTYPE];
 
     struct vnode_attr cached_attrs;
     struct timespec   cached_attrs_valid;

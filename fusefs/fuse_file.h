@@ -89,7 +89,7 @@ fuse_filehandle_xlate_to_oflags(fufh_type_t type)
 }
 
 int fuse_filehandle_get(vnode_t vp, vfs_context_t context,
-                        fufh_type_t fufh_type);
+                        fufh_type_t fufh_type, int mode);
 int fuse_filehandle_put(vnode_t vp, vfs_context_t context,
                         fufh_type_t fufh_type, int foregrounded);
 

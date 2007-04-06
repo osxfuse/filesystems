@@ -32,7 +32,7 @@
 		<string>8.0.0</string>
 		<key>com.apple.kpi.mach</key>
 		<string>8.0.0</string>
-#if MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
 		<key>com.apple.kpi.unsupported</key>
 		<string>8.0.0</string>
 #endif

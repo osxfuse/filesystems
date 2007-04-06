@@ -11,7 +11,10 @@
 #include "fuse_sysctl.h"
 
 int
-fuse_filehandle_get(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type)
+fuse_filehandle_get(vnode_t       vp,
+                    vfs_context_t context,
+                    fufh_type_t   fufh_type,
+                    int           mode)
 {
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_dispatcher  fdi;
@@ -22,11 +25,17 @@ fuse_filehandle_get(vnode_t vp, vfs_context_t context, fufh_type_t fufh_type)
     int err = 0;
     int isdir = 0;
     int op = FUSE_OPEN;
-    int oflags = fuse_filehandle_xlate_to_oflags(fufh_type);
+    int oflags;
 
-    fuse_trace_printf("fuse_filehandle_get(vp=%p, fufh_type=%d)\n",
-                      vp, fufh_type);
+    fuse_trace_printf("fuse_filehandle_get(vp=%p, fufh_type=%d, mode=%x)\n",
+                      vp, fufh_type, mode);
 
+    /*
+     * Note that this means we are effectively FILTERING OUT open flags.
+     */
+    (void)mode;
+    oflags = fuse_filehandle_xlate_to_oflags(fufh_type);
+    
     fufh = &(fvdat->fufh[fufh_type]);
     if (fufh->fufh_flags & FUFH_VALID) {
         IOLog("MacFUSE: fufh (type=%d) already valid... called in vain\n",

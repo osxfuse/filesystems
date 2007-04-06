@@ -86,7 +86,7 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (((vtype == VREG) && (action & KAUTH_VNODE_GENERIC_EXECUTE_BITS))) {
-#if NEED_MOUNT_ARGUMENT_FOR_THIS
+#if M_MACFUSE_NEED_MOUNT_ARGUMENT_FOR_THIS
         // Let the kernel handle this through open/close heuristics.
         return ENOTSUP;
 #else
@@ -95,7 +95,7 @@ fuse_internal_access(vnode_t                   vp,
 #endif
     }
 
-    if (fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL_ACCESS) {
+    if (fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL(ACCESS)) {
         // Let the kernel handle this.
         return 0;
     }
@@ -155,7 +155,7 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (err == ENOSYS) {
-        fuse_get_mpdata(mp)->noimpl |= FSESS_NOIMPL_ACCESS;
+        fuse_get_mpdata(mp)->noimpl |= FSESS_NOIMPL(ACCESS);
         err = 0; // or ENOTSUP;
     }
 
@@ -171,16 +171,16 @@ fuse_internal_access(vnode_t                   vp,
 
 __private_extern__
 int
-fuse_internal_fsync_callback(struct fuse_ticket *tick, __unused uio_t uio)
+fuse_internal_fsync_callback(struct fuse_ticket *ftick, __unused uio_t uio)
 {
     fuse_trace_printf_func();
 
-    if (tick->tk_aw_ohead.error == ENOSYS) {
-        tick->tk_data->dataflag |= (fticket_opcode(tick) == FUSE_FSYNC) ?
+    if (ftick->tk_aw_ohead.error == ENOSYS) {
+        ftick->tk_data->dataflag |= (fticket_opcode(ftick) == FUSE_FSYNC) ?
                                         FSESS_NOFSYNC : FSESS_NOFSYNCDIR;
     }
 
-    fuse_ticket_drop(tick);
+    fuse_ticket_drop(ftick);
 
     return 0;
 }
@@ -426,7 +426,7 @@ fuse_unlink_callback(vnode_t vp, void *cargs)
     return VNODE_RETURNED;
 }
 
-#define INVALIDATE_CACHED_VATTRS_UPON_UNLINK 1
+#define M_MACFUSE_INVALIDATE_CACHED_VATTRS_UPON_UNLINK 1
 __private_extern__
 int
 fuse_internal_remove(vnode_t               dvp,
@@ -437,7 +437,7 @@ fuse_internal_remove(vnode_t               dvp,
 {
     struct fuse_dispatcher fdi;
     struct vnode_attr *vap = VTOVA(vp);
-#if INVALIDATE_CACHED_VATTRS_UPON_UNLINK
+#if M_MACFUSE_INVALIDATE_CACHED_VATTRS_UPON_UNLINK
     int need_invalidate = 0;
     uint64_t target_nlink = 0;
 #endif
@@ -451,7 +451,7 @@ fuse_internal_remove(vnode_t               dvp,
     memcpy(fdi.indata, cnp->cn_nameptr, cnp->cn_namelen);
     ((char *)fdi.indata)[cnp->cn_namelen] = '\0';
 
-#if INVALIDATE_CACHED_VATTRS_UPON_UNLINK
+#if M_MACFUSE_INVALIDATE_CACHED_VATTRS_UPON_UNLINK
     if (vap->va_nlink > 1) {
         need_invalidate = 1;
         target_nlink = vap->va_nlink;
@@ -465,7 +465,7 @@ fuse_internal_remove(vnode_t               dvp,
     fuse_invalidate_attr(dvp);
     fuse_invalidate_attr(vp);
 
-#if INVALIDATE_CACHED_VATTRS_UPON_UNLINK
+#if M_MACFUSE_INVALIDATE_CACHED_VATTRS_UPON_UNLINK
     if (need_invalidate && !err) {
         vnode_iterate(vnode_mount(vp), 0, fuse_unlink_callback,
                       (void *)&target_nlink);
@@ -597,7 +597,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         } else {
             fufh_type = FUFH_RDWR;
         }
-        err = fuse_filehandle_get(vp, NULL, fufh_type);
+        err = fuse_filehandle_get(vp, NULL, fufh_type, 0 /* mode */);
         if (!err) {
             fufh = &(fvdat->fufh[fufh_type]);
             fufh->fufh_flags |= FUFH_STRATEGY;
@@ -747,7 +747,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         int merr = 0;
         off_t diff;
 
-#if 0
+#if M_MACFUSE_EXPERIMENTAL_JUNK
         /*
          * Wanna experiment with some panics?
          * Try doing something like:
@@ -820,7 +820,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
             goto out;
         }
 
-#if 0
+#if M_MACFUSE_EXPERIMENTAL_JUNK
         bufdat += buf_dirtyoff(bp);
         offset = (off_t)buf_blkno(bp) * biosize + buf_dirtyoff(bp);
 
@@ -874,8 +874,8 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
         if (merr)
             goto out;
 
+        fuse_invalidate_attr(vp);
 #endif
-        // fuse_invalidate_attr(vp);
     }
 
     if (fdi.tick)
@@ -885,7 +885,7 @@ fuse_internal_strategy(vnode_t vp, buf_t bp)
 
 out:
 
-#if 0
+#if M_MACFUSE_EXPERIMENTAL_JUNK
     if (fufh) {
         fufh->useco--;
         if (didnewfh) {
@@ -1100,15 +1100,15 @@ fuse_internal_newentry(vnode_t               dvp,
 
 __private_extern__
 int
-fuse_internal_forget_callback(struct fuse_ticket *tick, __unused uio_t uio)
+fuse_internal_forget_callback(struct fuse_ticket *ftick, __unused uio_t uio)
 {
     struct fuse_dispatcher fdi;
 
-    debug_printf("tick=%p, uio=%p\n", tick, uio);
+    debug_printf("ftick=%p, uio=%p\n", ftick, uio);
 
-    fdi.tick = tick;
+    fdi.tick = ftick;
     fuse_internal_forget_send( (mount_t)0, (vfs_context_t)0, 
-                     ((struct fuse_in_header *)tick->tk_ms_fiov.base)->nodeid,
+                     ((struct fuse_in_header *)ftick->tk_ms_fiov.base)->nodeid,
                      1, &fdi);
 
     return 0;
@@ -1157,21 +1157,21 @@ fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context)
 
 __private_extern__
 int
-fuse_internal_init_callback(struct fuse_ticket *tick, uio_t uio)
+fuse_internal_init_callback(struct fuse_ticket *ftick, uio_t uio)
 {
     int err = 0;
-    struct fuse_data     *data = tick->tk_data;
+    struct fuse_data     *data = ftick->tk_data;
     struct fuse_init_out *fiio;
 
-    if ((err = tick->tk_aw_ohead.error)) {
+    if ((err = ftick->tk_aw_ohead.error)) {
         goto out;
     }
 
-    if ((err = fticket_pull(tick, uio))) {
+    if ((err = fticket_pull(ftick, uio))) {
         goto out;
     }
 
-    fiio = fticket_resp(tick)->base;
+    fiio = fticket_resp(ftick)->base;
 
     /* XXX: Do we want to check anything further besides this? */
     if (fiio->major < 7) {
@@ -1184,7 +1184,7 @@ fuse_internal_init_callback(struct fuse_ticket *tick, uio_t uio)
     data->fuse_libabi_minor = fiio->minor;
 
     if (fuse_libabi_geq(data, 7, 5)) {
-        if (fticket_resp(tick)->len == sizeof(struct fuse_init_out)) {
+        if (fticket_resp(ftick)->len == sizeof(struct fuse_init_out)) {
             data->max_write = fiio->max_write;
         } else {
             err = EINVAL;
@@ -1195,7 +1195,7 @@ fuse_internal_init_callback(struct fuse_ticket *tick, uio_t uio)
     }
 
 out:
-    fuse_ticket_drop(tick);
+    fuse_ticket_drop(ftick);
 
     if (err) {
         fdata_kick_set(data);

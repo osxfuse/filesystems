@@ -6,8 +6,8 @@
 #ifndef _FUSE_PARAM_H_
 #define _FUSE_PARAM_H_
 
-#define MACFUSE_ENABLE_UNSUPPORTED 1
-#define MACFUSE_ENABLE_XATTR       1
+#define M_MACFUSE_ENABLE_UNSUPPORTED 1
+#define M_MACFUSE_ENABLE_XATTR       1
 
 /*
  * This is the prefix ("fuse" by default) of the name of a FUSE device node

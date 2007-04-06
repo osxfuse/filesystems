@@ -5,7 +5,7 @@
 
 #include <fuse_param.h>
 
-#if MACFUSE_ENABLE_UNSUPPORTED
+#if M_MACFUSE_ENABLE_UNSUPPORTED
 
 #include "fuse.h"
 #include "fuse_knote.h"
@@ -129,4 +129,4 @@ filt_fusevnode(struct knote *kn, long hint)
     return (kn->kn_fflags != 0);
 }
 
-#endif /* MACFUSE_ENABLE_UNSUPPORTED */
+#endif /* M_MACFUSE_ENABLE_UNSUPPORTED */

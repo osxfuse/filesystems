@@ -190,13 +190,13 @@ fusefs_unlock(fusenode_t cp)
 {
     u_int32_t c_flag;
     vnode_t vp = NULLVP;
-#if FUSE_RSRC_FORK
+#if M_MACFUSE_RSRC_FORK
     vnode_t rvp = NULLVP;
 #endif
 
     c_flag = cp->c_flag;
     cp->c_flag &= ~(C_NEED_DVNODE_PUT | C_NEED_DATA_SETSIZE);
-#if FUSE_RSRC_FORK
+#if M_MACFUSE_RSRC_FORK
     cp->c_flag &= ~(C_NEED_RVNODE_PUT | C_NEED_RSRC_SETSIZE);
 #endif
 
@@ -204,7 +204,7 @@ fusefs_unlock(fusenode_t cp)
         vp = cp->c_vp;
     }
 
-#if FUSE_RSRC_FORK
+#if M_MACFUSE_RSRC_FORK
     if (c_flag & (C_NEED_RVNODE_PUT | C_NEED_RSRC_SETSIZE)) {
         rvp = cp->c_rsrc_vp;
     }
@@ -223,7 +223,7 @@ fusefs_unlock(fusenode_t cp)
         }
     }
 
-#if FUSE_RSRC_FORK
+#if M_MACFUSE_RSRC_FORK
     if (rvp) {
         if (c_flag & C_NEED_RSRC_SETSIZE) {
             ubc_setsize(rvp, 0);

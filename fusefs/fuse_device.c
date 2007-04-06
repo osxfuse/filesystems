@@ -182,14 +182,14 @@ fuse_device_close(dev_t dev, __unused int flags, __unused int devtype,
     fuse_lck_mtx_lock(data->aw_mtx);
 
     if (data->mntco > 0) {
-        struct fuse_ticket *tick;
+        struct fuse_ticket *ftick;
 
-        while ((tick = fuse_aw_pop(data))) {
-            fuse_lck_mtx_lock(tick->tk_aw_mtx);
-            fticket_set_answered(tick);
-            tick->tk_aw_errno = ENOTCONN;
-            wakeup(tick);
-            fuse_lck_mtx_unlock(tick->tk_aw_mtx);
+        while ((ftick = fuse_aw_pop(data))) {
+            fuse_lck_mtx_lock(ftick->tk_aw_mtx);
+            fticket_set_answered(ftick);
+            ftick->tk_aw_errno = ENOTCONN;
+            wakeup(ftick);
+            fuse_lck_mtx_unlock(ftick->tk_aw_mtx);
         }
 
         fuse_lck_mtx_unlock(data->aw_mtx);
@@ -218,7 +218,7 @@ fuse_device_read(dev_t dev, uio_t uio, __unused int ioflag)
     void *buf[] = { NULL, NULL, NULL };
     struct fuse_softc  *fdev;
     struct fuse_data   *data;
-    struct fuse_ticket *tick;
+    struct fuse_ticket *ftick;
 
     fuse_trace_printf_func();
 
@@ -238,44 +238,44 @@ again:
         return ENODEV;
     }
 
-    if (!(tick = fuse_ms_pop(data))) {
+    if (!(ftick = fuse_ms_pop(data))) {
         err = msleep(data, data->ms_mtx, PCATCH, "fu_msg", 0);
         if (err != 0) {
             fuse_lck_mtx_unlock(data->ms_mtx);
             return (fdata_kick_get(data) ? ENODEV : err);
         }
-        tick = fuse_ms_pop(data);
+        ftick = fuse_ms_pop(data);
     }
 
-    if (!tick) {
+    if (!ftick) {
         goto again;
     }
 
     fuse_lck_mtx_unlock(data->ms_mtx);
 
     if (fdata_kick_get(data)) {
-         if (tick) {
-             fuse_ticket_drop_invalid(tick);
+         if (ftick) {
+             fuse_ticket_drop_invalid(ftick);
          }
          return ENODEV;
     }
 
-    switch (tick->tk_ms_type) {
+    switch (ftick->tk_ms_type) {
 
     case FT_M_FIOV:
-        buf[0] = tick->tk_ms_fiov.base;
-        buflen[0] =  tick->tk_ms_fiov.len;
+        buf[0] = ftick->tk_ms_fiov.base;
+        buflen[0] =  ftick->tk_ms_fiov.len;
         break;
 
     case FT_M_BUF:
-        buf[0] = tick->tk_ms_fiov.base;
-        buflen[0] =  tick->tk_ms_fiov.len;
-        buf[1] = tick->tk_ms_bufdata;
-        buflen[1] =  tick->tk_ms_bufsize;
+        buf[0] = ftick->tk_ms_fiov.base;
+        buflen[0] =  ftick->tk_ms_fiov.len;
+        buf[1] = ftick->tk_ms_bufdata;
+        buflen[1] =  ftick->tk_ms_bufsize;
         break;
 
     default:
-        panic("MacFUSE: unknown message type for ticket %p", tick);
+        panic("MacFUSE: unknown message type for ticket %p", ftick);
     }
 
     for (i = 0; buf[i]; i++) {
@@ -296,7 +296,7 @@ again:
      * a reply, so he sets the FT_INVALID bit in the ticket.
      */
    
-    fuse_ticket_drop_invalid(tick);
+    fuse_ticket_drop_invalid(ftick);
 
     return (err);
 }
@@ -323,19 +323,7 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata,
     case FUSEDEVIOCSETIMPLEMENTEDBITS:
         {
             uint64_t fuse_noimpl = *(uint64_t *)udata;
-
-            if (fuse_noimpl & (1LL << FUSE_GETXATTR)) {
-                data->noimpl |= FSESS_NOIMPL_GETXATTR;
-            }
-            if (fuse_noimpl & (1LL << FUSE_LISTXATTR)) {
-                data->noimpl |= FSESS_NOIMPL_LISTXATTR;
-            }
-            if (fuse_noimpl & (1LL << FUSE_REMOVEXATTR)) {
-                data->noimpl |= FSESS_NOIMPL_REMOVEXATTR;
-            }
-            if (fuse_noimpl & (1LL << FUSE_SETXATTR)) {
-                data->noimpl |= FSESS_NOIMPL_SETXATTR;
-            }
+            data->noimpl = fuse_noimpl;
         }
         ret = 0;
         break;
@@ -430,7 +418,7 @@ fuse_device_write(dev_t dev, uio_t uio, __unused int ioflag)
     struct fuse_out_header ohead;
     struct fuse_softc  *fdev;
     struct fuse_data   *data;
-    struct fuse_ticket *tick, *x_tick;
+    struct fuse_ticket *ftick, *x_ftick;
 
     fuse_trace_printf_func();
 
@@ -459,10 +447,10 @@ fuse_device_write(dev_t dev, uio_t uio, __unused int ioflag)
 
     fuse_lck_mtx_lock(data->aw_mtx);
 
-    TAILQ_FOREACH_SAFE(tick, &data->aw_head, tk_aw_link, x_tick) {
-        if (tick->tk_unique == ohead.unique) {
+    TAILQ_FOREACH_SAFE(ftick, &data->aw_head, tk_aw_link, x_ftick) {
+        if (ftick->tk_unique == ohead.unique) {
             found = 1;
-            fuse_aw_remove(tick);
+            fuse_aw_remove(ftick);
             break;
         }
     }
@@ -470,11 +458,11 @@ fuse_device_write(dev_t dev, uio_t uio, __unused int ioflag)
     fuse_lck_mtx_unlock(data->aw_mtx);
 
     if (found) {
-        if (tick->tk_aw_handler) {
-            memcpy(&tick->tk_aw_ohead, &ohead, sizeof(ohead));
-            err = tick->tk_aw_handler(tick, uio);
+        if (ftick->tk_aw_handler) {
+            memcpy(&ftick->tk_aw_ohead, &ohead, sizeof(ohead));
+            err = ftick->tk_aw_handler(ftick, uio);
         } else {
-            fuse_ticket_drop(tick);
+            fuse_ticket_drop(ftick);
             return (err);
         }
     } else {
