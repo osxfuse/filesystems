@@ -204,8 +204,6 @@ fuse_vnop_close(struct vnop_close_args *ap)
     int err = 0;
     vnode_t vp = ap->a_vp;
     fufh_type_t fufh_type;
-    struct fuse_dispatcher  fdi;
-    struct fuse_flush_in   *ffi;
     struct fuse_data       *data;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
@@ -246,14 +244,21 @@ fuse_vnop_close(struct vnop_close_args *ap)
 
     data = fuse_get_mpdata(vnode_mount(vp));
     if (!(data->noimpl & FSESS_NOIMPL(FLUSH))) {
+
+        struct fuse_dispatcher  fdi;
+        struct fuse_flush_in   *ffi;
+
         fdisp_init(&fdi, sizeof(*ffi));
         fdisp_make_vp(&fdi, FUSE_FLUSH, vp, ap->a_context);
+
         ffi = fdi.indata;
         ffi->fh = fufh->fh_id;
         ffi->unused = 0;
         ffi->padding = 0;
         ffi->lock_owner = 0;
+
         err = fdisp_wait_answ(&fdi);
+
         if (!err) {
             fuse_ticket_drop(fdi.tick);
         } else {
