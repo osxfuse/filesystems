@@ -239,6 +239,11 @@ fuse_vnop_close(struct vnop_close_args *ap)
 
     fufh->open_count--;
 
+    /* Enforce sync on close unless explicitly told not to. */
+    if (vnode_hasdirtyblks(vp) && !fuse_isnosynconclose(vp)) {
+        (void)cluster_push(vp, IO_SYNC | IO_CLOSE);
+    }
+
     data = fuse_get_mpdata(vnode_mount(vp));
     if (!(data->noimpl & FSESS_NOIMPL(FLUSH))) {
         fdisp_init(&fdi, sizeof(*ffi));
@@ -257,11 +262,6 @@ fuse_vnop_close(struct vnop_close_args *ap)
                 err = 0;
             }
         }
-    }
-
-    /* Enforce sync on close unless explicitly told not to. */
-    if (vnode_hasdirtyblks(vp) && !fuse_isnosynconclose(vp)) {
-        (void)cluster_push(vp, IO_SYNC | IO_CLOSE);
     }
 
     if ((fufh->open_count == 0) &&
