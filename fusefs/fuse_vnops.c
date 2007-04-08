@@ -201,9 +201,10 @@ fuse_vnop_blockmap(struct vnop_blockmap_args *ap)
 static int
 fuse_vnop_close(struct vnop_close_args *ap)
 {
-    int err = 0;
     vnode_t vp = ap->a_vp;
-    fufh_type_t fufh_type;
+    int err = 0, isdir = (vnode_vtype(vp) == VDIR) ? 1 : 0;
+
+    fufh_type_t             fufh_type;
     struct fuse_data       *data;
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
     struct fuse_filehandle *fufh = NULL;
@@ -219,7 +220,7 @@ fuse_vnop_close(struct vnop_close_args *ap)
         return 0;
     }
 
-    if (vnode_vtype(vp) == VDIR) {
+    if (isdir) {
         fufh_type = FUFH_RDONLY;
     } else {
         fufh_type = fuse_filehandle_xlate_from_fflags(ap->a_fflag);
@@ -236,6 +237,10 @@ fuse_vnop_close(struct vnop_close_args *ap)
     }
 
     fufh->open_count--;
+
+    if (isdir) {
+        goto skipdir;
+    }
 
     /* Enforce sync on close unless explicitly told not to. */
     if (vnode_hasdirtyblks(vp) && !fuse_isnosynconclose(vp)) {
@@ -268,6 +273,8 @@ fuse_vnop_close(struct vnop_close_args *ap)
             }
         }
     }
+
+skipdir:
 
     if ((fufh->open_count == 0) &&
         !(fufh->fufh_flags & FUFH_MAPPED)) {
