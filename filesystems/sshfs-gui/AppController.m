@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import "AppController.h"
+#import "DiskImageUtilities.h"
 
 #import <Cocoa/Cocoa.h>
 
@@ -27,6 +28,10 @@
 #define kPathName       @"pathname"
 
 @implementation AppController
+
+- (void)applicationWillFinishLaunching:(NSNotification *)notification {
+  [DiskImageUtilities handleApplicationLaunchFromReadOnlyDiskImage];
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
   [self showConnect:self];

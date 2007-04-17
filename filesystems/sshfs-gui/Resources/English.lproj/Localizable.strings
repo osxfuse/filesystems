@@ -1,3 +1,8 @@
 /* can't find sshfs binary */
 "nosshfs" = "I'm sorry, but the sshfs binary couldn't be found.";
 
+/* launching from a disk image */
+"DiskImageCopyTitle" = "Would you like to copy %@ to your computer's Applications folder and run it from there?";
+"DiskImageCopyMsg" = "%@ is currently running from the Disk Image, and must be copied for full functionality. Copying may replace an older version in the Applications directory.";
+"DiskImageCopyOK" = "Copy";
+"DiskImageCopyCancel" = "Don't Copy";
