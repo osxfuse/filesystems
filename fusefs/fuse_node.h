@@ -8,6 +8,7 @@
 
 #include "fuse_file.h"
 #include "fuse_knote.h"
+#include "fuse_node.h"
 #include "fuse_nodehash.h"
 #include <fuse_param.h>
 
@@ -127,7 +128,8 @@ FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
                                enum vtype    vtyp,
                                uint64_t      insize,
                                vnode_t      *vnPtr,
-                               int           flags);
+                               int           flags,
+                               int          *oflags);
 
 void FSNodeScrub(struct fuse_vnode_data *fvdat);
 
@@ -142,5 +144,39 @@ fuse_vget_i(mount_t               mp,
             uint64_t              size,
             enum vget_mode        mode,
             uint64_t              parentid);
+
+/* Name cache wrappers */
+
+static __inline__
+void
+fuse_vncache_enter(vnode_t dvp, vnode_t vp, struct componentname *cnp)
+{
+#if FUSE_TRACE_VNCACHE
+    IOLog("cache enter: dvp=%p, vp=%p, %s\n", dvp, vp, cnp->cn_nameptr);
+#endif
+    return cache_enter(dvp, vp, cnp);
+}
+
+static __inline__
+void
+fuse_vncache_purge(vnode_t vp)
+{
+#if FUSE_TRACE_VNCACHE
+    IOLog("cache purge: vp=%p\n", vp);
+#endif
+    return cache_purge(vp);
+}
+
+static __inline__
+int
+fuse_vncache_lookup(vnode_t dvp, vnode_t *vpp, struct componentname *cnp)
+{
+    int ret = cache_lookup(dvp, vpp, cnp);
+#if FUSE_TRACE_VNCACHE
+    IOLog("cache lookup: ret=%d, dvp=%p, *vpp=%p, %s\n",
+          ret, dvp, *vpp, cnp->cn_nameptr);
+#endif
+    return ret;
+}
 
 #endif /* _FUSE_NODE_H_ */

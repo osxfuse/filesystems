@@ -21,5 +21,6 @@ fuse_softc_t      fuse_softc_get(dev_t dev);
 struct fuse_data *fuse_softc_get_data(fuse_softc_t fdev);
 void              fuse_softc_set_data(fuse_softc_t fdev,
                                       struct fuse_data *data);
+dev_t             fuse_softc_get_dev(fuse_softc_t fdev);
 
 #endif /* _FUSE_DEVICE_H_ */

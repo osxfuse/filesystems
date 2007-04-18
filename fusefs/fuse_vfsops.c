@@ -175,11 +175,11 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     }
 
     if (fusefs_args.altflags & FUSE_MOPT_JAIL_SYMLINKS) {
-        mntopts |= FSESS_PUSH_SYMLINKS_IN;
+        mntopts |= FSESS_JAIL_SYMLINKS;
     }
 
     if (fusefs_args.altflags & FUSE_MOPT_ALLOW_OTHER) {
-        mntopts |= FSESS_DAEMON_CAN_SPY;
+        mntopts |= FSESS_ALLOW_OTHER;
     }
 
     if (fusefs_args.altflags & FUSE_MOPT_DEFAULT_PERMISSIONS) {
@@ -216,6 +216,10 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         vfs_setextendedsecurity(mp);
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_KILL_ON_UNMOUNT) {
+        mntopts |= FSESS_KILL_ON_UNMOUNT;
+    }
+
     err = 0;
 
     vfs_setfsprivate(mp, NULL);
@@ -228,7 +232,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     FUSE_LOCK();
     {
         data = fuse_softc_get_data(fdev);
-        if (data && (data->dataflag & FSESS_OPENED)) {
+        if (data && (data->dataflags & FSESS_OPENED)) {
             data->mntco++;
             debug_printf("a.inc:mntco = %d\n", data->mntco);
         } else {
@@ -244,7 +248,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         err = ENOTCONN;
     }
 
-    if (!err && (mntopts & FSESS_DAEMON_CAN_SPY) &&
+    if (!err && (mntopts & FSESS_ALLOW_OTHER) &&
         !fuse_vfs_context_issuser(context)) {
         debug_printf("only root can use \"allow_other\"\n");
         err = EPERM;
@@ -297,7 +301,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
 
     data->mp = mp;
     data->fdev = fdev;
-    data->dataflag |= mntopts;
+    data->dataflags |= mntopts;
 
     data->daemon_timeout.tv_sec =  fusefs_args.daemon_timeout;
     data->daemon_timeout.tv_nsec = 0;
@@ -310,7 +314,8 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     data->max_read = max_read;
     data->mpri = FM_PRIMARY;
     data->subtype = fusefs_args.subtype;
-    data->noimpl = (uint64_t)0;
+    data->mountaltflags = fusefs_args.altflags;
+    data->noimplflags = (uint64_t)0;
 
     data->blocksize = fuse_round_size(fusefs_args.blocksize,
                                       FUSE_MIN_BLOCKSIZE, FUSE_MAX_BLOCKSIZE);
@@ -340,7 +345,7 @@ out:
         debug_printf("b.dec: mntco=%d\n", data->mntco);
 
         FUSE_LOCK();
-        if ((data->mntco == 0) && !(data->dataflag & FSESS_OPENED)) {
+        if ((data->mntco == 0) && !(data->dataflags & FSESS_OPENED)) {
             fuse_softc_set_data(fdev, NULL);
             fdata_destroy(data);
         }
@@ -353,8 +358,10 @@ out:
 static errno_t
 fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
 {
-    int err   = 0;
-    int flags = 0;
+    int   err        = 0;
+    int   flags      = 0;
+    int   needsignal = 0;
+    pid_t daemonpid  = 0;
 
     struct fuse_data      *data;
     struct fuse_softc     *fdev;
@@ -386,7 +393,7 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
          */
         flags |= FORCECLOSE;
         IOLog("MacFUSE: forcing unmount on dead file system\n");
-    } else if (!(data->dataflag & FSESS_INITED)) {
+    } else if (!(data->dataflags & FSESS_INITED)) {
         flags |= FORCECLOSE;
         IOLog("MacFUSE: forcing unmount on not-yet-alive file system\n");
         fdata_kick_set(data);
@@ -403,7 +410,7 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
     }
 
     fdisp_init(&fdi, 0 /* no data to send along */);
-    fdisp_make(&fdi, FUSE_DESTROY, mp, 0, context);
+    fdisp_make(&fdi, FUSE_DESTROY, mp, FUSE_ROOT_ID, context);
 
     err = fdisp_wait_answ(&fdi);
     if (!err) {
@@ -418,17 +425,24 @@ fuse_vfs_unmount(mount_t mp, int mntflags, vfs_context_t context)
 
 alreadydead:
 
+    needsignal = data->dataflags & FSESS_KILL_ON_UNMOUNT;
+
     data->mpri = FM_NOMOUNTED;
     data->mntco--;
+    daemonpid = data->daemonpid;
     FUSE_LOCK();
     fdev = data->fdev;
-    if (data->mntco == 0 && !(data->dataflag & FSESS_OPENED)) {
+    if (data->mntco == 0 && !(data->dataflags & FSESS_OPENED)) {
         fuse_softc_set_data(fdev, NULL);
         fdata_destroy(data);
     }
     FUSE_UNLOCK();
 
     vfs_setfsprivate(mp, NULL);
+
+    if (daemonpid && needsignal) {
+        proc_signal(daemonpid, FUSE_UNMOUNT_SIGNAL);
+    }
 
     return (0);
 }        
@@ -448,7 +462,8 @@ fuse_vfs_root(mount_t mp, struct vnode **vpp, vfs_context_t context)
                                          VDIR,           // type
                                          FUSE_ROOT_SIZE, // size
                                          &vp,            // ptr
-                                         0);             // flags
+                                         0,              // flags
+                                         NULL);          // oflags
 
     *vpp = vp;
 
@@ -515,7 +530,7 @@ handle_capabilities_and_attributes(mount_t mp, struct vfs_attr *attr)
 //      | VOL_CAP_INT_USERACCESS
         ;
 
-    if (data->dataflag & FSESS_VOL_RENAME) {
+    if (data->dataflags & FSESS_VOL_RENAME) {
         attr->f_capabilities.capabilities[VOL_CAPABILITIES_INTERFACES] |=
             VOL_CAP_INT_VOL_RENAME;
     }
@@ -641,7 +656,7 @@ fuse_vfs_getattr(mount_t mp, struct vfs_attr *attr, vfs_context_t context)
         panic("MacFUSE: no private data for mount point?");
     }
 
-    if (!(data->dataflag & FSESS_INITED)) {
+    if (!(data->dataflags & FSESS_INITED)) {
         faking = 1;
         goto dostatfs;
     }
@@ -789,6 +804,7 @@ fuse_sync_callback(vnode_t vp, void *cargs)
     struct fuse_vnode_data *fvdat;
     struct fuse_dispatcher  fdi;
     struct fuse_filehandle *fufh;
+    struct fuse_data       *data;
 
     if (!vnode_hasdirtyblks(vp)) {
         return VNODE_RETURNED;
@@ -798,12 +814,14 @@ fuse_sync_callback(vnode_t vp, void *cargs)
         return VNODE_RETURNED_DONE;
     }
 
-    if (fdata_kick_get(fuse_get_mpdata(vnode_mount(vp)))) {
+    data = fuse_get_mpdata(vnode_mount(vp));
+
+    if (fdata_kick_get(data)) {
         return VNODE_RETURNED_DONE;
     }
 
-    if (!(fuse_get_mpdata(vnode_mount(vp))->dataflag &
-        (vnode_vtype(vp) == VDIR) ? FSESS_NOFSYNCDIR : FSESS_NOFSYNC)) {
+    if (data->noimplflags & ((vnode_vtype(vp) == VDIR) ?
+                         FSESS_NOIMPL(FSYNCDIR) : FSESS_NOIMPL(FSYNC))) {
         return VNODE_RETURNED;
     }
 
@@ -898,7 +916,7 @@ fuse_vfs_setattr(mount_t mp, struct vfs_attr *fsap, vfs_context_t context)
 
         size_t vlen;
 
-        if (!(data->dataflag & FSESS_VOL_RENAME)) {
+        if (!(data->dataflags & FSESS_VOL_RENAME)) {
             error = ENOTSUP;
             goto out;
         }

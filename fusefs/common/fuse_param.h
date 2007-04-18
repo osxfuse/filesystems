@@ -67,15 +67,23 @@
 #define FUSE_MAX_INIT_TIMEOUT              300    /* s  */
 #define FUSE_INIT_WAIT_INTERVAL            100000 /* us */
 
-#define FUSE_DEFAULT_DAEMON_TIMEOUT        0      /* no timeout */
+#define FUSE_DEFAULT_DAEMON_TIMEOUT        10     /* no timeout */
 #define FUSE_MIN_DAEMON_TIMEOUT            0      /* s */
 #define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
 
-#define FUSE_UNMOUNT_DAEMON_TIMEOUT        20     /* s */
+#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Eject Volume"
+#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Continue to Wait"
+#define FUSE_TIMEOUT_ALERT_MESSAGE                                            \
+  "The MacFUSE file system daemon is not responding. You can either continue "\
+  "to wait, or eject the volume right now.\n\nIf you eject, any unsaved data "\
+  "you might have from this volume could be lost, unless the application(s)"  \
+  "you're using allow you to save that data elsewhere."
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
 
 #define FUSE_LINK_MAX                      LINK_MAX
 #define FUSE_UIO_BACKUP_MAX                8
+
+#define FUSE_UNMOUNT_SIGNAL                SIGKILL
 
 #endif /* _FUSE_PARAM_H_ */

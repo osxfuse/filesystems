@@ -14,6 +14,8 @@
 
 #include <fuse_param.h>
 
+#include <UserNotification/kUNCUserNotifications.h>
+
 static struct fuse_ticket *fticket_alloc(struct fuse_data *data);
 static void                fticket_refresh(struct fuse_ticket *ftick);
 static void                fticket_destroy(struct fuse_ticket *ftick);
@@ -196,15 +198,77 @@ fticket_wait_answer(struct fuse_ticket *ftick)
         goto out;
     }
 
+again:
     err = msleep(ftick, ftick->tk_aw_mtx, PCATCH, "fu_ans",
                  data->daemon_timeout_p);
     if (err == EAGAIN) {
+
+        kern_return_t kr;
+        unsigned int rf;
+
+        fuse_lck_mtx_lock(data->timeout_mtx);
+        switch (data->timeout_status) {
+
+        case FUSE_TIMEOUT_PROCESSING:
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto again;
+            break; /* NOTREACHED */
+
+        case FUSE_TIMEOUT_NONE:
+            data->timeout_status = FUSE_TIMEOUT_PROCESSING;
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            break;
+
+        case FUSE_TIMEOUT_DEAD:
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto alreadydead;
+            break; /* NOTREACHED */
+
+        default:
+            IOLog("MacFUSE: invalid timeout status (%d)\n",
+                  data->timeout_status);
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto again;
+            break; /* NOTREACHED */
+        }
+
+        kr = KUNCUserNotificationDisplayAlert(
+                 0,                                   // timeout
+                 0,                                   // flags (stop alert)
+                 NULL,                                // iconPath
+                 NULL,                                // soundPath
+                 NULL,                                // localizationPath
+                 data->volname,                       // alertHeader
+                 FUSE_TIMEOUT_ALERT_MESSAGE,          // alertMessage
+                 FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE,   // defaultButtonTitle
+                 FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE, // alternateButtonTitle
+                 NULL,                                // otherButtonTitle
+                 &rf);
+
+        if (kr != KERN_SUCCESS) {
+            /* force ejection if we couldn't show the dialog */
+            rf = kKUNCDefaultResponse;
+        }
+
+        fuse_lck_mtx_lock(data->timeout_mtx);
+        if (rf == kKUNCDefaultResponse) {
+            data->timeout_status = FUSE_TIMEOUT_DEAD;
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+        } else {
+            data->timeout_status = FUSE_TIMEOUT_NONE;
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto again;
+        }
+
+alreadydead:
         if (!fdata_kick_get(data)) {
             fdata_kick_set(data);
         }
-        vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
         err = ENOTCONN;
         fticket_set_answered(ftick);
+
+        vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
+
         goto out;
     }
 
@@ -310,7 +374,7 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
 
     data->mpri = FM_NOMOUNTED;
     data->fdev = fdev;
-    data->dataflag = 0;
+    data->dataflags = 0;
     data->ms_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
     STAILQ_INIT(&data->ms_head);
     data->ticket_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
@@ -322,6 +386,7 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
     data->ticketer = 0;
     data->freeticket_counter = 0;
     data->daemoncred = proc_ucred(p);
+    data->daemonpid = proc_pid(p);
     kauth_cred_ref(data->daemoncred);
 
 #if M_MACFUSE_EXPERIMENTAL_JUNK
@@ -332,6 +397,9 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
 #if M_MACFUSE_EXCPLICIT_RENAME_LOCK
     data->rename_lock = lck_rw_alloc_init(fuse_lock_group, fuse_lock_attr);
 #endif
+
+    data->timeout_status = FUSE_TIMEOUT_NONE;
+    data->timeout_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
 
     return (data);
 }
@@ -357,6 +425,9 @@ fdata_destroy(struct fuse_data *data)
     data->rename_lock = NULL;
 #endif
 
+    data->timeout_status = FUSE_TIMEOUT_NONE;
+    lck_mtx_free(data->timeout_mtx, fuse_lock_group);
+
     while ((ftick = fuse_pop_allticks(data))) {
         fticket_destroy(ftick);
     }
@@ -376,7 +447,7 @@ fdata_kick_get(struct fuse_data *data)
 {
     debug_printf("data=%p\n", data);
 
-    return (data->dataflag & FSESS_KICK);
+    return (data->dataflags & FSESS_KICK);
 }
 
 void
@@ -390,7 +461,7 @@ fdata_kick_set(struct fuse_data *data)
         return;
     }
 
-    data->dataflag |= FSESS_KICK;
+    data->dataflags |= FSESS_KICK;
     wakeup_one((caddr_t)data);
     fuse_lck_mtx_unlock(data->ms_mtx);
 
@@ -492,7 +563,7 @@ fuse_ticket_fetch(struct fuse_data *data)
         }
     }
 
-    if (!(data->dataflag & FSESS_INITED) && data->ticketer > 1) {
+    if (!(data->dataflags & FSESS_INITED) && data->ticketer > 1) {
         err = msleep(&data->ticketer, data->ticket_mtx, PCATCH | PDROP,
                      "fu_ini", 0);
     } else {
@@ -590,6 +661,10 @@ fuse_body_audit(struct fuse_ticket *ftick, size_t blen)
     enum fuse_opcode opcode;
 
     debug_printf("ftick=%p, blen = %lx\n", ftick, blen);
+
+    if (fdata_kick_get(ftick->tk_data)) {
+        return ENOTCONN;
+    }
 
     opcode = fticket_opcode(ftick);
 
@@ -754,7 +829,8 @@ fuse_body_audit(struct fuse_ticket *ftick, size_t blen)
         break;
 
     default:
-        panic("MacFUSE: opcodes out of sync");
+        IOLog("MacFUSE: opcodes out of sync (%d)\n", opcode);
+        panic("MacFUSE: opcodes out of sync (%d)", opcode);
     }
 
     return (err);

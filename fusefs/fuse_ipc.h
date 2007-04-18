@@ -134,8 +134,10 @@ struct fuse_data {
     struct fuse_softc         *fdev;
     mount_t                    mp;
     kauth_cred_t               daemoncred;
-    int                        dataflag;
-    uint64_t                   noimpl;
+    pid_t                      daemonpid;
+    uint32_t                   dataflags;     /* effective fuse_data flags */
+    uint64_t                   mountaltflags; /* as-is copy of altflags    */
+    uint64_t                   noimplflags;   /* not-implemented flags     */
 
     lck_mtx_t                 *ms_mtx;
     STAILQ_HEAD(, fuse_ticket) ms_head;
@@ -153,6 +155,9 @@ struct fuse_data {
     lck_rw_t                  *rename_lock;
 #endif
 
+    uint32_t                   timeout_status;
+    lck_mtx_t                 *timeout_mtx;
+
     uint32_t                   fuse_libabi_major;
     uint32_t                   fuse_libabi_minor;
 
@@ -166,33 +171,33 @@ struct fuse_data {
     char                       volname[MAXPATHLEN];
 };
 
+enum {
+    FUSE_TIMEOUT_NONE       = 0,
+    FUSE_TIMEOUT_PROCESSING = 1, 
+    FUSE_TIMEOUT_DEAD       = 2,
+};
+
 /* Not-Implemented Bits */
 
 #define FSESS_NOIMPL(MSG)         (1LL << FUSE_##MSG)
 
-#define FSESS_KICK                0x0001 // session is to be closed
-#define FSESS_OPENED              0x0002 // session device has been opened
-#define FSESS_NOFSYNC             0x0004 // daemon doesn't implement fsync
-#define FSESS_NOFSYNCDIR          0x0008 // daemon doesn't implement fsyncdir
-#define FSESS_INITED              0x0010 // session has been inited
-#define FSESS_DAEMON_CAN_SPY      0x0020 // let non-owners access this fs
-                                         // (and being observed by the daemon)
-#define FSESS_NEGLECT_SHARES      0x0040 // presence of secondary mount is not
-                                         // considered as "fs is busy"
-#define FSESS_PUSH_SYMLINKS_IN    0x0080 // prefix absolute symlinks with mp
-#define FSESS_DEFAULT_PERMISSIONS 0x0100 // kernel does permission checking
-
-#define FSESS_NO_APPLESPECIAL     0x0200 // no ._ and .DS_Store files at all
-#define FSESS_NO_ATTRCACHE        0x0400 // no attribute caching
-#define FSESS_NO_READAHEAD        0x0800 // no readaheads
-#define FSESS_NO_SYNCWRITES       0x1000 // no synchronous writes
-#define FSESS_NO_SYNCONCLOSE      0x2000 // no sync on close (with async writes)
-#define FSESS_NO_VNCACHE          0x4000 // no vnode name cache
-#define FSESS_NO_UBC              0x8000 // no unified buffer cache
-
-#define FSESS_DIRECT_IO           0x00010000 // direct_io for the entire mount
-#define FSESS_EXTENDED_SECURITY   0x00020000 // enable extended security (ACLs)
-#define FSESS_VOL_RENAME          0x00040000 // allow volume name to be changed
+#define FSESS_KICK                0x00000001 // session is to be closed
+#define FSESS_OPENED              0x00000002 // session device has been opened
+#define FSESS_INITED              0x00000004 // session has been inited
+#define FSESS_ALLOW_OTHER         0x00000008
+#define FSESS_DEFAULT_PERMISSIONS 0x00000010
+#define FSESS_DIRECT_IO           0x00000020
+#define FSESS_EXTENDED_SECURITY   0x00000040
+#define FSESS_JAIL_SYMLINKS       0x00000080
+#define FSESS_KILL_ON_UNMOUNT     0x00000100
+#define FSESS_NO_APPLESPECIAL     0x00000200
+#define FSESS_NO_ATTRCACHE        0x00000400
+#define FSESS_NO_READAHEAD        0x00000800
+#define FSESS_NO_SYNCWRITES       0x00001000
+#define FSESS_NO_SYNCONCLOSE      0x00002000
+#define FSESS_NO_VNCACHE          0x00004000
+#define FSESS_NO_UBC              0x00008000
+#define FSESS_VOL_RENAME          0x00010000
 
 static __inline__
 struct fuse_data *

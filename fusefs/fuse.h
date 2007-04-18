@@ -22,12 +22,13 @@
 #include <fuse_sysctl.h>
 #include <fuse_version.h>
 
-//#define FUSE_DEBUG       1
-//#define FUSE_KDEBUG      1
-//#define FUSE_KTRACE_OP   1
-//#define FUSE_TRACE       1
-//#define FUSE_TRACE_LK    1
-//#define FUSE_TRACE_OP    1
+//#define FUSE_DEBUG         1
+//#define FUSE_KDEBUG        1
+//#define FUSE_KTRACE_OP     1
+//#define FUSE_TRACE         1
+//#define FUSE_TRACE_LK      1
+//#define FUSE_TRACE_OP      1
+//#define FUSE_TRACE_VNCACHE 1
 #define FUSE_TRACK_STATS 1
 
 #define FUSEFS_SIGNATURE 0x55464553 // 'FUSE'
@@ -103,7 +104,7 @@ FUSE_OSMalloc(uint32_t size, OSMallocTag tag)
         panic("MacFUSE: memory allocation failed (size=%d)", size);
     }
 
-    OSAddAtomic(size, (SInt32 *)&fuse_memory_allocated);
+    FUSE_OSAddAtomic(size, (SInt32 *)&fuse_memory_allocated);
     
     return addr;
 }
@@ -114,7 +115,7 @@ FUSE_OSFree(void *addr, uint32_t size, OSMallocTag tag)
 {
     OSFree(addr, size, tag);
 
-    OSAddAtomic(-(size), (SInt32 *)&fuse_memory_allocated);
+    FUSE_OSAddAtomic(-(size), (SInt32 *)&fuse_memory_allocated);
 }
 #else
 

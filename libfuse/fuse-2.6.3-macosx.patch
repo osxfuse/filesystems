@@ -1,6 +1,6 @@
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-02-27 02:19:32.000000000 -0800
++++ new/README.MacFUSE	2007-04-16 04:30:13.000000000 -0700
 @@ -0,0 +1,7 @@
 +MacFUSE Project Page:
 +
@@ -11,7 +11,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +CFLAGS="-D__FreeBSD__=10 -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/configure new/configure
 --- old/configure	2007-02-04 06:30:48.000000000 -0800
-+++ new/configure	2007-02-27 02:19:32.000000000 -0800
++++ new/configure	2007-04-16 04:30:13.000000000 -0700
 @@ -11284,7 +11284,8 @@
  fi
  
@@ -24,7 +24,7 @@ diff -Naur old/configure new/configure
  echo $ECHO_N "checking for library containing clock_gettime... $ECHO_C" >&6; }
 diff -Naur old/example/fusexmp.c new/example/fusexmp.c
 --- old/example/fusexmp.c	2006-12-09 10:51:13.000000000 -0800
-+++ new/example/fusexmp.c	2007-02-27 02:19:32.000000000 -0800
++++ new/example/fusexmp.c	2007-04-16 04:30:13.000000000 -0700
 @@ -45,8 +45,25 @@
      int res;
  
@@ -102,7 +102,7 @@ diff -Naur old/example/fusexmp.c new/example/fusexmp.c
      return 0;
 diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
 --- old/example/fusexmp_fh.c	2006-12-09 10:51:13.000000000 -0800
-+++ new/example/fusexmp_fh.c	2007-02-27 02:19:55.000000000 -0800
++++ new/example/fusexmp_fh.c	2007-04-16 04:30:13.000000000 -0700
 @@ -32,8 +32,9 @@
      int res;
  
@@ -212,7 +212,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .access	= xmp_access,
 diff -Naur old/fuse.pc.in new/fuse.pc.in
 --- old/fuse.pc.in	2006-12-09 10:52:22.000000000 -0800
-+++ new/fuse.pc.in	2007-02-27 02:19:32.000000000 -0800
++++ new/fuse.pc.in	2007-04-16 04:30:13.000000000 -0700
 @@ -4,7 +4,7 @@
  includedir=@includedir@
  
@@ -223,21 +223,9 @@ diff -Naur old/fuse.pc.in new/fuse.pc.in
  Libs: -L${libdir} -lfuse @libfuse_libs@
 -Cflags: -I${includedir}/fuse -D_FILE_OFFSET_BITS=64
 +Cflags: -I${includedir}/fuse -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64
-diff -Naur old/include/fuse.h new/include/fuse.h
---- old/include/fuse.h	2007-01-31 12:15:26.000000000 -0800
-+++ new/include/fuse.h	2007-02-27 02:19:32.000000000 -0800
-@@ -662,4 +662,8 @@
- }
- #endif
- 
-+#if (__FreeBSD__ >= 10)
-+#define __asm__(x)
-+#endif
-+
- #endif /* _FUSE_H_ */
 diff -Naur old/lib/Makefile.in new/lib/Makefile.in
 --- old/lib/Makefile.in	2007-02-04 06:31:02.000000000 -0800
-+++ new/lib/Makefile.in	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/Makefile.in	2007-04-16 04:30:13.000000000 -0700
 @@ -60,8 +60,12 @@
  	fuse_loop.c fuse_loop_mt.c fuse_lowlevel.c fuse_misc.h \
  	fuse_mt.c fuse_opt.c fuse_session.c fuse_signals.c helper.c \
@@ -279,7 +267,7 @@ diff -Naur old/lib/Makefile.in new/lib/Makefile.in
  libulockmgr_la_LDFLAGS = -version-number 1:0:1
 diff -Naur old/lib/fuse.c new/lib/fuse.c
 --- old/lib/fuse.c	2007-02-02 03:57:48.000000000 -0800
-+++ new/lib/fuse.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/fuse.c	2007-04-16 04:31:11.000000000 -0700
 @@ -734,6 +734,16 @@
  
  static void curr_time(struct timespec *now)
@@ -305,9 +293,63 @@ diff -Naur old/lib/fuse.c new/lib/fuse.c
  }
  
  static void update_stat(struct node *node, const struct stat *stbuf)
+@@ -2994,12 +3005,14 @@
+                                   sizeof(struct fuse_operations_compat1), 11);
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_exited,__fuse_exited@");
+ __asm__(".symver fuse_process_cmd,__fuse_process_cmd@");
+ __asm__(".symver fuse_read_cmd,__fuse_read_cmd@");
+ __asm__(".symver fuse_set_getcontext_func,__fuse_set_getcontext_func@");
+ __asm__(".symver fuse_new_compat2,fuse_new@");
+ __asm__(".symver fuse_new_compat22,fuse_new@FUSE_2.2");
++#endif
+ 
+ #else /* __FreeBSD__ */
+ 
+@@ -3036,4 +3049,6 @@
+                                     op_size, 25);
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_new_compat25,fuse_new@FUSE_2.5");
++#endif
+diff -Naur old/lib/fuse_lowlevel.c new/lib/fuse_lowlevel.c
+--- old/lib/fuse_lowlevel.c	2006-12-09 10:52:22.000000000 -0800
++++ new/lib/fuse_lowlevel.c	2007-04-16 04:31:26.000000000 -0700
+@@ -1395,9 +1395,11 @@
+     return 0;
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_reply_statfs_compat,fuse_reply_statfs@FUSE_2.4");
+ __asm__(".symver fuse_reply_open_compat,fuse_reply_open@FUSE_2.4");
+ __asm__(".symver fuse_lowlevel_new_compat,fuse_lowlevel_new@FUSE_2.4");
++#endif
+ 
+ #else /* __FreeBSD__ */
+ 
+@@ -1421,4 +1423,6 @@
+                                     op_size, userdata);
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_lowlevel_new_compat25,fuse_lowlevel_new@FUSE_2.5");
++#endif
+diff -Naur old/lib/fuse_mt.c new/lib/fuse_mt.c
+--- old/lib/fuse_mt.c	2006-12-09 10:51:14.000000000 -0800
++++ new/lib/fuse_mt.c	2007-04-16 04:31:39.000000000 -0700
+@@ -120,4 +120,6 @@
+     return fuse_session_loop_mt(fuse_get_session(f));
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_loop_mt_proc,__fuse_loop_mt@");
++#endif
 diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
 --- old/lib/fuse_session.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_session.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/fuse_session.c	2007-04-16 04:30:13.000000000 -0700
 @@ -15,6 +15,9 @@
  #include <string.h>
  #include <assert.h>
@@ -362,7 +404,7 @@ diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
      struct fuse_session *se = (struct fuse_session *) malloc(sizeof(*se));
 diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
 --- old/lib/fuse_signals.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_signals.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/fuse_signals.c	2007-04-16 04:30:13.000000000 -0700
 @@ -13,12 +13,34 @@
  #include <signal.h>
  
@@ -400,7 +442,7 @@ diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
  static int set_one_signal_handler(int sig, void (*handler)(int))
 diff -Naur old/lib/helper.c new/lib/helper.c
 --- old/lib/helper.c	2006-12-09 10:52:22.000000000 -0800
-+++ new/lib/helper.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/helper.c	2007-04-16 04:32:06.000000000 -0700
 @@ -264,6 +264,10 @@
      if (fd)
          *fd = fuse_chan_fd(ch);
@@ -412,9 +454,44 @@ diff -Naur old/lib/helper.c new/lib/helper.c
      return fuse;
  
   err_unmount:
+@@ -390,11 +394,13 @@
+     return fuse_mount_compat22(mountpoint, NULL);
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_setup_compat2,__fuse_setup@");
+ __asm__(".symver fuse_setup_compat22,fuse_setup@FUSE_2.2");
+ __asm__(".symver fuse_teardown,__fuse_teardown@");
+ __asm__(".symver fuse_main_compat2,fuse_main@");
+ __asm__(".symver fuse_main_real_compat22,fuse_main_real@FUSE_2.2");
++#endif
+ 
+ #endif /* __FreeBSD__ */
+ 
+@@ -427,7 +433,9 @@
+     return fuse_kern_mount(mountpoint, args);
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_setup_compat25,fuse_setup@FUSE_2.5");
+ __asm__(".symver fuse_teardown_compat22,fuse_teardown@FUSE_2.2");
+ __asm__(".symver fuse_main_real_compat25,fuse_main_real@FUSE_2.5");
+ __asm__(".symver fuse_mount_compat25,fuse_mount@FUSE_2.5");
++#endif
+diff -Naur old/lib/mount.c new/lib/mount.c
+--- old/lib/mount.c	2007-01-02 09:10:33.000000000 -0800
++++ new/lib/mount.c	2007-04-16 04:32:13.000000000 -0700
+@@ -304,5 +304,7 @@
+     return res;
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_mount_compat22,fuse_mount@FUSE_2.2");
+ __asm__(".symver fuse_unmount_compat22,fuse_unmount@FUSE_2.2");
++#endif
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/mount_bsd.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/mount_bsd.c	2007-04-16 04:32:21.000000000 -0700
 @@ -6,6 +6,11 @@
      See the file COPYING.LIB.
  */
@@ -440,7 +517,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +#include <sys/mount.h>
 +#include <AssertMacros.h>
 +
-+static const char *MacFUSE = "MacFUSE version 0.2.4, " __DATE__ ", " __TIME__;
++static const char *MacFUSE = "MacFUSE version 0.2.5, " __DATE__ ", " __TIME__;
 +
 +static int
 +checkloadable(void)
@@ -497,7 +574,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  
  enum {
      KEY_ALLOW_ROOT,
-@@ -108,11 +174,37 @@
+@@ -108,11 +174,38 @@
      FUSE_OPT_KEY("noprivate",           KEY_KERN),
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
@@ -511,6 +588,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +    FUSE_OPT_KEY("init_timeout=",       KEY_KERN),
 +    FUSE_OPT_KEY("iosize=",             KEY_KERN),
 +    FUSE_OPT_KEY("jail_symlinks",       KEY_KERN),
++    FUSE_OPT_KEY("kill_on_unmount",     KEY_KERN),
 +    FUSE_OPT_KEY("noapplespecial",      KEY_KERN),
 +    FUSE_OPT_KEY("noattrcache",         KEY_KERN),
 +    FUSE_OPT_KEY("noauthopaque",        KEY_KERN),
@@ -535,7 +613,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      FUSE_OPT_END
  };
  
-@@ -199,8 +291,21 @@
+@@ -199,8 +292,21 @@
      if (rv)
          return;
  
@@ -557,7 +635,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  void fuse_kern_unmount(const char *mountpoint, int fd)
-@@ -222,13 +327,29 @@
+@@ -222,13 +328,29 @@
      if (*ep != '\0')
          return;
  
@@ -587,7 +665,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      int ibg, len;
  
      len = sizeof(ibg);
-@@ -237,6 +358,7 @@
+@@ -237,6 +359,7 @@
          return 0;
  
      return ibg;
@@ -595,7 +673,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  
-@@ -247,6 +369,15 @@
+@@ -247,6 +370,15 @@
      char *fdnam, *dev;
      int pid;
  
@@ -611,7 +689,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      fdnam = getenv("FUSE_DEV_FD");
  
      if (fdnam) {
-@@ -267,12 +398,29 @@
+@@ -267,12 +399,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -647,7 +725,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +470,31 @@
+@@ -322,11 +471,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }
@@ -679,9 +757,16 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  
  out:
      return fd;
+@@ -360,4 +529,6 @@
+     return res;
+ }
+ 
++#if !(__FreeBSD__ >= 10)
+ __asm__(".symver fuse_unmount_compat22,fuse_unmount@FUSE_2.2");
++#endif
 diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
 --- old/lib/ulockmgr.c	2007-01-02 09:10:33.000000000 -0800
-+++ new/lib/ulockmgr.c	2007-02-27 02:19:32.000000000 -0800
++++ new/lib/ulockmgr.c	2007-04-16 04:30:13.000000000 -0700
 @@ -18,9 +18,19 @@
  #include <assert.h>
  #include <signal.h>

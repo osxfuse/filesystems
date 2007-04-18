@@ -256,8 +256,10 @@ fuse_internal_remove(vnode_t               dvp,
 
 int
 fuse_internal_rename(vnode_t               fdvp,
+                     vnode_t               fvp,
                      struct componentname *fcnp,
                      vnode_t               tdvp,
+                     vnode_t               tvp,
                      struct componentname *tcnp,
                      vfs_context_t         context);
 
@@ -384,7 +386,7 @@ static __inline__
 int
 fuse_isdeadfs_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_KICK);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_KICK);
 }
 
 static __inline__
@@ -399,7 +401,7 @@ int
 fuse_isdirectio(vnode_t vp)
 {
     /* Try global first. */
-    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_DIRECT_IO) {
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_DIRECT_IO) {
         return 1;
     }
 
@@ -410,7 +412,7 @@ static __inline__
 int
 fuse_isdirectio_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_DIRECT_IO);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_DIRECT_IO);
 }
 
 #if M_MACFUSE_EXPERIMENTAL_JUNK
@@ -419,7 +421,7 @@ int
 fuse_isnoattrcache(vnode_t vp)
 {
     /* Try global first. */
-    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_ATTRCACHE) {
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_NO_ATTRCACHE) {
         return 1;
     }
 
@@ -430,7 +432,7 @@ static __inline__
 int
 fuse_isnoattrcache_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_ATTRCACHE);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_NO_ATTRCACHE);
 }
 #endif
 
@@ -439,7 +441,7 @@ int
 fuse_isnoreadahead(vnode_t vp)
 {
     /* Try global first. */
-    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_READAHEAD) {
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_NO_READAHEAD) {
         return 1;
     }
     
@@ -455,7 +457,7 @@ fuse_isnosynconclose(vnode_t vp)
         return 0;
     }
 
-    return (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_SYNCONCLOSE);
+    return (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_NO_SYNCONCLOSE);
 }
 
 static __inline__
@@ -467,7 +469,7 @@ fuse_isnosyncwrites_mp(mount_t mp)
         return 0;
     }
 
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_SYNCWRITES);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_NO_SYNCWRITES);
 }
 
 static __inline__
@@ -476,7 +478,7 @@ fuse_setnosyncwrites_mp(mount_t mp)
 {
     vfs_clearflags(mp, MNT_SYNCHRONOUS);
     vfs_setflags(mp, MNT_ASYNC);
-    fuse_get_mpdata(mp)->dataflag |= FSESS_NO_SYNCWRITES;
+    fuse_get_mpdata(mp)->dataflags |= FSESS_NO_SYNCWRITES;
 }
 
 static __inline__
@@ -486,7 +488,7 @@ fuse_clearnosyncwrites_mp(mount_t mp)
     if (!vfs_issynchronous(mp)) {
         vfs_clearflags(mp, MNT_ASYNC);
         vfs_setflags(mp, MNT_SYNCHRONOUS);
-        fuse_get_mpdata(mp)->dataflag &= ~FSESS_NO_SYNCWRITES;
+        fuse_get_mpdata(mp)->dataflags &= ~FSESS_NO_SYNCWRITES;
     }
 }
 
@@ -495,7 +497,7 @@ int
 fuse_isnoubc(vnode_t vp)
 {
     /* Try global first. */
-    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_UBC) {
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_NO_UBC) {
         return 1;
     }
     
@@ -507,7 +509,7 @@ static __inline__
 int
 fuse_isnoubc_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_UBC);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_NO_UBC);
 }
 
 static __inline__
@@ -515,7 +517,7 @@ int
 fuse_isnovncache(vnode_t vp)
 {
     /* Try global first. */
-    if (fuse_get_mpdata(vnode_mount(vp))->dataflag & FSESS_NO_VNCACHE) {
+    if (fuse_get_mpdata(vnode_mount(vp))->dataflags & FSESS_NO_VNCACHE) {
         return 1;
     }
     
@@ -527,14 +529,14 @@ static __inline__
 int
 fuse_isnovncache_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_NO_VNCACHE);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_NO_VNCACHE);
 }
 
 static __inline__
 int
 fuse_isextendedsecurity(vnode_t vp)
 {
-    return (fuse_get_mpdata(vnode_mount(vp))->dataflag & \
+    return (fuse_get_mpdata(vnode_mount(vp))->dataflags & \
             FSESS_EXTENDED_SECURITY);
 }
 
@@ -542,7 +544,7 @@ static __inline__
 int
 fuse_isextendedsecurity_mp(mount_t mp)
 {
-    return (fuse_get_mpdata(mp)->dataflag & FSESS_EXTENDED_SECURITY);
+    return (fuse_get_mpdata(mp)->dataflags & FSESS_EXTENDED_SECURITY);
 }
 
 static __inline__
@@ -582,7 +584,7 @@ int
 fuse_skip_apple_special_mp(mount_t mp, char *nameptr, long namelen)
 {
 #define DS_STORE ".DS_Store"
-    int ismpoption = fuse_get_mpdata(mp)->dataflag & FSESS_NO_APPLESPECIAL;
+    int ismpoption = fuse_get_mpdata(mp)->dataflags & FSESS_NO_APPLESPECIAL;
 
     if (ismpoption && nameptr) {
         /* This _will_ allow just "._", that is, a namelen of 2. */

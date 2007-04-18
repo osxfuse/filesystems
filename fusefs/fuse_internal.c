@@ -46,7 +46,7 @@ fuse_internal_access(vnode_t                   vp,
 {
     int err = 0;
     uint32_t mask = 0;
-    int dataflag;
+    int dataflags;
     int vtype;
     mount_t mp;
     struct fuse_dispatcher fdi;
@@ -63,7 +63,7 @@ fuse_internal_access(vnode_t                   vp,
     vtype = vnode_vtype(vp);
 
     data = fuse_get_mpdata(mp);
-    dataflag = data->dataflag;
+    dataflags = data->dataflags;
 
     if ((action & KAUTH_VNODE_GENERIC_WRITE_BITS) && vfs_isrdonly(mp)) {
         return EACCES;
@@ -71,7 +71,7 @@ fuse_internal_access(vnode_t                   vp,
 
     // Unless explicitly permitted, deny everyone except the fs owner.
     if (vnode_isvroot(vp) && !(facp->facc_flags & FACCESS_NOCHECKSPY)) {
-        if (!(dataflag & FSESS_DAEMON_CAN_SPY)) {
+        if (!(dataflags & FSESS_ALLOW_OTHER)) {
             int denied = fuse_match_cred(data->daemoncred,
                                          vfs_context_ucred(context));
             if (denied) {
@@ -95,12 +95,12 @@ fuse_internal_access(vnode_t                   vp,
 #endif
     }
 
-    if (fuse_get_mpdata(mp)->noimpl & FSESS_NOIMPL(ACCESS)) {
+    if (fuse_get_mpdata(mp)->noimplflags & FSESS_NOIMPL(ACCESS)) {
         // Let the kernel handle this.
         return 0;
     }
 
-    if (dataflag & FSESS_DEFAULT_PERMISSIONS) {
+    if (dataflags & FSESS_DEFAULT_PERMISSIONS) {
         // Let the kernel handle this.
         return 0;
     }
@@ -155,7 +155,7 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (err == ENOSYS) {
-        fuse_get_mpdata(mp)->noimpl |= FSESS_NOIMPL(ACCESS);
+        fuse_get_mpdata(mp)->noimplflags |= FSESS_NOIMPL(ACCESS);
         err = 0; // or ENOTSUP;
     }
 
@@ -176,8 +176,13 @@ fuse_internal_fsync_callback(struct fuse_ticket *ftick, __unused uio_t uio)
     fuse_trace_printf_func();
 
     if (ftick->tk_aw_ohead.error == ENOSYS) {
-        ftick->tk_data->dataflag |= (fticket_opcode(ftick) == FUSE_FSYNC) ?
-                                        FSESS_NOFSYNC : FSESS_NOFSYNCDIR;
+        if (fticket_opcode(ftick) == FUSE_FSYNC) {
+            ftick->tk_data->noimplflags |= FSESS_NOIMPL(FSYNC);
+        } else if (fticket_opcode(ftick) == FUSE_FSYNCDIR) {
+            ftick->tk_data->noimplflags |= FSESS_NOIMPL(FSYNCDIR);
+        } else {
+            IOLog("MacFUSE: unexpected opcode in sync handling\n");
+        }
     }
 
     fuse_ticket_drop(ftick);
@@ -251,7 +256,7 @@ fuse_internal_ioctl_avfi(vnode_t vp, __unused vfs_context_t context,
 
     /* The result of this doesn't alter our return value. */
     if (avfi->cmd & FUSE_AVFI_PURGEVNCACHE) {
-        (void)cache_purge(vp);
+        fuse_vncache_purge(vp);
     }
 
     return ret;
@@ -480,8 +485,10 @@ fuse_internal_remove(vnode_t               dvp,
 __private_extern__
 int
 fuse_internal_rename(vnode_t               fdvp,
+            __unused vnode_t               fvp,
                      struct componentname *fcnp,
                      vnode_t               tdvp,
+            __unused vnode_t               tvp,
                      struct componentname *tcnp,
                      vfs_context_t         context)
 {
@@ -506,9 +513,11 @@ fuse_internal_rename(vnode_t               fdvp,
         fuse_ticket_drop(fdi.tick);
     }
 
-    fuse_invalidate_attr(fdvp);
-    if (tdvp != fdvp) {
-        fuse_invalidate_attr(tdvp);
+    if (err == 0) {
+        fuse_invalidate_attr(fdvp);
+        if (tdvp != fdvp) {
+            fuse_invalidate_attr(tdvp);
+        }
     }
 
     return (err);
@@ -1146,7 +1155,7 @@ __private_extern__
 void
 fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context)
 {   
-    cache_purge(vp);
+    fuse_vncache_purge(vp);
 
     (void)fuse_internal_revoke(vp, REVOKEALL, context);
 
@@ -1202,7 +1211,7 @@ out:
     }
 
     lck_mtx_lock(data->ticket_mtx);
-    data->dataflag |= FSESS_INITED;
+    data->dataflags |= FSESS_INITED;
     wakeup(&data->ticketer);
     lck_mtx_unlock(data->ticket_mtx);
 

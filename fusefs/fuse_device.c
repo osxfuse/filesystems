@@ -23,6 +23,7 @@ static int fuse_cdev_major      = -1;
 struct fuse_softc {
     int    usecount;
     pid_t  pid;
+    dev_t  dev;
     void  *cdev;
     void  *data;
 };
@@ -63,6 +64,16 @@ fuse_softc_set_data(fuse_softc_t fdev, struct fuse_data *data)
     }
 
     fdev->data = data;
+}
+
+dev_t
+fuse_softc_get_dev(fuse_softc_t fdev)
+{
+    if (fdev) {
+        return 0;
+    }
+
+    return fdev->dev;
 }
 
 static int
@@ -139,7 +150,7 @@ fuse_device_open(dev_t dev, __unused int flags, __unused int devtype,
         fdev->usecount--;
         return EBUSY;
     } else {
-        fdata->dataflag |= FSESS_OPENED;
+        fdata->dataflags |= FSESS_OPENED;
         fdev->data = fdata;
         fdev->pid = proc_pid(p);
     }       
@@ -177,7 +188,7 @@ fuse_device_close(dev_t dev, __unused int flags, __unused int devtype,
     }
 
     fdata_kick_set(data);
-    data->dataflag &= ~FSESS_OPENED;
+    data->dataflags &= ~FSESS_OPENED;
 
     fuse_lck_mtx_lock(data->aw_mtx);
 
@@ -280,7 +291,7 @@ again:
 
     for (i = 0; buf[i]; i++) {
         if (uio_resid(uio) < buflen[i]) {
-            data->dataflag |= FSESS_KICK;
+            data->dataflags |= FSESS_KICK;
             err = ENODEV;
             break;
         }
@@ -323,7 +334,7 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata,
     case FUSEDEVIOCSETIMPLEMENTEDBITS:
         {
             uint64_t fuse_noimpl = *(uint64_t *)udata;
-            data->noimpl = fuse_noimpl;
+            data->noimplflags = fuse_noimpl;
         }
         ret = 0;
         break;
@@ -332,7 +343,7 @@ fuse_device_ioctl(dev_t dev, u_long cmd, caddr_t udata,
         if (data->mpri == FM_NOMOUNTED) {
             return ENXIO;
         }
-        *(u_int32_t *)udata = (data->dataflag & FSESS_INITED);
+        *(u_int32_t *)udata = (data->dataflags & FSESS_INITED);
         ret = 0;
         break;
 
@@ -483,6 +494,7 @@ fuse_devices_start(void)
 
     for (i = 0; i < FUSE_NDEVICES; i++) {
         dev_t dev = makedev(fuse_cdev_major, i);
+        fuse_softc_table[i].dev = dev;
         fuse_softc_table[i].cdev = devfs_make_node(dev,
                                                    DEVFS_CHAR,
                                                    UID_ROOT,
@@ -504,6 +516,7 @@ error:
     for (--i; i >= 0; i--) {
         devfs_remove(fuse_softc_table[i].cdev);
         fuse_softc_table[i].cdev = NULL;
+        fuse_softc_table[i].dev = 0;
     }
 
     (void)cdevsw_remove(fuse_cdev_major, &fuse_device_cdevsw);
@@ -532,6 +545,7 @@ fuse_devices_stop(void)
         }
         devfs_remove(fuse_softc_table[i].cdev);
         fuse_softc_table[i].cdev = NULL;
+        fuse_softc_table[i].dev = 0;
     }
 
     ret = cdevsw_remove(fuse_cdev_major, &fuse_device_cdevsw);

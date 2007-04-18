@@ -21,6 +21,13 @@
 	<string>MACFUSE_VERSION_LITERAL</string>
 	<key>FSPersonalities</key>
 	<dict>
+		<key>Generic</key>
+		<dict>
+			<key>FSName</key>
+			<string>Generic MacFUSE File System (MacFUSE)</string>
+			<key>FSSubType</key>
+			<integer>0</integer>
+		</dict>
 		<key>PassThrough</key>
 		<dict>
 			<key>FSName</key>

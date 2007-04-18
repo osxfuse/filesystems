@@ -41,44 +41,45 @@ void  showversion(int doexit);
 struct mntopt mopts[] = {
     MOPT_STDOPTS,
     MOPT_UPDATE,
-    { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,           1 }, // used
-    { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,            1 },
-    { "blocksize=",          0, FUSE_MOPT_BLOCKSIZE,             1 }, // used
-    { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,        1 }, // used
-    { "debug",               0, FUSE_MOPT_DEBUG,                 1 }, // used
-    { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,   1 },
-    { "extended_security",   0, FUSE_MOPT_EXTENDED_SECURITY,     1 }, // used
-    { "fd=",                 0, FUSE_MOPT_FD,                    1 },
-    { "fsid=" ,              0, FUSE_MOPT_FSID,                  1 }, // used
-    { "fsname=",             0, FUSE_MOPT_FSNAME,                1 }, // used
-    { "gid=",                0, FUSE_MOPT_GID,                   1 }, // used
-    { "hard_remove",         0, FUSE_MOPT_HARD_REMOVE,           1 },
-    { "init_timeout=",       0, FUSE_MOPT_INIT_TIMEOUT,          1 }, // used
-    { "iosize=",             0, FUSE_MOPT_IOSIZE,                1 }, // used
-    { "jail_symlinks",       0, FUSE_MOPT_JAIL_SYMLINKS,         1 }, // used
-    { "kernel_cache",        0, FUSE_MOPT_KERNEL_CACHE,          1 },
-    { "ping_diskarb",        0, FUSE_MOPT_PING_DISKARB,          1 }, // used
-    { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,           1 },
-    { "rootmode=",           0, FUSE_MOPT_ROOTMODE,              1 },
-    { "subtype=",            0, FUSE_MOPT_SUBTYPE,               1 }, // used
-    { "uid=",                0, FUSE_MOPT_UID,                   1 }, // used
-    { "umask=",              0, FUSE_MOPT_UMASK,                 1 },
-    { "use_ino",             0, FUSE_MOPT_USE_INO,               1 },
-    { "volname=",            0, FUSE_MOPT_VOLNAME,               1 }, // used
+    { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,            1 }, // kused
+    { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,             1 },
+    { "blocksize=",          0, FUSE_MOPT_BLOCKSIZE,              1 }, // kused
+    { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,         1 }, // kused
+    { "debug",               0, FUSE_MOPT_DEBUG,                  1 }, // kused
+    { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,    1 },
+    { "extended_security",   0, FUSE_MOPT_EXTENDED_SECURITY,      1 }, // kused
+    { "fd=",                 0, FUSE_MOPT_FD,                     1 },
+    { "fsid=" ,              0, FUSE_MOPT_FSID,                   1 }, // kused
+    { "fsname=",             0, FUSE_MOPT_FSNAME,                 1 }, // kused
+    { "gid=",                0, FUSE_MOPT_GID,                    1 }, // kused
+    { "hard_remove",         0, FUSE_MOPT_HARD_REMOVE,            1 },
+    { "init_timeout=",       0, FUSE_MOPT_INIT_TIMEOUT,           1 }, // kused
+    { "iosize=",             0, FUSE_MOPT_IOSIZE,                 1 }, // kused
+    { "jail_symlinks",       0, FUSE_MOPT_JAIL_SYMLINKS,          1 }, // kused
+    { "kernel_cache",        0, FUSE_MOPT_KERNEL_CACHE,           1 },
+    { "kill_on_unmount",     0, FUSE_MOPT_KILL_ON_UNMOUNT,        1 }, // kused 
+    { "ping_diskarb",        0, FUSE_MOPT_PING_DISKARB,           1 }, // kused
+    { "readdir_ino",         0, FUSE_MOPT_READDIR_INO,            1 },
+    { "rootmode=",           0, FUSE_MOPT_ROOTMODE,               1 },
+    { "subtype=",            0, FUSE_MOPT_SUBTYPE,                1 }, // kused
+    { "uid=",                0, FUSE_MOPT_UID,                    1 }, // kused
+    { "umask=",              0, FUSE_MOPT_UMASK,                  1 },
+    { "use_ino",             0, FUSE_MOPT_USE_INO,                1 },
+    { "volname=",            0, FUSE_MOPT_VOLNAME,                1 }, // kused
 
     /* negative ones */
 
-    { "applespecial",        1, FUSE_MOPT_NO_APPLESPECIAL,       1 }, // used
-    { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,          1 }, // used
-    { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,        1 }, // used
-    { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS, 1 }, // used
-    { "browse",              1, FUSE_MOPT_NO_BROWSE,             1 }, // used
-    { "localcaches",         1, FUSE_MOPT_NO_LOCALCACHES,        1 }, // used
-    { "readahead",           1, FUSE_MOPT_NO_READAHEAD,          1 }, // used
-    { "synconclose",         1, FUSE_MOPT_NO_SYNCONCLOSE,        1 }, // used
-    { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,         1 }, // used
-    { "ubc",                 1, FUSE_MOPT_NO_UBC,                1 }, // used
-    { "vncache",             1, FUSE_MOPT_NO_VNCACHE,            1 }, // used
+    { "applespecial",        1, FUSE_MOPT_NO_APPLESPECIAL,        1 }, // kused
+    { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,           1 }, // kused
+    { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,         1 }, // kused
+    { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS,  1 }, // kused
+    { "browse",              1, FUSE_MOPT_NO_BROWSE,              1 }, // kused
+    { "localcaches",         1, FUSE_MOPT_NO_LOCALCACHES,         1 }, // kused
+    { "readahead",           1, FUSE_MOPT_NO_READAHEAD,           1 }, // kused
+    { "synconclose",         1, FUSE_MOPT_NO_SYNCONCLOSE,         1 }, // kused
+    { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,          1 }, // kused
+    { "ubc",                 1, FUSE_MOPT_NO_UBC,                 1 }, // kused
+    { "vncache",             1, FUSE_MOPT_NO_VNCACHE,             1 }, // kused
 
     { NULL }
 };
@@ -836,6 +837,7 @@ showhelp()
       "    -o init_timeout=<s>    timeout in seconds for the init method to complete\n"
       "    -o iosize=<size>       specify maximum I/O size in bytes\n" 
       "    -o jail_symlinks       contain symbolic links within the mount\n"
+      "    -o kill_on_unmount     kernel will send a signal (SIGKILL by default) to the\n                           daemon after unmount finishes\n" 
       "    -o noapplespecial      ignore Apple Double (._) and .DS_Store files entirely\n"
       "    -o noauthopaque        set MNTK_AUTH_OPAQUE in the kernel\n"
       "    -o noauthopaqueaccess  set MNTK_AUTH_OPAQUE_ACCESS in the kernel\n"

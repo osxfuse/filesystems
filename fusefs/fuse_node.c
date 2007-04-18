@@ -27,7 +27,8 @@ FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
                                enum vtype    vtyp,
                                uint64_t      insize,
                                vnode_t      *vnPtr,
-                               int           flags)
+                               int           flags,
+                               int          *oflags)
 {
     int      err;
     int      junk;
@@ -88,14 +89,18 @@ FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
             fvdat->truncatelock = lck_rw_alloc_init(fuse_lock_group, fuse_lock_attr);
             fvdat->creator = current_thread();
             fvdat->flag = flags;
-            //LIST_INIT(&fvdat->fh_head);
         }
 
         if (err == 0) {
             params.vnfs_mp         = mp;
             params.vnfs_vtype      = vtyp;
             params.vnfs_str        = NULL;
-            params.vnfs_dvp        = NULL; // dvp; XXXXXXXXXXXXXXXXXXXXXXXXXX
+
+            params.vnfs_dvp        = dvp;
+            if (markroot == TRUE) {
+                params.vnfs_dvp = NULLVP; /* XXX: should be this coming in */
+            }
+
             params.vnfs_fsnode     = hn;
             params.vnfs_vops       = fuse_vnode_operations;
             params.vnfs_marksystem = FALSE;
@@ -109,12 +114,15 @@ FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
         }
 
         if (err == 0) {
-            HNodeAttachVNodeSucceeded(hn, 0 /* forkIndex */, vn);
             if (markroot == TRUE) {
                 fvdat->parent = vn;
             } else {
                 fvdat->parent = dvp;
             }
+            if (oflags) {
+                *oflags |= MAKEENTRY;
+            }
+            HNodeAttachVNodeSucceeded(hn, 0 /* forkIndex */, vn);
             FUSE_OSAddAtomic(1, (SInt32 *)&fuse_vnodes_current);
         } else {
             if (HNodeAttachVNodeFailed(hn, 0 /* forkIndex */)) {
@@ -180,13 +188,13 @@ fuse_vget_i(mount_t               mp,
 #endif
 
     err = FSNodeGetOrCreateFileVNodeByID(mp, context, nodeid, dvp,
-                                         vtyp, size, vpp, 0);
+                                         vtyp, size, vpp, 0, NULL);
     if (err) {
         return err;
     }
 
-    if (!fuse_isnovncache_mp(mp)) {
-        cache_enter(dvp, *vpp, cnp);
+    if (!fuse_isnovncache_mp(mp) && (cnp->cn_flags & MAKEENTRY)) {
+        fuse_vncache_enter(dvp, *vpp, cnp);
     }
 
 /* found: */
