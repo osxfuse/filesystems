@@ -232,6 +232,11 @@ again:
             break; /* NOTREACHED */
         }
 
+        /*
+         * The kext "hangs" while this is showing, so the timeout_mtx
+         * will only come into play if I run a separate thread for this.
+         */
+
         kr = KUNCUserNotificationDisplayAlert(
                  0,                                   // timeout
                  0,                                   // flags (stop alert)
