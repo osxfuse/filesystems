@@ -209,15 +209,15 @@ again:
         fuse_lck_mtx_lock(data->timeout_mtx);
         switch (data->timeout_status) {
 
-        case FUSE_TIMEOUT_PROCESSING:
-            fuse_lck_mtx_unlock(data->timeout_mtx);
-            goto again;
-            break; /* NOTREACHED */
-
         case FUSE_TIMEOUT_NONE:
             data->timeout_status = FUSE_TIMEOUT_PROCESSING;
             fuse_lck_mtx_unlock(data->timeout_mtx);
             break;
+
+        case FUSE_TIMEOUT_PROCESSING:
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto again;
+            break; /* NOTREACHED */
 
         case FUSE_TIMEOUT_DEAD:
             fuse_lck_mtx_unlock(data->timeout_mtx);
@@ -238,7 +238,7 @@ again:
          */
 
         kr = KUNCUserNotificationDisplayAlert(
-                 0,                                   // timeout
+                 FUSE_TIMEOUT_ALERT_TIMEOUT,          // timeout
                  0,                                   // flags (stop alert)
                  NULL,                                // iconPath
                  NULL,                                // soundPath
@@ -274,26 +274,8 @@ alreadydead:
 
         vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_DEAD, 0);
 
-        goto out;
+        /* goto out; */
     }
-
-    /*
-     * An experimental version of the above:
-    {
-        struct timespec ts = { 1, 0 };
-again:
-        err = msleep(ftick, ftick->tk_aw_mtx, PCATCH, "fu_ans", &ts);
-        if (err == EAGAIN) {
-            if (fdata_kick_get(ftick->tk_data)) {
-                err = ENOTCONN;
-                fticket_set_answered(ftick);
-                goto out;
-            }
-            goto again;
-        }
-    }
-    *
-    */
 
 out:
     fuse_lck_mtx_unlock(ftick->tk_aw_mtx);

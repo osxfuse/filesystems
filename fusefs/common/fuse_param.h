@@ -78,6 +78,7 @@
   "to wait, or eject the volume right now.\n\nIf you eject, any unsaved data "\
   "you might have from this volume could be lost, unless the application(s)"  \
   "you're using allow you to save that data elsewhere."
+#define FUSE_TIMEOUT_ALERT_TIMEOUT         20     /* s */
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
 
