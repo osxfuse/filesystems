@@ -233,8 +233,7 @@ again:
         }
 
         /*
-         * The kext "hangs" while this is showing, so the timeout_mtx
-         * will only come into play if I run a separate thread for this.
+         * We will "hang" while this is showing.
          */
 
         kr = KUNCUserNotificationDisplayAlert(
