@@ -30,6 +30,8 @@
 // NOTE: These uses NSTask to invoke /usr/bin/hdiutil. Because we wait for the 
 // task to finish, our run loop is polled during hdiutil's execution, 
 // potentially leading to reentrancy.
+//
+// BUILD NOTE: link to Security.framework, SecurityFoundation.framework
 
 @interface DiskImageUtilities : NSObject 
 
@@ -42,13 +44,6 @@
 // copies the current app from a read-only disk image to /Applications, with user approval
 //
 // Call this every time from -applicationWillFinishLaunching
-//
-// The app must have these strings in its localizable.strings file:
-//
-// "DiskImageCopyTitle" = "Would you like to copy %@ to your computer's Applications folder and run it from there?";
-// "DiskImageCopyMsg" = "%@ is currently running from the Disk Image, and must be copied for full functionality. Copying may replace an older version in the Applications directory.";
-// "DiskImageCopyOK" = "Copy";
-// "DiskImageCopyCancel" = "Don't Copy";
 
 + (void)handleApplicationLaunchFromReadOnlyDiskImage;
 

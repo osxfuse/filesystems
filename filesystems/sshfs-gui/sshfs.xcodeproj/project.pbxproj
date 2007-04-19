@@ -14,8 +14,8 @@
 		8235791E0B4481C700FE77BB /* askpass in Resources */ = {isa = PBXBuildFile; fileRef = 8235791D0B4481C700FE77BB /* askpass */; };
 		8249C9150B547465007CFB64 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8249C9140B547465007CFB64 /* Localizable.strings */; };
 		82CB0CAA0BD5585E00EDD0B9 /* DiskImageUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 82CB0CA90BD5585E00EDD0B9 /* DiskImageUtilities.m */; };
-		82CB0CAD0BD558B100EDD0B9 /* AuthorizedTaskManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 82CB0CAC0BD558B100EDD0B9 /* AuthorizedTaskManager.m */; };
-		82CB0CBA0BD5593500EDD0B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82CB0CB90BD5593500EDD0B9 /* Security.framework */; };
+		82CB0FC00BD7B61E00EDD0B9 /* SecurityFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82CB0FBF0BD7B61E00EDD0B9 /* SecurityFoundation.framework */; };
+		82CB10310BD7BA5600EDD0B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82CB10300BD7BA5600EDD0B9 /* Security.framework */; };
 		82EDA4D20B44628E00542FAD /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 82EDA4D10B44628E00542FAD /* AppController.m */; };
 		82EDA5CB0B44692400542FAD /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82EDA5050B44660300542FAD /* DiskArbitration.framework */; };
 		8D11072D0486CEB800E47090 /* sshfsMain.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* sshfsMain.m */; settings = {ATTRIBUTES = (); }; };
@@ -49,9 +49,8 @@
 		8249C90D0B5473FC007CFB64 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = Resources/English.lproj/Localizable.strings; sourceTree = "<group>"; };
 		82CB0CA80BD5585E00EDD0B9 /* DiskImageUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiskImageUtilities.h; sourceTree = "<group>"; };
 		82CB0CA90BD5585E00EDD0B9 /* DiskImageUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DiskImageUtilities.m; sourceTree = "<group>"; };
-		82CB0CAB0BD558B100EDD0B9 /* AuthorizedTaskManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AuthorizedTaskManager.h; sourceTree = "<group>"; };
-		82CB0CAC0BD558B100EDD0B9 /* AuthorizedTaskManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AuthorizedTaskManager.m; sourceTree = "<group>"; };
-		82CB0CB90BD5593500EDD0B9 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		82CB0FBF0BD7B61E00EDD0B9 /* SecurityFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityFoundation.framework; path = /System/Library/Frameworks/SecurityFoundation.framework; sourceTree = "<absolute>"; };
+		82CB10300BD7BA5600EDD0B9 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
 		82EDA4D00B44628E00542FAD /* AppController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppController.h; sourceTree = "<group>"; };
 		82EDA4D10B44628E00542FAD /* AppController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppController.m; sourceTree = "<group>"; };
 		82EDA5050B44660300542FAD /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
@@ -77,7 +76,8 @@
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				D4A6C9A609479AB400354625 /* Foundation.framework in Frameworks */,
 				82EDA5CB0B44692400542FAD /* DiskArbitration.framework in Frameworks */,
-				82CB0CBA0BD5593500EDD0B9 /* Security.framework in Frameworks */,
+				82CB0FC00BD7B61E00EDD0B9 /* SecurityFoundation.framework in Frameworks */,
+				82CB10310BD7BA5600EDD0B9 /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,7 +122,8 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				82CB0CB90BD5593500EDD0B9 /* Security.framework */,
+				82CB10300BD7BA5600EDD0B9 /* Security.framework */,
+				82CB0FBF0BD7B61E00EDD0B9 /* SecurityFoundation.framework */,
 				823578530B44786400FE77BB /* CoreFoundation.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 				29B97325FDCFA39411CA2CEA /* Foundation.framework */,
@@ -148,8 +149,6 @@
 				82EDA4D10B44628E00542FAD /* AppController.m */,
 				82CB0CA80BD5585E00EDD0B9 /* DiskImageUtilities.h */,
 				82CB0CA90BD5585E00EDD0B9 /* DiskImageUtilities.m */,
-				82CB0CAB0BD558B100EDD0B9 /* AuthorizedTaskManager.h */,
-				82CB0CAC0BD558B100EDD0B9 /* AuthorizedTaskManager.m */,
 			);
 			name = Sources;
 			sourceTree = "<group>";
@@ -240,7 +239,6 @@
 				8D11072D0486CEB800E47090 /* sshfsMain.m in Sources */,
 				82EDA4D20B44628E00542FAD /* AppController.m in Sources */,
 				82CB0CAA0BD5585E00EDD0B9 /* DiskImageUtilities.m in Sources */,
-				82CB0CAD0BD558B100EDD0B9 /* AuthorizedTaskManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

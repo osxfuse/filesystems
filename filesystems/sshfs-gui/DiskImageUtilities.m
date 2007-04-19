@@ -24,9 +24,10 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <unistd.h>
+#include <Security/Security.h>
+#include <SecurityFoundation/SFAuthorization.h>
 
 #import "DiskImageUtilities.h"
-#import "AuthorizedTaskManager.h"
 
 static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
 
@@ -35,6 +36,7 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
 + (void)copyAndLaunchAppAtPath:(NSString *)oldPath
                toDirectoryPath:(NSString *)newDirectory;
 + (void)killAppAtPath:(NSString *)appPath;
++ (BOOL)doAuthorizedCopyFromPath:(NSString *)src toPath:(NSString *)dest;
 @end
 
 @implementation DiskImageUtilities
@@ -172,11 +174,20 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
       [NSApp activateIgnoringOtherApps:YES];
       
       NSString *displayName = [[NSFileManager defaultManager] displayNameAtPath:mainBundlePath];
-      NSString *msg1template = NSLocalizedString(@"DiskImageCopyTitle", nil);
+      NSString *msg1template = NSLocalizedString(@"Would you like to copy %@ to your "
+                                                 @"computer's Applications folder and "
+                                                 @"run it from there?",
+                                                 @"Copy app from disk image: title");
       NSString *msg1 = [NSString stringWithFormat:msg1template, displayName];
-      NSString *msg2 = NSLocalizedString(@"DiskImageCopyMsg", nil);
-      NSString *btnOK = NSLocalizedString(@"DiskImageCopyOK", nil);
-      NSString *btnCancel = NSLocalizedString(@"DiskImageCopyCancel", nil);
+      NSString *msg2 = NSLocalizedString(@"%@ is currently running from the Disk Image, "
+                                         @"and must be copied for full functionality. "
+                                         @"Copying may replace an older version in the "
+                                         @"Applications directory.",
+                                         @"Copy app from disk image: message");
+      NSString *btnOK = NSLocalizedString(@"Copy",
+                                          @"Copy app from disk image: ok button");
+      NSString *btnCancel = NSLocalizedString(@"Don't Copy",
+                                              @"Copy app from disk image: cancel button");
       
       int result = NSRunAlertPanel(msg1, msg2, btnOK, btnCancel, NULL, displayName);
       if (result == NSAlertDefaultReturn) {
@@ -191,7 +202,7 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
                        toDirectoryPath:[appsPaths objectAtIndex:0]];  
           // calls exit(0) on successful copy/launch
         } else {
-          NSLog(@"Cannot make applications folder path");
+          NSLog(@"DiskImageUtilities: Cannot make applications folder path");
         }
       }
     }
@@ -203,12 +214,10 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
 + (void)copyAndLaunchAppAtPath:(NSString *)oldPath
                toDirectoryPath:(NSString *)newDirectory {
   
+  NSFileManager *fileManager = [NSFileManager defaultManager];
   NSString *pathInApps = [newDirectory stringByAppendingPathComponent:[oldPath lastPathComponent]];
   BOOL isDir;
-  BOOL dirPathExists = [[NSFileManager defaultManager]
-                      fileExistsAtPath:pathInApps isDirectory:&isDir] && isDir;
-  
-  AuthorizedTaskManager *authTaskMgr = [AuthorizedTaskManager sharedAuthorizedTaskManager];
+  BOOL dirPathExists = [fileManager fileExistsAtPath:pathInApps isDirectory:&isDir] && isDir;
   
   // We must authenticate as admin if we don't have write permission
   // in the /Apps directory, or if there's already an app there
@@ -216,35 +225,34 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
   BOOL mustAuth = (![self canWriteToPath:newDirectory] 
                    || (dirPathExists && ![self canWriteToPath:pathInApps]));
   
-  if (!mustAuth || [authTaskMgr authorize]) {
+  [self killAppAtPath:pathInApps];
+  
+  BOOL didCopy;
+  if (mustAuth) {
+    didCopy = [self doAuthorizedCopyFromPath:oldPath toPath:pathInApps];
+  } else {
+    didCopy = [fileManager copyPath:oldPath toPath:pathInApps handler:nil];
+  }
+
+  if (didCopy) {
+    // launch the new copy and bail
+    LSLaunchURLSpec spec;
+    spec.appURL = (CFURLRef) [NSURL fileURLWithPath:pathInApps];
+    spec.launchFlags = kLSLaunchNewInstance;
+    spec.itemURLs = NULL;
+    spec.passThruParams = NULL;
+    spec.asyncRefCon = NULL;
     
-    [self killAppAtPath:pathInApps];
-    
-    BOOL didCopy = [authTaskMgr copyPath:oldPath
-                                  toPath:pathInApps];
-    if (didCopy) {
-      // launch the new copy and bail
-      LSLaunchURLSpec spec;
-      spec.appURL = (CFURLRef) [NSURL fileURLWithPath:pathInApps];
-      spec.launchFlags = kLSLaunchNewInstance;
-      spec.itemURLs = NULL;
-      spec.passThruParams = NULL;
-      spec.asyncRefCon = NULL;
-      
-      OSStatus err = LSOpenFromURLSpec(&spec, NULL); // NULL -> don't care about the launched URL
-      if (err == noErr) {
-        exit(0);
-      } else {
-        NSLog(@"DiskImageUtilities: Error %d launching \"%@\"", err, pathInApps);
-      }
+    OSStatus err = LSOpenFromURLSpec(&spec, NULL); // NULL -> don't care about the launched URL
+    if (err == noErr) {
+      exit(0);
     } else {
-      // copying to /Applications failed 
-      NSLog(@"DiskImageUtilities: Error copying to \"%@\"", pathInApps);     
+      NSLog(@"DiskImageUtilities: Error %d launching \"%@\"", err, pathInApps);
     }
   } else {
-    // user cancelled admin auth 
+    // copying to /Applications failed 
+    NSLog(@"DiskImageUtilities: Error copying to \"%@\"", pathInApps);     
   }
-  
 }
 
 // looks for an app running from the specified path, and calls KillProcess on it
@@ -281,4 +289,53 @@ static NSString* const kHDIUtilPath = @"/usr/bin/hdiutil";
   return (stat == 0);
 }
 
+// doAuthorizedCopyFromPath does an authorized copy, getting admin rights
+//
+// NOTE: when running the task with admin privileges, this waits on any child 
+// process, since AEWP doesn't tell us the child's pid.  This could be fooled 
+// by any other child process that quits in the window between launch and 
+// completion of our actual tool.
++ (BOOL)doAuthorizedCopyFromPath:(NSString *)src toPath:(NSString *)dest {
+  // authorize
+  AuthorizationFlags authFlags =  kAuthorizationFlagPreAuthorize 
+                                | kAuthorizationFlagExtendRights
+                                | kAuthorizationFlagInteractionAllowed;
+  AuthorizationItem authItem = {kAuthorizationRightExecute, 0, nil, 0}; 
+  AuthorizationRights authRights = {1, &authItem}; 
+  SFAuthorization *authorization = [SFAuthorization authorizationWithFlags:authFlags
+                                                                    rights:&authRights
+                                                               environment:kAuthorizationEmptyEnvironment];
+  
+  // execute the copy
+  const char taskPath[] = "/usr/bin/ditto";
+  const char* arguments[] = { 
+    "-rsrcFork",  // 0: copy resource forks; --rsrc requires 10.3
+    NULL,  // 1: src path
+    NULL,  // 2: dest path
+    NULL 
+  };
+  arguments[1] = [src fileSystemRepresentation];
+  arguments[2] = [dest fileSystemRepresentation];
+  
+  FILE **kNoPipe = nil;
+  OSStatus status = AuthorizationExecuteWithPrivileges([authorization authorizationRef],
+                                                       taskPath,
+                                                       kAuthorizationFlagDefaults,
+                                                       (char *const *)arguments,
+                                                       kNoPipe);
+  if (status == errAuthorizationSuccess) {
+    int wait_status;
+    int pid = wait(&wait_status);
+    if (pid == -1 || !WIFEXITED(wait_status))	{
+      status = -1;
+    } else {
+      status = WEXITSTATUS(wait_status);
+    }
+  }
+  
+  // deauthorize
+  [authorization invalidateCredentials];
+  
+  return (status == 0);
+}
 @end
