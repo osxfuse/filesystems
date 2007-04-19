@@ -13,6 +13,7 @@
 		823578540B44786400FE77BB /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 823578530B44786400FE77BB /* CoreFoundation.framework */; };
 		8235791E0B4481C700FE77BB /* askpass in Resources */ = {isa = PBXBuildFile; fileRef = 8235791D0B4481C700FE77BB /* askpass */; };
 		8249C9150B547465007CFB64 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 8249C9140B547465007CFB64 /* Localizable.strings */; };
+		82743E570BD7CE2D006FB711 /* sshnodelay.so in Resources */ = {isa = PBXBuildFile; fileRef = 82743E560BD7CE2D006FB711 /* sshnodelay.so */; };
 		82CB0CAA0BD5585E00EDD0B9 /* DiskImageUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 82CB0CA90BD5585E00EDD0B9 /* DiskImageUtilities.m */; };
 		82CB0FC00BD7B61E00EDD0B9 /* SecurityFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82CB0FBF0BD7B61E00EDD0B9 /* SecurityFoundation.framework */; };
 		82CB10310BD7BA5600EDD0B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82CB10300BD7BA5600EDD0B9 /* Security.framework */; };
@@ -47,6 +48,7 @@
 		823578530B44786400FE77BB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		8235791D0B4481C700FE77BB /* askpass */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = askpass; sourceTree = BUILT_PRODUCTS_DIR; };
 		8249C90D0B5473FC007CFB64 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.strings; name = English; path = Resources/English.lproj/Localizable.strings; sourceTree = "<group>"; };
+		82743E560BD7CE2D006FB711 /* sshnodelay.so */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = sshnodelay.so; path = Resources/sshnodelay.so; sourceTree = "<group>"; };
 		82CB0CA80BD5585E00EDD0B9 /* DiskImageUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DiskImageUtilities.h; sourceTree = "<group>"; };
 		82CB0CA90BD5585E00EDD0B9 /* DiskImageUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DiskImageUtilities.m; sourceTree = "<group>"; };
 		82CB0FBF0BD7B61E00EDD0B9 /* SecurityFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SecurityFoundation.framework; path = /System/Library/Frameworks/SecurityFoundation.framework; sourceTree = "<absolute>"; };
@@ -114,6 +116,7 @@
 				D4A6C9DF09479C8900354625 /* MainMenu.nib */,
 				823578200B44701F00FE77BB /* ssh.icns */,
 				8205AF790B653F3700A99579 /* sshfs-static */,
+				82743E560BD7CE2D006FB711 /* sshnodelay.so */,
 				8235791D0B4481C700FE77BB /* askpass */,
 			);
 			name = Resources;
@@ -218,6 +221,7 @@
 				8235791E0B4481C700FE77BB /* askpass in Resources */,
 				8249C9150B547465007CFB64 /* Localizable.strings in Resources */,
 				8205AF7A0B653F3700A99579 /* sshfs-static in Resources */,
+				82743E570BD7CE2D006FB711 /* sshnodelay.so in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
