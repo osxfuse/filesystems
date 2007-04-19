@@ -75,6 +75,7 @@ struct mntopt mopts[] = {
     { "authopaqueaccess",    1, FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS,  1 }, // kused
     { "browse",              1, FUSE_MOPT_NO_BROWSE,              1 }, // kused
     { "localcaches",         1, FUSE_MOPT_NO_LOCALCACHES,         1 }, // kused
+    { "noping_diskarb",      1, FUSE_MOPT_PING_DISKARB,           0 }, // kused
     { "readahead",           1, FUSE_MOPT_NO_READAHEAD,           1 }, // kused
     { "synconclose",         1, FUSE_MOPT_NO_SYNCONCLOSE,         1 }, // kused
     { "syncwrites",          1, FUSE_MOPT_NO_SYNCWRITES,          1 }, // kused
@@ -515,7 +516,7 @@ main(int argc, char **argv)
     int       fd        = -1;
     int32_t   dindex    = -1;
     char     *fdnam     = NULL;
-    uint64_t  altflags  = 0;
+    uint64_t  altflags  = 0 | FUSE_MOPT_PING_DISKARB;
     char     *mntpath   = NULL;
 
     int i, ch = '\0', done = 0;
@@ -843,12 +844,12 @@ showhelp()
       "    -o noauthopaqueaccess  set MNTK_AUTH_OPAQUE_ACCESS in the kernel\n"
       "    -o nobrowse            set MNT_DONTBROWSE in the kernel\n"
       "    -o nolocalcaches       meta option equivalent to noreadahead,noubc,novncache\n"
+      "    -o noping_diskarb      do not ping Disk Arbitration (pings by default)\n"
       "    -o noreadahead         disable I/O read-ahead behavior for this file system\n"
       "    -o nosynconclose       disable sync-on-close behavior (enabled by default)\n"
       "    -o nosyncwrites        disable synchronous-writes behavior (dangerous)\n"
       "    -o noubc               disable the unified buffer cache for this file system\n"
       "    -o novncache           disable the vnode name cache for this file system\n"
-      "    -o ping_diskarb        ping Disk Arbitration\n"
       "    -o subtype=<num>       set the file system's subtype identifier\n"
       "    -o volname=<name>      set the file system's volume name\n"      
     );
