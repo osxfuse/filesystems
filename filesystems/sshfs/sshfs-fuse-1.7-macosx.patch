@@ -208,7 +208,7 @@ diff -Naur old/sshfs.c new/sshfs.c
 +    if (!sshfs_program_path[0]) {
 +        goto nobundle;
 +    }
-+    sshfs_program_path_base = basename(sshfs_program_path); 
++    sshfs_program_path_base = dirname(sshfs_program_path); 
 +    if (!sshfs_program_path_base) {
 +        goto nobundle;
 +    }
@@ -393,7 +393,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      case KEY_VERSION:
 +#if (__FreeBSD__ >= 10)
 +        fprintf(stderr, "SSHFS version %s (MacFUSE, %d, %s, %s)\n",
-+                PACKAGE_VERSION, 7, __DATE__, __TIME__);
++                PACKAGE_VERSION, 8, __DATE__, __TIME__);
 +#else
          fprintf(stderr, "SSHFS version %s\n", PACKAGE_VERSION);
 +#endif

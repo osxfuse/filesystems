@@ -523,10 +523,15 @@ main(int argc, char **argv)
     struct mntopt  *mo;
     struct mntval  *mv;
     fuse_mount_args args;
-    
+
     if (!getenv("MOUNT_FUSEFS_CALL_BY_LIB")) {
         showhelp();
         /* NOTREACHED */
+    }
+
+    /* Kludge to make "<fsdaemon> --version" happy. */
+    if ((argc == 2) && !strncmp(argv[1], "--version", strlen("--version"))) {
+        showversion(1);
     }
 
     if (!getenv("MOUNT_FUSEFS_IGNORE_VERSION_MISMATCH")) {
