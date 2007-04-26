@@ -72,19 +72,22 @@
 #define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
 
 #define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Eject Volume"
-#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Continue to Wait"
-#define FUSE_TIMEOUT_ALERT_MESSAGE                                            \
-  "The MacFUSE file system daemon is not responding. You can either continue "\
-  "to wait, or eject the volume right now.\n\nIf you eject, any unsaved data "\
-  "you might have from this volume could be lost, unless the application(s)"  \
-  "you're using allow you to save that data elsewhere."
-#define FUSE_TIMEOUT_ALERT_TIMEOUT         20     /* s */
+#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Wait a Little More"
+#define FUSE_TIMEOUT_OTHER_BUTTON_TITLE     "Disable this Alert"
+#define FUSE_TIMEOUT_ALERT_MESSAGE                                             \
+  "The MacFUSE file system daemon is not responding. You can eject the volume "\
+  "right now. Any unsaved data you might have from this volume could then be " \
+  "lost, unless the applications you are using allow you to save that data "   \
+  "elsewhere.\n\nAlternatively, you can wait a little more. If the daemon "    \
+  "still doesn't respond, you'll see this alert again.\n\nFinally, you can "   \
+  "disable this alert altogether and wait for as long as it takes."
+#define FUSE_TIMEOUT_ALERT_TIMEOUT         30     /* s */
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
 
 #define FUSE_LINK_MAX                      LINK_MAX
 #define FUSE_UIO_BACKUP_MAX                8
 
-#define FUSE_UNMOUNT_SIGNAL                SIGKILL
+#define FUSE_POSTUNMOUNT_SIGNAL            SIGKILL
 
 #endif /* _FUSE_PARAM_H_ */

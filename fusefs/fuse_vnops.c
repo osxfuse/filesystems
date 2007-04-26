@@ -2328,6 +2328,7 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
     for (type = 0; type < FUFH_MAXTYPE; type++) {
         fufh = &(fvdat->fufh[type]);
         if (fufh->fufh_flags & FUFH_VALID) {
+            int open_count = fufh->open_count;
             fufh->fufh_flags &= ~FUFH_MAPPED;
             fufh->open_count = 0;
             if ((fufh->fufh_flags & FUFH_STRATEGY) ||
@@ -2340,7 +2341,8 @@ fuse_vnop_reclaim(struct vnop_reclaim_args *ap)
                  */
                 if (!fuse_isdeadfs(vp) && !(fvdat->flag & FN_REVOKING)) {
                     panic("MacFUSE: vnode reclaimed with valid fufh "
-                          "(type=%d, vtype=%d)", type, vnode_vtype(vp));
+                          "(type=%d, vtype=%d, open_count=%d)",
+                          type, vnode_vtype(vp), open_count);
                 }
             }
         }

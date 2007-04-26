@@ -530,8 +530,17 @@ main(int argc, char **argv)
     }
 
     /* Kludge to make "<fsdaemon> --version" happy. */
-    if ((argc == 2) && !strncmp(argv[1], "--version", strlen("--version"))) {
+    if ((argc == 2) &&
+        ((!strncmp(argv[1], "--version", strlen("--version"))) ||
+         (!strncmp(argv[1], "-v", strlen("-v"))))) {
         showversion(1);
+    }
+
+    /* Kludge to make "<fsdaemon> --help" happy. */
+    if ((argc == 2) &&
+        ((!strncmp(argv[1], "--help", strlen("--help"))) ||
+         (!strncmp(argv[1], "-h", strlen("-h"))))) {
+        showhelp();
     }
 
     if (!getenv("MOUNT_FUSEFS_IGNORE_VERSION_MISMATCH")) {
@@ -676,6 +685,14 @@ main(int argc, char **argv)
     if ((altflags & FUSE_MOPT_NO_SYNCONCLOSE) &&
         !(altflags & FUSE_MOPT_NO_SYNCWRITES)) {
         errx(1, "the 'nosynconclose' option requires 'nosyncwrites'");
+    }
+
+    /*
+     * 'novncache' must not appear with 'extended_security'
+     */
+    if ((altflags & FUSE_MOPT_NO_VNCACHE) &&
+        (altflags & FUSE_MOPT_EXTENDED_SECURITY)) {
+        errx(1, "'novncache' is not allowed with 'extended_security'");
     }
 
     errno = 0;

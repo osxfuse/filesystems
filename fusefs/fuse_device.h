@@ -17,6 +17,8 @@ struct fuse_data;
 int fuse_devices_start(void);
 int fuse_devices_stop(void);
 
+int fuse_devices_kill_unit(int unit);
+
 fuse_softc_t      fuse_softc_get(dev_t dev);
 struct fuse_data *fuse_softc_get_data(fuse_softc_t fdev);
 void              fuse_softc_set_data(fuse_softc_t fdev,

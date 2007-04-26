@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
+#include "fuse_device.h"
 #include "fuse_kernel.h"
 #include "fuse_sysctl.h"
 #include <fuse_param.h>
@@ -23,6 +24,7 @@ uint32_t fuse_fh_upcall_count        = 0;                                  // r
 int32_t  fuse_iov_credit             = FUSE_DEFAULT_IOV_CREDIT;            // rw
 int32_t  fuse_iov_current            = 0;                                  // r
 uint32_t fuse_iov_permanent_bufsize  = FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE; // rw
+int32_t  fuse_kill_fs                = -1;                                 // w
 uint32_t fuse_lookup_cache_hits      = 0;                                  // r
 uint32_t fuse_lookup_cache_misses    = 0;                                  // r
 uint32_t fuse_lookup_cache_overrides = 0;                                  // r
@@ -34,6 +36,7 @@ int32_t  fuse_vnodes_current         = 0;                                  // r
 
 SYSCTL_DECL(_macfuse);
 SYSCTL_NODE(, OID_AUTO, macfuse, CTLFLAG_RW, 0, "MacFUSE Statistics");
+SYSCTL_NODE(_macfuse, OID_AUTO, control, CTLFLAG_RW, 0, "MacFUSE Controls");
 SYSCTL_NODE(_macfuse, OID_AUTO, counters, CTLFLAG_RW, 0,
             "MacFUSE Statistics: Monotonic Counters");
 SYSCTL_NODE(_macfuse, OID_AUTO, resourceusage, CTLFLAG_RW, 0,
@@ -42,6 +45,49 @@ SYSCTL_NODE(_macfuse, OID_AUTO, tunables, CTLFLAG_RW, 0,
             "MacFUSE Statistics: Tunables");
 SYSCTL_NODE(_macfuse, OID_AUTO, version, CTLFLAG_RW, 0,
             "MacFUSE Statistics: Version Information");
+
+/* fuse.control */
+
+int sysctl_macfuse_control_kill_fs_handler SYSCTL_HANDLER_ARGS;
+
+int
+sysctl_macfuse_control_kill_fs_handler SYSCTL_HANDLER_ARGS
+{
+    int error = 0;
+    (void)oidp;
+
+    if (arg1) {
+        error = SYSCTL_OUT(req, arg1, sizeof(int));
+    } else {
+        error = SYSCTL_OUT(req, &arg2, sizeof(int));
+    }
+
+    if (error || !req->newptr) {
+        return error;
+    }
+
+    if (!arg1) {
+        error = EPERM;
+    } else {
+        error = SYSCTL_IN(req, arg1, sizeof(int));
+        if (error == 0) {
+            error = fuse_devices_kill_unit(*(int *)arg1);
+        }
+        fuse_kill_fs = -1; /* set it back */
+    }
+
+    return error;
+}
+
+SYSCTL_PROC(_macfuse_control,                // our parent
+            OID_AUTO,                        // automatically assign object ID
+            kill_fs,                         // our name
+            (CTLTYPE_INT | CTLFLAG_WR),      // type flag/access flag
+            &fuse_kill_fs,                   // location of our data
+            0,                               // argument passed to our handler
+            sysctl_macfuse_control_kill_fs_handler, // our handler function
+            "I",                             // our data type (integer)
+            "MacFUSE Controls: Kill the Given File System");
 
 /* fuse.counters */
 SYSCTL_INT(_macfuse_counters, OID_AUTO, device_use, CTLFLAG_RD,
@@ -89,10 +135,12 @@ SYSCTL_STRING(_macfuse_version, OID_AUTO, string, CTLFLAG_RD,
 
 static struct sysctl_oid *fuse_sysctl_list[] =
 {
+    &sysctl__macfuse_control,
     &sysctl__macfuse_counters,
     &sysctl__macfuse_resourceusage,
     &sysctl__macfuse_tunables,
     &sysctl__macfuse_version,
+    &sysctl__macfuse_control_kill_fs,
     &sysctl__macfuse_counters_device_use,
     &sysctl__macfuse_counters_filehandle_reuse,
     &sysctl__macfuse_counters_filehandle_upcalls,

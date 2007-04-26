@@ -32,6 +32,31 @@ struct fuse_softc fuse_softc_table[FUSE_NDEVICES];
 
 #define FUSE_SOFTC_FROM_UNIT_FAST(u) (fuse_softc_t)&(fuse_softc_table[(u)])
 
+int
+fuse_devices_kill_unit(int unit)
+{
+    int error = ENOENT;
+    struct fuse_softc *fdev;
+
+    if ((unit < 0) || (unit >= FUSE_NDEVICES)) {
+        return EINVAL;
+    }
+
+    fdev = FUSE_SOFTC_FROM_UNIT_FAST(unit);
+    if (!fdev) {
+        return ENOENT;
+    }
+
+    FUSE_LOCK();
+    if (fdev->data) {
+        fdata_kick_set(fdev->data);
+        error = 0;
+    }
+    FUSE_UNLOCK();
+
+    return error;
+}
+
 fuse_softc_t
 fuse_softc_get(dev_t dev)
 {

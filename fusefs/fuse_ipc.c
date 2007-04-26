@@ -14,7 +14,7 @@
 
 #include <fuse_param.h>
 
-#include <UserNotification/kUNCUserNotifications.h>
+#include <UserNotification/KUNCUserNotifications.h>
 
 static struct fuse_ticket *fticket_alloc(struct fuse_data *data);
 static void                fticket_refresh(struct fuse_ticket *ftick);
@@ -246,7 +246,7 @@ again:
                  FUSE_TIMEOUT_ALERT_MESSAGE,          // alertMessage
                  FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE,   // defaultButtonTitle
                  FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE, // alternateButtonTitle
-                 NULL,                                // otherButtonTitle
+                 FUSE_TIMEOUT_OTHER_BUTTON_TITLE,     // otherButtonTitle
                  &rf);
 
         if (kr != KERN_SUCCESS) {
@@ -255,13 +255,29 @@ again:
         }
 
         fuse_lck_mtx_lock(data->timeout_mtx);
-        if (rf == kKUNCDefaultResponse) {
+        switch (rf) {
+        case kKUNCDefaultResponse: /* Eject */
             data->timeout_status = FUSE_TIMEOUT_DEAD;
             fuse_lck_mtx_unlock(data->timeout_mtx);
-        } else {
+            break;
+
+        case kKUNCAlternateResponse: /* Wait More */
+        case kKUNCOtherResponse:     /* Disable Alert */
+        case kKUNCCancelResponse:    /* No Selection */
             data->timeout_status = FUSE_TIMEOUT_NONE;
+            if (rf == kKUNCOtherResponse) {
+                data->daemon_timeout_p = (struct timespec *)0;
+            }
             fuse_lck_mtx_unlock(data->timeout_mtx);
             goto again;
+            break; /* NOTREACHED */
+
+        default:
+            IOLog("MacFUSE: unknown response from alert panel (kr=%d, rf=%d)\n",
+                  kr, rf);
+            data->timeout_status = FUSE_TIMEOUT_DEAD;
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            break;
         }
 
 alreadydead:

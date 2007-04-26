@@ -204,7 +204,7 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
 
     if (fusefs_args.altflags & FUSE_MOPT_NO_VNCACHE) {
         if (fusefs_args.altflags & FUSE_MOPT_EXTENDED_SECURITY) {
-            /* 'novncache' and 'extende_security' don't mix well. */
+            /* 'novncache' and 'extended_security' don't mix well. */
             return EINVAL;
         }
         mntopts |= FSESS_NO_VNCACHE;
@@ -441,7 +441,7 @@ alreadydead:
     vfs_setfsprivate(mp, NULL);
 
     if (daemonpid && needsignal) {
-        proc_signal(daemonpid, FUSE_UNMOUNT_SIGNAL);
+        proc_signal(daemonpid, FUSE_POSTUNMOUNT_SIGNAL);
     }
 
     return (0);
