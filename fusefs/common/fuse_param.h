@@ -71,8 +71,8 @@
 #define FUSE_MIN_DAEMON_TIMEOUT            0      /* s */
 #define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
 
-#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Eject Volume"
-#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Wait a Little More"
+#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Continue to Wait"
+#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Eject Volume"
 #define FUSE_TIMEOUT_OTHER_BUTTON_TITLE     "Disable this Alert"
 #define FUSE_TIMEOUT_ALERT_MESSAGE                                             \
   "The MacFUSE file system daemon is not responding. You can eject the volume "\
