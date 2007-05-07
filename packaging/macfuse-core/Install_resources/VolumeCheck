@@ -21,8 +21,8 @@ then
   exit 113
 fi
 
-MAJOR=`echo "$VERSION" | awk -F. '{ print $1 }'`
-MINOR=`echo "$VERSION" | awk -F. '{ print $2 }'`
+MAJOR=`echo "$VERSION" | /usr/bin/awk -F. '{ print $1 }'`
+MINOR=`echo "$VERSION" | /usr/bin/awk -F. '{ print $2 }'`
 if [ \( x"$MAJOR" = x"" \) -o \( x"$MINOR" = x"" \) ]
 then
   # Unable to parse OS X version obtained from volume.

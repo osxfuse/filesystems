@@ -13,14 +13,14 @@ SYSTEM_ROOT=$4
 # > version 1.0, we need to blow this away every time :-(
 if [ -d $INSTALL_VOLUME/System/Library/Filesystems/fusefs.fs ]
 then
-  rm -rf $INSTALL_VOLUME/System/Library/Filesystems/fusefs.fs
+  /bin/rm -rf $INSTALL_VOLUME/System/Library/Filesystems/fusefs.fs
 fi
 
 ## MacFUSE Kernel Extension
 
 if [ -d $INSTALL_VOLUME/Library/Extensions/fusefs.kext ]
 then
-  rm -rf $INSTALL_VOLUME/Library/Extensions/fusefs.kext
+  /bin/rm -rf $INSTALL_VOLUME/Library/Extensions/fusefs.kext
 fi
 
 # We originally installed the kernel extension in /System/Library/Extensions.
@@ -28,16 +28,16 @@ fi
 # parent directory.
 if [ -d $INSTALL_VOLUME/System/Library/Extensions/fusefs.kext ]
 then
-  rm -rf $INSTALL_VOLUME/System/Library/Extensions/fusefs.kext
-  touch $INSTALL_VOLUME/System/Library/Extensions
+  /bin/rm -rf $INSTALL_VOLUME/System/Library/Extensions/fusefs.kext
+  /usr/bin/touch $INSTALL_VOLUME/System/Library/Extensions
 fi
 
 ## MacFUSE User Library
 
 # Remove any incompatible versions of libfuse we might have installed.
-rm -f $INSTALL_VOLUME/usr/local/lib/libfuse.*
-rm -f $INSTALL_VOLUME/usr/local/lib/libulockmgr.*
-rm -f $INSTALL_VOLUME/usr/local/lib/pkgconfig/fuse.pc
+/bin/rm -f $INSTALL_VOLUME/usr/local/lib/libfuse.*
+/bin/rm -f $INSTALL_VOLUME/usr/local/lib/libulockmgr.*
+/bin/rm -f $INSTALL_VOLUME/usr/local/lib/pkgconfig/fuse.pc
 
 ## Signal success
 
