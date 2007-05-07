@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2006-08-17 03:07:05.000000000 -0700
-+++ new/Makefile.in	2007-04-19 03:54:33.000000000 -0700
++++ new/Makefile.in	2007-05-04 14:59:03.000000000 -0700
 @@ -597,8 +597,13 @@
  uninstall-local:
  	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
@@ -17,7 +17,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-04-19 03:54:33.000000000 -0700
++++ new/README.MacFUSE	2007-05-04 14:59:03.000000000 -0700
 @@ -0,0 +1,7 @@
 +MacFUSE Project Page:
 +
@@ -28,7 +28,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2006-08-16 01:51:21.000000000 -0700
-+++ new/cache.c	2007-04-19 03:54:33.000000000 -0700
++++ new/cache.c	2007-05-04 15:04:12.000000000 -0700
 @@ -116,9 +116,20 @@
      pthread_mutex_unlock(&cache.lock);
  }
@@ -70,9 +70,38 @@ diff -Naur old/cache.c new/cache.c
      }
      return err;
  }
+@@ -486,6 +499,9 @@
+     cache.next_oper = oper;
+ 
+     cache_unity_fill(oper, &cache_oper);
++#if (__FreeBSD__ >= 10)
++    cache_enabled = cache.on;
++#endif
+     if (cache.on) {
+         cache_oper.getattr  = oper->oper.getattr ? cache_getattr : NULL;
+         cache_oper.readlink = oper->oper.readlink ? cache_readlink : NULL;
+@@ -539,3 +555,7 @@
+ 
+     return fuse_opt_parse(args, &cache, cache_opts, NULL);
+ }
++
++#if (__FreeBSD__ >= 10)
++int cache_enabled;
++#endif
+diff -Naur old/cache.h new/cache.h
+--- old/cache.h	2006-02-20 03:43:23.000000000 -0800
++++ new/cache.h	2007-05-04 15:03:30.000000000 -0700
+@@ -26,3 +26,7 @@
+ int cache_parse_options(struct fuse_args *args);
+ void cache_add_attr(const char *path, const struct stat *stbuf);
+ void cache_invalidate(const char *path);
++
++#if (__FreeBSD__ >= 10)
++extern int cache_enabled;
++#endif
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2006-08-18 03:34:08.000000000 -0700
-+++ new/sshfs.c	2007-04-19 04:10:38.000000000 -0700
++++ new/sshfs.c	2007-05-04 15:03:20.000000000 -0700
 @@ -18,7 +18,9 @@
  #include <string.h>
  #include <stdint.h>
@@ -134,15 +163,18 @@ diff -Naur old/sshfs.c new/sshfs.c
      struct list_head list;
  };
  
-@@ -147,6 +179,7 @@
+@@ -147,6 +179,10 @@
      int is_seq;
      int connver;
      int modifver;
 +    int refs;
++#if (__FreeBSD__ >= 10)
++    pthread_mutex_t file_lock;
++#endif
  };
  
  struct sshfs {
-@@ -157,7 +190,9 @@
+@@ -157,7 +193,9 @@
      char *workarounds;
      int rename_workaround;
      int nodelay_workaround;
@@ -152,7 +184,15 @@ diff -Naur old/sshfs.c new/sshfs.c
      int transform_symlinks;
      int follow_symlinks;
      int no_check_root;
-@@ -184,6 +219,9 @@
+@@ -180,10 +218,17 @@
+     int server_version;
+     unsigned remote_uid;
+     unsigned local_uid;
++#if (__FreeBSD__ >= 10)
++    unsigned remote_gid;
++    unsigned local_gid;
++#endif
+     int remote_uid_detected;
      unsigned blksize;
      char *progname;
      long modifver;
@@ -162,7 +202,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  };
  
  static struct sshfs sshfs;
-@@ -270,16 +308,24 @@
+@@ -270,16 +315,24 @@
  static struct fuse_opt workaround_opts[] = {
      SSHFS_OPT("none",       rename_workaround, 0),
      SSHFS_OPT("none",       nodelay_workaround, 0),
@@ -187,7 +227,25 @@ diff -Naur old/sshfs.c new/sshfs.c
      FUSE_OPT_END
  };
  
-@@ -627,13 +673,36 @@
+@@ -570,8 +623,17 @@
+         }
+     }
+ 
++#if (__FreeBSD__ >= 10)
++    if (sshfs.remote_uid_detected) {
++        if (uid == sshfs.remote_uid)
++            uid = sshfs.local_uid;
++        if (gid == sshfs.remote_gid)
++            gid = sshfs.local_gid;
++    }
++#else
+     if (sshfs.remote_uid_detected && uid == sshfs.remote_uid)
+         uid = sshfs.local_uid;
++#endif
+ 
+     memset(stbuf, 0, sizeof(struct stat));
+     stbuf->st_mode = mode;
+@@ -627,13 +689,36 @@
          _exit(1);
  }
  
@@ -224,7 +282,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      snprintf(sopath, sizeof(sopath), "%s/%s", LIBDIR, SSHNODELAY_SO);
      res = access(sopath, R_OK);
      if (res == -1) {
-@@ -657,17 +726,26 @@
+@@ -657,17 +742,26 @@
              return -1;
          }
      }
@@ -251,7 +309,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  
  static int start_ssh(void)
  {
-@@ -687,8 +765,15 @@
+@@ -687,8 +781,15 @@
      } else if (pid == 0) {
          int devnull;
  
@@ -267,7 +325,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  
          devnull = open("/dev/null", O_WRONLY);
  
-@@ -822,7 +907,7 @@
+@@ -822,7 +923,7 @@
      unsigned nout = 0;
  
      assert(count <= SFTP_MAX_IOV - 1);
@@ -276,7 +334,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      buf_add_uint32(&buf, iov_length(iov, count) + 5);
      buf_add_uint8(&buf, type);
      buf_add_uint32(&buf, id);
-@@ -947,8 +1032,13 @@
+@@ -947,8 +1048,13 @@
                                                       GUINT_TO_POINTER(id));
          if (req == NULL)
              fprintf(stderr, "request %i not found\n", id);
@@ -291,7 +349,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          pthread_mutex_unlock(&sshfs.lock);
          if (req != NULL) {
              struct timeval now;
-@@ -1046,7 +1136,7 @@
+@@ -1046,7 +1152,7 @@
  static int sftp_init()
  {
      int res = -1;
@@ -300,7 +358,18 @@ diff -Naur old/sshfs.c new/sshfs.c
      struct buffer buf;
      buf_init(&buf, 0);
      if (sftp_send_iov(SSH_FXP_INIT, PROTO_VERSION, NULL, 0) == -1)
-@@ -1342,6 +1432,11 @@
+@@ -1125,6 +1231,10 @@
+ 
+     sshfs.remote_uid = stbuf.st_uid;
+     sshfs.local_uid = getuid();
++#if (__FreeBSD__ >= 10)
++    sshfs.remote_gid = stbuf.st_gid;
++    sshfs.local_gid = getgid();
++#endif
+     sshfs.remote_uid_detected = 1;
+     DEBUG("remote_uid = %i\n", sshfs.remote_uid);
+ 
+@@ -1342,6 +1452,11 @@
          pthread_mutex_unlock(&sshfs.lock);
          goto out;
      }
@@ -312,35 +381,80 @@ diff -Naur old/sshfs.c new/sshfs.c
      g_hash_table_insert(sshfs.reqtab, GUINT_TO_POINTER(id), req);
      gettimeofday(&req->start, NULL);
      DEBUG("[%05i] %s\n", id, type_name(type));
-@@ -1768,6 +1863,7 @@
+@@ -1766,8 +1881,12 @@
+     sf = g_new0(struct sshfs_file, 1);
+     list_init(&sf->write_reqs);
      pthread_cond_init(&sf->write_finished, NULL);
++#if (__FreeBSD__ >= 10)
++    pthread_mutex_init(&sf->file_lock, NULL);
++#endif
      /* Assume random read after open */
      sf->is_seq = 0;
 +    sf->refs = 1;
      sf->next_pos = 0;
      sf->modifver= sshfs.modifver;
      sf->connver = sshfs.connver;
-@@ -1851,6 +1947,19 @@
+@@ -1794,11 +1913,21 @@
+     }
+ 
+     if (!err) {
++#if (__FreeBSD__ >= 10)
++        if (cache_enabled)
++            cache_add_attr(path, &stbuf);
++#else
+         cache_add_attr(path, &stbuf);
++#endif
+         buf_finish(&sf->handle);
+         fi->fh = (unsigned long) sf;
+     } else {
++#if (__FreeBSD__ >= 10)
++        if (cache_enabled)
++            cache_invalidate(path);
++#else
+         cache_invalidate(path);
++#endif
+         g_free(sf);
+     }
+     buf_free(&buf);
+@@ -1851,6 +1980,37 @@
      return sshfs_flush(path, fi);
  }
  
 +static void sshfs_file_put(struct sshfs_file *sf)
 +{
++#if (__FreeBSD__ >= 10)
++    pthread_mutex_lock(&sf->file_lock);
++#endif
 +    sf->refs--;
++#if (__FreeBSD__ >= 10)
++    if (!sf->refs) {
++        pthread_mutex_unlock(&sf->file_lock);
++        g_free(sf);
++    } else {
++        pthread_mutex_unlock(&sf->file_lock);
++    }
++#else
 +    if (!sf->refs)
 +        g_free(sf);
++#endif
 +}
 +
 +static struct sshfs_file *sshfs_file_get(struct sshfs_file *sf)
 +{
++#if (__FreeBSD__ >= 10)
++    pthread_mutex_lock(&sf->file_lock);
++#endif
 +    sf->refs++;
++#if (__FreeBSD__ >= 10)
++    pthread_mutex_unlock(&sf->file_lock);
++#endif
 +    return sf;
 +}
 +
  static int sshfs_release(const char *path, struct fuse_file_info *fi)
  {
      struct sshfs_file *sf = get_sshfs_file(fi);
-@@ -1861,7 +1970,7 @@
+@@ -1861,7 +2021,7 @@
      }
      buf_free(handle);
      chunk_put_locked(sf->readahead);
@@ -349,7 +463,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      return 0;
  }
  
-@@ -2084,6 +2193,7 @@
+@@ -2084,6 +2244,7 @@
      }
      list_del(&req->list);
      pthread_cond_broadcast(&sf->write_finished);
@@ -357,7 +471,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  }
  
  static int sshfs_write(const char *path, const char *wbuf, size_t size,
-@@ -2110,7 +2220,7 @@
+@@ -2110,7 +2271,7 @@
      iov[1].iov_len = size;
      if (!sshfs.sync_write && !sf->write_error)
          err = sftp_request_send(SSH_FXP_WRITE, iov, 2, sshfs_write_begin,
@@ -366,7 +480,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      else
          err = sftp_request_iov(SSH_FXP_WRITE, iov, 2, SSH_FXP_STATUS, NULL);
      buf_free(&buf);
-@@ -2330,6 +2440,7 @@
+@@ -2330,6 +2491,7 @@
  {
      pthread_mutex_init(&sshfs.lock, NULL);
      pthread_mutex_init(&sshfs.lock_write, NULL);
@@ -374,7 +488,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.reqtab = g_hash_table_new(NULL, NULL);
      if (!sshfs.reqtab) {
          fprintf(stderr, "failed to create hash table\n");
-@@ -2396,8 +2507,12 @@
+@@ -2396,8 +2558,12 @@
  "             none             no workarounds enabled\n"
  "             all              all workarounds enabled\n"
  "             [no]rename       fix renaming to existing file (default: off)\n"
@@ -387,20 +501,20 @@ diff -Naur old/sshfs.c new/sshfs.c
  "    -o idmap=TYPE          user/group ID mapping, possible types are:\n"
  "             none             no translation of the ID space (default)\n"
  "             user             only translate UID of connecting user\n"
-@@ -2476,7 +2591,12 @@
+@@ -2476,7 +2642,12 @@
          exit(1);
  
      case KEY_VERSION:
 +#if (__FreeBSD__ >= 10)
 +        fprintf(stderr, "SSHFS version %s (MacFUSE, %d, %s, %s)\n",
-+                PACKAGE_VERSION, 8, __DATE__, __TIME__);
++                PACKAGE_VERSION, 10, __DATE__, __TIME__);
 +#else
          fprintf(stderr, "SSHFS version %s\n", PACKAGE_VERSION);
 +#endif
  #if FUSE_VERSION >= 25
          fuse_opt_add_arg(outargs, "--version");
          sshfs_fuse_main(outargs);
-@@ -2542,8 +2662,17 @@
+@@ -2542,8 +2713,17 @@
          fuse_opt_insert_arg(args, 1, "-olarge_read");
  }
  
@@ -418,7 +532,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      int res;
      struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
      char *tmp;
-@@ -2554,8 +2683,14 @@
+@@ -2554,8 +2734,14 @@
      sshfs.blksize = 4096;
      sshfs.max_read = 65536;
      sshfs.nodelay_workaround = 1;
@@ -433,7 +547,17 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.ssh_ver = 2;
      sshfs.progname = argv[0];
      ssh_add_arg("ssh");
-@@ -2567,6 +2702,14 @@
+@@ -2563,10 +2749,24 @@
+     ssh_add_arg("-a");
+     ssh_add_arg("-oClearAllForwardings=yes");
+ 
++#if (__FreeBSD__ >= 10)
++    sshfs.detect_uid = 1;
++    /* Until this gets fixed somewhere else. */
++    g_slice_set_config(G_SLICE_CONFIG_ALWAYS_MALLOC, TRUE);
++#endif
++
+     if (fuse_opt_parse(&args, &sshfs, sshfs_opts, sshfs_opt_proc) == -1 ||
          parse_workarounds() == -1)
          exit(1);
  
@@ -450,7 +574,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          fprintf(stderr, "see `%s -h' for usage\n", argv[0]);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-04-19 03:54:33.000000000 -0700
++++ new/sshnodelay.c	2007-05-04 14:59:03.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
