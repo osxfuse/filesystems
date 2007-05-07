@@ -53,10 +53,6 @@ fuse_internal_access(vnode_t                   vp,
     struct fuse_access_in *fai;
     struct fuse_data      *data;
 
-    /* NOT YET DONE */
-    /* If this vnop gives you trouble, just return 0 here for a lazy kludge. */
-    // return 0;
-
     fuse_trace_printf_func();
 
     mp = vnode_mount(vp);
@@ -69,13 +65,13 @@ fuse_internal_access(vnode_t                   vp,
         return EACCES;
     }
 
-    // Unless explicitly permitted, deny everyone except the fs owner.
-    if (vnode_isvroot(vp) && !(facp->facc_flags & FACCESS_NOCHECKSPY)) {
+    /* Unless explicitly permitted, deny everyone except the fs owner. */
+    if (!vnode_isvroot(vp) && !(facp->facc_flags & FACCESS_NOCHECKSPY)) {
         if (!(dataflags & FSESS_ALLOW_OTHER)) {
             int denied = fuse_match_cred(data->daemoncred,
                                          vfs_context_ucred(context));
             if (denied) {
-                return EACCES;
+                return EPERM;
             }
         }
         facp->facc_flags |= FACCESS_NOCHECKSPY;
@@ -155,8 +151,12 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (err == ENOSYS) {
+        /*
+         * Make sure we don't come in here again.
+         */
+        vfs_clearauthopaque(mp);
         fuse_get_mpdata(mp)->noimplflags |= FSESS_NOIMPL(ACCESS);
-        err = 0; // or ENOTSUP;
+        err = 0;
     }
 
     if (err == ENOENT) {

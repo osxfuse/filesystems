@@ -851,6 +851,8 @@ showhelp()
     }
     fprintf(stderr, "\nAvailable mount options:\n");
     fprintf(stderr,
+      "    -o allow_other         allow access to others besides the user who mounted"
+      "                             mounted the file system\n"
       "    -o blocksize=<size>    specify block size in bytes of \"storage\"\n"
       "    -o daemon_timeout=<s>  timeout in seconds for kernel calls to daemon\n"
       "    -o debug               turn on debug information printing\n"

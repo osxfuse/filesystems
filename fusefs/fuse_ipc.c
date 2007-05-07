@@ -256,14 +256,14 @@ again:
 
         fuse_lck_mtx_lock(data->timeout_mtx);
         switch (rf) {
-        case kKUNCAlternateResponse: /* Eject */
+        case kKUNCOtherResponse:     /* Force Eject      */
             data->timeout_status = FUSE_TIMEOUT_DEAD;
             fuse_lck_mtx_unlock(data->timeout_mtx);
             break;
 
-        case kKUNCDefaultResponse: /* Continue to Wait */
-        case kKUNCOtherResponse:   /* Disable Alert    */
-        case kKUNCCancelResponse:  /* No Selection     */
+        case kKUNCDefaultResponse:   /* Keep Trying      */
+        case kKUNCAlternateResponse: /* Don't Warn Again */
+        case kKUNCCancelResponse:    /* No Selection     */
             data->timeout_status = FUSE_TIMEOUT_NONE;
             if (rf == kKUNCOtherResponse) {
                 data->daemon_timeout_p = (struct timespec *)0;

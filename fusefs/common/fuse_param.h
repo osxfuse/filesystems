@@ -67,21 +67,17 @@
 #define FUSE_MAX_INIT_TIMEOUT              300    /* s  */
 #define FUSE_INIT_WAIT_INTERVAL            100000 /* us */
 
-#define FUSE_DEFAULT_DAEMON_TIMEOUT        10     /* no timeout */
-#define FUSE_MIN_DAEMON_TIMEOUT            0      /* s */
-#define FUSE_MAX_DAEMON_TIMEOUT            600    /* s */
+#define FUSE_DEFAULT_DAEMON_TIMEOUT        20     /* s  */
+#define FUSE_MIN_DAEMON_TIMEOUT            0      /* s  */
+#define FUSE_MAX_DAEMON_TIMEOUT            600    /* s  */
 
-#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Continue to Wait"
-#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Eject Volume"
-#define FUSE_TIMEOUT_OTHER_BUTTON_TITLE     "Disable this Alert"
-#define FUSE_TIMEOUT_ALERT_MESSAGE                                             \
-  "The MacFUSE file system daemon is not responding. You can eject the volume "\
-  "right now. Any unsaved data you might have from this volume could then be " \
-  "lost, unless the applications you are using allow you to save that data "   \
-  "elsewhere.\n\nAlternatively, you can wait a little more. If the daemon "    \
-  "still doesn't respond, you'll see this alert again.\n\nFinally, you can "   \
-  "disable this alert altogether and wait for as long as it takes."
-#define FUSE_TIMEOUT_ALERT_TIMEOUT         30     /* s */
+#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Keep Trying"
+#define FUSE_TIMEOUT_OTHER_BUTTON_TITLE     "Force Eject"
+#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Don't Warn Again"
+#define FUSE_TIMEOUT_ALERT_MESSAGE                                        \
+  "The MacFUSE file system is not responding. You can eject this volume " \
+  "immediately, but unsaved changes may be lost."
+#define FUSE_TIMEOUT_ALERT_TIMEOUT         120    /* s */
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
 

@@ -602,4 +602,46 @@ fuse_skip_apple_special_mp(mount_t mp, char *nameptr, long namelen)
     return 0;
 }
 
+static __inline__
+int
+fuse_blanket_deny(vnode_t vp, vfs_context_t context)
+{
+    mount_t mp = vnode_mount(vp);
+    struct fuse_data *data = fuse_get_mpdata(mp);
+    int issuser = fuse_vfs_context_issuser(context);
+    int isvroot = vnode_isvroot(vp);
+
+    /* if allow_other is set */
+    if (data->dataflags & FSESS_ALLOW_OTHER) {
+        return 0;
+    }
+
+    /* if allow_root is set */
+    if (issuser && (data->dataflags & FSESS_ALLOW_ROOT)) {
+        return 0;
+    }
+
+    /* if this is the user who mounted the fs */
+    if (fuse_match_cred(data->daemoncred, vfs_context_ucred(context)) == 0) {
+        return 0;
+    }
+
+    if (!(data->dataflags & FSESS_INITED) && isvroot && issuser) {
+        return 0;
+    }
+
+    if (fuse_isdeadfs(vp) && isvroot) {
+        return 0;
+    }
+
+    return 1;
+}
+
+#define CHECK_BLANKET_DENIAL(vp, context, err) \
+    { \
+        if (fuse_blanket_deny(vp, context)) { \
+            return err; \
+        } \
+    }
+
 #endif /* _FUSE_INTERNAL_H_ */
