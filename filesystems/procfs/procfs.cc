@@ -87,6 +87,10 @@ static int init_task_list(task_array_t           *task_list,
 static void fini_task_list(task_array_t           task_list,
                            mach_msg_type_number_t task_count)
 {
+    unsigned int i;
+    for (i = 0; i < task_count; i++) {
+        mach_port_deallocate(mach_task_self(), task_list[i]);
+    }
     vm_deallocate(mach_task_self(), (vm_address_t)task_list,
                   task_count * sizeof(task_t));
 }
@@ -101,6 +105,10 @@ static int init_thread_list(task_t                  the_task,
 static void fini_thread_list(thread_array_t         thread_list,
                              mach_msg_type_number_t thread_count)
 {
+    unsigned int i;
+    for (i = 0; i < thread_count; i++) {
+        mach_port_deallocate(mach_task_self(), thread_list[i]);
+    }
     vm_deallocate(mach_task_self(), (vm_address_t)thread_list,
                   thread_count * sizeof(thread_act_t));
 }
@@ -1407,7 +1415,7 @@ gotdata:
     int len = -1;                                          \
     kern_return_t kr;                                      \
     char tmpbuf[4096];                                     \
-    task_t the_task;                                       \
+    task_t the_task = MACH_PORT_NULL;                      \
     pid_t pid = strtol(argv[0], NULL, 10);                 \
                                                            \
     kr = task_for_pid(mach_task_self(), pid, &the_task);   \
@@ -1416,6 +1424,10 @@ gotdata:
     }
 
 #define READ_PROC_TASK_EPILOGUE()                          \
+                                                           \
+    if (the_task != MACH_PORT_NULL) {                      \
+        mach_port_deallocate(mach_task_self(), the_task);  \
+    }                                                      \
                                                            \
     if (len < 0) {                                         \
         return -EIO;                                       \
@@ -1803,16 +1815,13 @@ READ_HANDLER(proc__task__threads__thread__basic_info)
 {
     READ_PROC_TASK_PROLOGUE();
     DECL_THREAD_LIST();
-    unsigned int i;
-    char the_name[MAXNAMLEN + 1];
-    thread_t the_thread = MACH_PORT_NULL;
     INIT_THREAD_LIST(the_task);
-    for (i = 0; i < thread_count; i++) {
-        snprintf(the_name, MAXNAMLEN, "%x", thread_list[i]);
-        if (strcmp(the_name, argv[1]) == 0) {
-            the_thread = thread_list[i];
-            break;
-        }
+
+    thread_t the_thread = MACH_PORT_NULL;
+    unsigned int i = strtoul(argv[1], NULL, 16);
+
+    if (i < thread_count) {
+        the_thread = thread_list[i];
     }
     
     if (the_thread == MACH_PORT_NULL) {
@@ -1977,19 +1986,16 @@ READ_HANDLER(proc__task__threads__thread__states__exception)
 READ_HANDLER(proc__task__threads__thread__states__float)
 {
     READ_PROC_TASK_PROLOGUE();
-    DECL_THREAD_LIST();       
-    unsigned int i;
-    char the_name[MAXNAMLEN + 1];
-    thread_t the_thread = MACH_PORT_NULL;
+    DECL_THREAD_LIST();
     INIT_THREAD_LIST(the_task);
-    for (i = 0; i < thread_count; i++) {
-        snprintf(the_name, MAXNAMLEN, "%x", thread_list[i]);
-        if (strcmp(the_name, argv[1]) == 0) {
-            the_thread = thread_list[i]; 
-            break;
-        }   
-    }   
-    
+
+    thread_t the_thread = MACH_PORT_NULL;
+    unsigned int i = strtoul(argv[1], NULL, 16);
+
+    if (i < thread_count) {
+        the_thread = thread_list[i];
+    }
+
     if (the_thread == MACH_PORT_NULL) {
         FINI_THREAD_LIST();
         return -ENOENT;
@@ -2106,17 +2112,14 @@ gotdata:
 READ_HANDLER(proc__task__threads__thread__states__thread)
 {
     READ_PROC_TASK_PROLOGUE();
-    DECL_THREAD_LIST();        
-    unsigned int i;
-    char the_name[MAXNAMLEN + 1];
-    thread_t the_thread = MACH_PORT_NULL;
+    DECL_THREAD_LIST();
     INIT_THREAD_LIST(the_task);
-    for (i = 0; i < thread_count; i++) {
-        snprintf(the_name, MAXNAMLEN, "%x", thread_list[i]);
-        if (strcmp(the_name, argv[1]) == 0) {
-            the_thread = thread_list[i];
-            break;
-        }
+
+    thread_t the_thread = MACH_PORT_NULL;
+    unsigned int i = strtoul(argv[1], NULL, 16);
+
+    if (i < thread_count) {
+        the_thread = thread_list[i];
     }
 
     if (the_thread == MACH_PORT_NULL) {
@@ -2281,11 +2284,20 @@ READ_HANDLER(proc__task__vmmap)
                             info.reserved);
             address += vmsize;
         } else if (kr != KERN_INVALID_ADDRESS) {
+
+            if (the_task != MACH_PORT_NULL) {
+                mach_port_deallocate(mach_task_self(), the_task);
+            }
+
             return -EIO;
         }
     } while (kr != KERN_INVALID_ADDRESS);
 
 gotdata:
+
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
 
     READ_PROC_TASK_EPILOGUE();
 }
@@ -2586,7 +2598,7 @@ READDIR_HANDLER(proc__task__ports)
     pid_t pid = strtol(argv[0], NULL, 10);
     struct stat dir_stat;
     char the_name[MAXNAMLEN + 1];
-    task_t the_task;
+    task_t the_task = MACH_PORT_NULL;
 
     kr = task_for_pid(mach_task_self(), pid, &the_task);
     if (kr != KERN_SUCCESS) {
@@ -2606,6 +2618,10 @@ READDIR_HANDLER(proc__task__ports)
     }
     FINI_PORT_LIST();
 
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
+
     return 0;
 }
 
@@ -2617,7 +2633,7 @@ READDIR_HANDLER(proc__task__threads)
     pid_t pid = strtol(argv[0], NULL, 10);
     struct stat dir_stat;
     char the_name[MAXNAMLEN + 1];
-    task_t the_task;
+    task_t the_task = MACH_PORT_NULL;
 
     kr = task_for_pid(mach_task_self(), pid, &the_task);
     if (kr != KERN_SUCCESS) {
@@ -2629,13 +2645,18 @@ READDIR_HANDLER(proc__task__threads)
     dir_stat.st_size = 0;
 
     INIT_THREAD_LIST(the_task);
+    FINI_THREAD_LIST();
+
     for (i = 0; i < thread_count; i++) {
-        snprintf(the_name, MAXNAMLEN, "%x", thread_list[i]);
+        snprintf(the_name, MAXNAMLEN, "%x", i);
         if (filler(buf, the_name, &dir_stat, 0)) {
             break;
         }
     }
-    FINI_THREAD_LIST();
+
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
 
     return 0;
 }
