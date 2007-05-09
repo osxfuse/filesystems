@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.1"
+#define MACFUSE_PROCFS_VERSION "1.2"
 #define FUSE_USE_VERSION 26
 
 #include <stdio.h>
@@ -355,6 +355,8 @@ PROTO_GETATTR_HANDLER(default_link);
 PROTO_GETATTR_HANDLER(hardware__tpm__keyslots__slot);
 PROTO_GETATTR_HANDLER(hardware__tpm__pcrs__pcr);
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
+PROTO_GETATTR_HANDLER(proc__task__ports__port);
+PROTO_GETATTR_HANDLER(proc__task__threads__thread);
 
 PROTO_READLINK_HANDLER(einval);
 
@@ -682,8 +684,11 @@ procfs_directory_table[] = {
         { NULL }
     )
 
-    DECL_DIRECTORY_COMPACT(
-        "/\\d+/task/ports/[a-f\\d]+",
+    DECL_DIRECTORY(
+        "/(\\d+)/task/ports/([a-f\\d]+)",
+        2,
+        proc__task__ports__port,
+        default,
         { "msgcount", "qlimit", "seqno", "sorights", "task_rights", NULL },
         { NULL }
     )
@@ -703,12 +708,13 @@ procfs_directory_table[] = {
         { NULL }
     )
 
-    DECL_DIRECTORY_COMPACT(
-        "/\\d+/task/threads/[a-f\\d]+",
+    DECL_DIRECTORY(
+        "/(\\d+)/task/threads/([a-f\\d])+",
+        2,
+        proc__task__threads__thread,
+        default,
         { NULL },
-        {
-            "basic_info", "states", NULL
-        }
+        { "basic_info", "states", NULL }
     )
 
     DECL_DIRECTORY_COMPACT(
@@ -860,6 +866,85 @@ GETATTR_HANDLER(hardware__tpm__pcrs__pcr)
     return 0;
 }  
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
+
+GETATTR_HANDLER(proc__task__ports__port)
+{
+    kern_return_t kr;
+    task_t the_task = MACH_PORT_NULL;
+    pid_t pid = strtol(argv[0], NULL, 10);
+
+    kr = task_for_pid(mach_task_self(), pid, &the_task);
+    if (kr != KERN_SUCCESS) {
+        return -ENOENT;
+    }
+
+    DECL_PORT_LIST();
+    INIT_PORT_LIST(the_task);
+
+    int found = 0;
+    unsigned int i;
+    unsigned int the_port_name = strtoul(argv[1], NULL, 16);
+
+    for (i = 0; i < name_count; i++) {
+        if (the_port_name == name_list[i]) {
+            found = 1;
+            break;
+        }
+    }
+
+    FINI_PORT_LIST();
+
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
+
+    if (!found) {
+        return -ENOENT;
+    }
+
+    time_t current_time = time(NULL);
+
+    stbuf->st_mode = S_IFDIR | 0555;
+    stbuf->st_nlink = 1;
+    stbuf->st_size = 0;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    
+    return 0;
+}
+
+GETATTR_HANDLER(proc__task__threads__thread)
+{
+    kern_return_t kr;
+    task_t the_task = MACH_PORT_NULL;
+    pid_t pid = strtol(argv[0], NULL, 10);
+
+    kr = task_for_pid(mach_task_self(), pid, &the_task);
+    if (kr != KERN_SUCCESS) {
+        return -ENOENT;
+    }
+
+    DECL_THREAD_LIST();
+    INIT_THREAD_LIST(the_task);
+    FINI_THREAD_LIST();
+
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
+
+    unsigned int the_thread_name = strtoul(argv[1], NULL, 16);
+    if (the_thread_name >= thread_count) {
+        return -ENOENT;
+    }
+
+    time_t current_time = time(NULL);
+
+    stbuf->st_mode = S_IFDIR | 0555;
+    stbuf->st_nlink = 1;
+    stbuf->st_size = 0;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    
+    return 0;
+}
 
 // END: GETATTR
 
@@ -2825,7 +2910,7 @@ static int procfs_getattr(const char *path, struct stat *stbuf)
             break;
 
         default:
-            return -ENOENT;
+            break;
         }
     }
 
@@ -2863,7 +2948,7 @@ static int procfs_getattr(const char *path, struct stat *stbuf)
             break;
 
         default:
-            return -ENOENT;
+            break;
         }
     }
 
@@ -2901,7 +2986,7 @@ static int procfs_getattr(const char *path, struct stat *stbuf)
             break;
 
         default:
-            return -ENOENT;
+            break;
         }
     }
 
