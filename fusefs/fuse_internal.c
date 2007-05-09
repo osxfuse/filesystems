@@ -61,6 +61,10 @@ fuse_internal_access(vnode_t                   vp,
     data = fuse_get_mpdata(mp);
     dataflags = data->dataflags;
 
+    if (dataflags & FSESS_DEFER_AUTH) {
+        return 0;
+    }
+
     if ((action & KAUTH_VNODE_GENERIC_WRITE_BITS) && vfs_isrdonly(mp)) {
         return EACCES;
     }

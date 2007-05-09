@@ -174,6 +174,17 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         err = 0;
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_DEFER_AUTH) {
+        if (fusefs_args.altflags &
+            (FUSE_MOPT_NO_AUTH_OPAQUE | FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS)) {
+            return EINVAL;
+        }
+        mntopts |= FSESS_DEFER_AUTH;
+        vfs_setauthopaque(mp);
+        vfs_setauthopaqueaccess(mp);
+        err = 0;
+    }
+
     if (fusefs_args.altflags & FUSE_MOPT_JAIL_SYMLINKS) {
         mntopts |= FSESS_JAIL_SYMLINKS;
     }

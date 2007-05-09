@@ -93,6 +93,7 @@ enum {
 #define FUSE_MOPT_USE_INO                0x0000000800000000ULL
 #define FUSE_MOPT_VOLNAME                0x0000001000000000ULL
 #define FUSE_MOPT_VOL_RENAME             0x0000002000000000ULL
+#define FUSE_MOPT_DEFER_AUTH             0x0000004000000000ULL
 
 #define FUSE_MAKEDEV(x, y)              ((dev_t)(((x) << 24) | (y)))
 #define FUSE_MINOR_MASK                 0xFFFFFF

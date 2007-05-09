@@ -47,6 +47,7 @@ struct mntopt mopts[] = {
     { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,         1 }, // kused
     { "debug",               0, FUSE_MOPT_DEBUG,                  1 }, // kused
     { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,    1 },
+    { "defer_auth",          0, FUSE_MOPT_DEFER_AUTH,             1 }, // kused
     { "extended_security",   0, FUSE_MOPT_EXTENDED_SECURITY,      1 }, // kused
     { "fd=",                 0, FUSE_MOPT_FD,                     1 },
     { "fsid=" ,              0, FUSE_MOPT_FSID,                   1 }, // kused
@@ -695,6 +696,12 @@ main(int argc, char **argv)
         errx(1, "'novncache' is not allowed with 'extended_security'");
     }
 
+    if ((altflags & FUSE_MOPT_DEFER_AUTH) &&
+        (altflags &
+         (FUSE_MOPT_NO_AUTH_OPAQUE | FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS))) {
+        errx(1, "'defer_auth' is not allowed with 'noauthopaque*'");
+    }
+
     errno = 0;
     fd = strtol(fdnam, NULL, 10);
     if ((errno == EINVAL) || (errno == ERANGE)) {
@@ -856,6 +863,7 @@ showhelp()
       "    -o blocksize=<size>    specify block size in bytes of \"storage\"\n"
       "    -o daemon_timeout=<s>  timeout in seconds for kernel calls to daemon\n"
       "    -o debug               turn on debug information printing\n"
+      "    -o defer_auth          defer permission checks to file operations themselves"
       "    -o extended_security   turn on Mac OS X extended security (ACLs)\n"
       "    -o fsid                set the second 32-bit component of the fsid\n"
       "    -o fsname=<name>       set the file system's name\n"
