@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.0"
+#define MACFUSE_PROCFS_VERSION "1.1"
 #define FUSE_USE_VERSION 26
 
 #include <stdio.h>
