@@ -436,10 +436,10 @@ static FUSEFileSystem *manager;
 
 - (BOOL)fillStatBuffer:(struct stat *)stbuf forPath:(NSString *)path{
   // TODO: support passthrough paths for all reads/writes/stats
-  //  NSString *realPath = [self passthroughPathForPath:path];
-  //  if (realPath) {
-  //    return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
-  //  }
+    NSString *realPath = [self passthroughPathForPath:path];
+    if (realPath) {
+      return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
+    }
 
   NSString* dataPath = path;  // Default to the given path.
   BOOL isManagedResource = 
@@ -455,7 +455,7 @@ static FUSEFileSystem *manager;
   }
   
   NSMutableDictionary* attributes = [NSMutableDictionary dictionary];
-  [attributes setObject:[NSNumber numberWithLong:044] 
+  [attributes setObject:[NSNumber numberWithLong:0555] 
                  forKey:NSFilePosixPermissions];
   [attributes setObject:[NSNumber numberWithLong:(isDirectory ? 2 : 1)]
                  forKey:NSFileReferenceCount];
@@ -570,6 +570,12 @@ static FUSEFileSystem *manager;
 }
 
 - (NSData *)managedContentsForPath:(NSString *)path {
+  
+  NSString *realPath = [self passthroughPathForPath:path];
+  if (realPath) {
+    return ([[NSFileManager defaultManager] contentsAtPath:realPath]);
+  }
+
   NSString* dataPath = path;  // Default to the given path.
   NSString* type = nil;
   BOOL isManagedResource = 
