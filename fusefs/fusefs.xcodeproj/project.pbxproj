@@ -251,7 +251,7 @@
 		54C6DE3D0B5EEB75002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
 		54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fusefs.fs; sourceTree = "<group>"; };
 		54C6DE6B0B5EEDD1002D9FD9 /* Contents */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Contents; path = fusefs.fs/Contents; sourceTree = "<group>"; };
-		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		54D47B930B4F614C00A8FE1C /* load */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = folder; path = load; sourceTree = "<group>"; };
 		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
 		54D47BBC0B4F628200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };

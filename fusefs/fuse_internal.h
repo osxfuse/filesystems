@@ -16,6 +16,8 @@
 #include <sys/vnode.h>
 #include <sys/xattr.h>
 
+#include <UserNotification/KUNCUserNotifications.h>
+
 #include <fuse_ioctl.h>
 #include "fuse_ipc.h"
 #include "fuse_node.h"
@@ -377,6 +379,7 @@ fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context);
 
 int fuse_internal_init_callback(struct fuse_ticket *ftick, uio_t uio);
 void fuse_internal_send_init(struct fuse_data *data, vfs_context_t context);
+void fuse_internal_thread_call_expiry_handler(void *param0, void *param1);
 
 /* miscellaneous */
 

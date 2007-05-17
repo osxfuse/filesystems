@@ -42,7 +42,8 @@ struct mntopt mopts[] = {
     MOPT_STDOPTS,
     MOPT_UPDATE,
     { "allow_other",         0, FUSE_MOPT_ALLOW_OTHER,            1 }, // kused
-    { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,             1 },
+    { "allow_recursion",     0, FUSE_MOPT_ALLOW_RECURSION,        1 }, // uused
+    { "allow_root",          0, FUSE_MOPT_ALLOW_ROOT,             1 }, // kused
     { "blocksize=",          0, FUSE_MOPT_BLOCKSIZE,              1 }, // kused
     { "daemon_timeout=",     0, FUSE_MOPT_DAEMON_TIMEOUT,         1 }, // kused
     { "debug",               0, FUSE_MOPT_DEBUG,                  1 }, // kused
@@ -70,6 +71,7 @@ struct mntopt mopts[] = {
 
     /* negative ones */
 
+    { "alerts",              1, FUSE_MOPT_NO_ALERTS,              1 }, // kused
     { "applespecial",        1, FUSE_MOPT_NO_APPLESPECIAL,        1 }, // kused
     { "attrcache",           1, FUSE_MOPT_NO_ATTRCACHE,           1 }, // kused
     { "authopaque",          1, FUSE_MOPT_NO_AUTH_OPAQUE,         1 }, // kused
@@ -521,8 +523,9 @@ main(int argc, char **argv)
     char     *mntpath   = NULL;
 
     int i, ch = '\0', done = 0;
-    struct mntopt  *mo;
-    struct mntval  *mv;
+    struct mntopt *mo;
+    struct mntval *mv;
+    struct statfs statfsb;
     fuse_mount_args args;
 
     if (!getenv("MOUNT_FUSEFS_CALL_BY_LIB")) {
@@ -666,6 +669,17 @@ main(int argc, char **argv)
 
     fuse_process_mvals();
 
+    if (statfs(mntpath, &statfsb)) {
+        errx(1, "cannot stat the mount point %s", mntpath);
+    }
+
+    if ((strlen(statfsb.f_fstypename) == strlen(MACFUSE_FS_TYPE)) &&
+        (strcmp(statfsb.f_fstypename, MACFUSE_FS_TYPE) == 0)) {
+        if (!(altflags & FUSE_MOPT_ALLOW_RECURSION)) {
+            errx(1, "mount point %s is itself on a MacFUSE volume", mntpath);
+        }
+    }
+
     if (altflags & FUSE_MOPT_NO_LOCALCACHES) {
         altflags |= FUSE_MOPT_NO_READAHEAD;
         altflags |= FUSE_MOPT_NO_UBC;
@@ -700,6 +714,10 @@ main(int argc, char **argv)
         (altflags &
          (FUSE_MOPT_NO_AUTH_OPAQUE | FUSE_MOPT_NO_AUTH_OPAQUE_ACCESS))) {
         errx(1, "'defer_auth' is not allowed with 'noauthopaque*'");
+    }
+
+    if (getenv("MOUNT_FUSEFS_NO_ALERTS")) {
+        altflags |= FUSE_MOPT_NO_ALERTS;
     }
 
     errno = 0;
@@ -741,11 +759,20 @@ main(int argc, char **argv)
         daemon_timeout = FUSE_MAX_DAEMON_TIMEOUT;
     }
 
+    if (init_timeout < FUSE_MIN_INIT_TIMEOUT) {
+        init_timeout = FUSE_MIN_INIT_TIMEOUT;
+    }
+
+    if (init_timeout > FUSE_MAX_INIT_TIMEOUT) {
+        init_timeout = FUSE_MAX_INIT_TIMEOUT;
+    }
+
     args.altflags       = altflags;
     args.blocksize      = blocksize;
     args.daemon_timeout = daemon_timeout;
     args.fsid           = fsid;
     args.index          = dindex;
+    args.init_timeout   = init_timeout;
     args.iosize         = iosize;
     args.subtype        = subtype;
 
@@ -794,14 +821,6 @@ main(int argc, char **argv)
            
             post_notification(FUSE_UNOTIFICATIONS_NOTIFY_MOUNTED,
                               udata_keys, udata_values, 1);
-
-            if (init_timeout < FUSE_MIN_INIT_TIMEOUT) {
-                init_timeout = FUSE_MIN_INIT_TIMEOUT;
-            }
-
-            if (init_timeout > FUSE_MAX_INIT_TIMEOUT) {
-                init_timeout = FUSE_MAX_INIT_TIMEOUT;
-            }
 
             wait_iterations = \
                 (init_timeout * 1000000) / FUSE_INIT_WAIT_INTERVAL;
@@ -860,6 +879,8 @@ showhelp()
     fprintf(stderr,
       "    -o allow_other         allow access to others besides the user who mounted"
       "                             mounted the file system\n"
+      "    -o allow_recursion     allow a mount point that itself is on a MacFUSE volume"
+      "    -o allow_root          allow access to root (cannot be mixed with allow_other)"
       "    -o blocksize=<size>    specify block size in bytes of \"storage\"\n"
       "    -o daemon_timeout=<s>  timeout in seconds for kernel calls to daemon\n"
       "    -o debug               turn on debug information printing\n"

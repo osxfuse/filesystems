@@ -15,6 +15,7 @@
 
 /* NB: none of these are bigger than unsigned 32-bit. */
 
+int32_t  fuse_admin_group            = 0;                                  // rw
 uint32_t fuse_api_major              = FUSE_KERNEL_VERSION;                // r
 uint32_t fuse_api_minor              = FUSE_KERNEL_MINOR_VERSION;          // r
 int32_t  fuse_dev_use_count          = 0;                                  // r
@@ -118,6 +119,8 @@ SYSCTL_INT(_macfuse_resourceusage, OID_AUTO, vnodes, CTLFLAG_RD,
            &fuse_vnodes_current, 0, "");
 
 /* fuse.tunables */
+SYSCTL_INT(_macfuse_tunables, OID_AUTO, admin_group, CTLFLAG_RW,
+           &fuse_admin_group, 0, "");
 SYSCTL_INT(_macfuse_tunables, OID_AUTO, iov_credit, CTLFLAG_RW,
            &fuse_iov_credit, 0, "");
 SYSCTL_INT(_macfuse_tunables, OID_AUTO, iov_permanent_bufsize, CTLFLAG_RW,
@@ -153,6 +156,7 @@ static struct sysctl_oid *fuse_sysctl_list[] =
     &sysctl__macfuse_resourceusage_ipc_tickets,
     &sysctl__macfuse_resourceusage_memory_bytes,
     &sysctl__macfuse_resourceusage_vnodes,
+    &sysctl__macfuse_tunables_admin_group,
     &sysctl__macfuse_tunables_iov_credit,
     &sysctl__macfuse_tunables_iov_permanent_bufsize,
     &sysctl__macfuse_tunables_max_freetickets,

@@ -30,6 +30,7 @@
 #include "fuse_file.h"
 #include "fuse_internal.h"
 #include "fuse_ipc.h"
+#include "fuse_locking.h"
 #include "fuse_node.h"
 #include "fuse_file.h"
 #include "fuse_nodehash.h"
@@ -1169,6 +1170,34 @@ fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context)
 /* fuse start/stop */
 
 __private_extern__
+void
+fuse_internal_thread_call_expiry_handler(void *param0, void *param1)
+{
+    (void)param1;
+    int pid = 0;
+    struct fuse_data *data = (struct fuse_data *)param0;
+    fuse_lck_mtx_lock(data->timeout_mtx);
+    pid = data->daemonpid;
+    fdata_kick_set(data);
+
+    (void)KUNCUserNotificationDisplayNotice(
+                                      0,             // noticeTimeout
+                                      0,             // flags
+                                      NULL,          // iconPath
+                                      NULL,          // soundPath
+                                      NULL,          // localizationPath
+                                      data->volname, // alertHeader
+                                      FUSE_INIT_TIMEOUT_NOTICE_MESSAGE,
+                                      FUSE_INIT_TIMEOUT_DEFAULT_BUTTON_TITLE);
+
+    fuse_lck_mtx_unlock(data->timeout_mtx);
+
+    if (pid) {
+        proc_signal(pid, FUSE_POSTUNMOUNT_SIGNAL);
+    }
+}
+
+__private_extern__
 int
 fuse_internal_init_callback(struct fuse_ticket *ftick, uio_t uio)
 {
@@ -1214,10 +1243,14 @@ out:
         fdata_kick_set(data);
     }
 
-    lck_mtx_lock(data->ticket_mtx);
+    fuse_lck_mtx_lock(data->timeout_mtx);
+    (void)thread_call_cancel(data->thread_call);
+    fuse_lck_mtx_unlock(data->timeout_mtx);
+
+    fuse_lck_mtx_lock(data->ticket_mtx);
     data->dataflags |= FSESS_INITED;
     wakeup(&data->ticketer);
-    lck_mtx_unlock(data->ticket_mtx);
+    fuse_lck_mtx_unlock(data->ticket_mtx);
 
     return (0);
 }
@@ -1228,6 +1261,7 @@ fuse_internal_send_init(struct fuse_data *data, vfs_context_t context)
 {
     struct fuse_init_in   *fiii;
     struct fuse_dispatcher fdi;
+    uint64_t deadline;
 
     fdisp_init(&fdi, sizeof(*fiii));
     fdisp_make(&fdi, FUSE_INIT, data->mp, 0, context);
@@ -1236,6 +1270,12 @@ fuse_internal_send_init(struct fuse_data *data, vfs_context_t context)
     fiii->minor = FUSE_KERNEL_MINOR_VERSION;
     fiii->max_readahead = data->iosize * 16;
     fiii->flags = 0;
+
+    clock_interval_to_deadline(data->init_timeout.tv_sec, kSecondScale,
+                               &deadline);
+    fuse_lck_mtx_lock(data->timeout_mtx);
+    thread_call_enter_delayed(data->thread_call, deadline);
+    fuse_lck_mtx_unlock(data->timeout_mtx);
 
     fuse_insert_callback(fdi.tick, fuse_internal_init_callback);
     fuse_insert_message(fdi.tick);

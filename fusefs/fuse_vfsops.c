@@ -10,6 +10,7 @@
 #include "fuse_kludges.h"
 #include "fuse_locking.h"
 #include "fuse_node.h"
+#include "fuse_sysctl.h"
 #include "fuse_vfsops.h"
 
 #include <fuse_mount.h>
@@ -130,6 +131,15 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         return EINVAL;
     }
 
+    if ((fusefs_args.init_timeout > FUSE_MAX_INIT_TIMEOUT) ||
+        (fusefs_args.init_timeout < FUSE_MIN_INIT_TIMEOUT)) {
+        return EINVAL;
+    }
+
+    if (fusefs_args.altflags & FUSE_MOPT_NO_ALERTS) {
+        mntopts |= FSESS_NO_ALERTS;
+    }
+
     if (fusefs_args.altflags & FUSE_MOPT_NO_BROWSE) {
         vfs_setflags(mp, MNT_DONTBROWSE);
     }
@@ -189,8 +199,27 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         mntopts |= FSESS_JAIL_SYMLINKS;
     }
 
-    if (fusefs_args.altflags & FUSE_MOPT_ALLOW_OTHER) {
+    /*
+     * Note that unlike Linux, which keeps allow_root in user-space and
+     * passes allow_other in that case to the kernel, we let allow_root
+     * reach the kernel. The 'if' ordering is important here.
+     */
+    if (fusefs_args.altflags & FUSE_MOPT_ALLOW_ROOT) {
+        int is_member = 0;
+        if ((kauth_cred_ismember_gid(kauth_cred_get(), fuse_admin_group,
+                                    &is_member) == 0) && is_member) {
+            mntopts |= FSESS_ALLOW_ROOT;
+        } else {
+            debug_printf("only a member of group %d can use \"allow_root\"\n",
+                         fuse_admin_group);
+            return EPERM;
+        }
+    } else if (fusefs_args.altflags & FUSE_MOPT_ALLOW_OTHER) {
         mntopts |= FSESS_ALLOW_OTHER;
+        if (!fuse_vfs_context_issuser(context)) {
+            debug_printf("only root can use \"allow_other\"\n");
+            return EPERM;
+        }
     }
 
     if (fusefs_args.altflags & FUSE_MOPT_DEFAULT_PERMISSIONS) {
@@ -259,12 +288,6 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         err = ENOTCONN;
     }
 
-    if (!err && (mntopts & FSESS_ALLOW_OTHER) &&
-        !fuse_vfs_context_issuser(context)) {
-        debug_printf("only root can use \"allow_other\"\n");
-        err = EPERM;
-    }
-
     if (err) {
         goto out;
     }
@@ -321,6 +344,9 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
     } else {
         data->daemon_timeout_p = (struct timespec *)0;
     }
+
+    data->init_timeout.tv_sec = fusefs_args.init_timeout;
+    data->init_timeout.tv_nsec = 0;
 
     data->max_read = max_read;
     data->mpri = FM_PRIMARY;

@@ -57,27 +57,32 @@
  */
 #define FUSE_DEFAULT_MAX_FREE_TICKETS      1024
 
-#define FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE (1L << 19)
+#define FUSE_DEFAULT_IOV_PERMANENT_BUFSIZE (1L << 20) /* from 19 */
 #define FUSE_DEFAULT_IOV_CREDIT            16
 
 #endif /* KERNEL */
 
-#define FUSE_DEFAULT_INIT_TIMEOUT          10     /* s  */
-#define FUSE_MIN_INIT_TIMEOUT              1      /* s  */
-#define FUSE_MAX_INIT_TIMEOUT              300    /* s  */
-#define FUSE_INIT_WAIT_INTERVAL            100000 /* us */
+#define FUSE_DEFAULT_INIT_TIMEOUT                  10     /* s  */
+#define FUSE_MIN_INIT_TIMEOUT                      1      /* s  */
+#define FUSE_MAX_INIT_TIMEOUT                      300    /* s  */
+#define FUSE_INIT_WAIT_INTERVAL                    100000 /* us */
 
-#define FUSE_DEFAULT_DAEMON_TIMEOUT        20     /* s  */
-#define FUSE_MIN_DAEMON_TIMEOUT            0      /* s  */
-#define FUSE_MAX_DAEMON_TIMEOUT            600    /* s  */
+#define FUSE_INIT_TIMEOUT_DEFAULT_BUTTON_TITLE     "OK"
+#define FUSE_INIT_TIMEOUT_NOTICE_MESSAGE                                  \
+  "Timed out waiting for the file system to initialize. The volume has "  \
+  "been ejected. You can use the init_timeout mount option to wait longer."
 
-#define FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE   "Keep Trying"
-#define FUSE_TIMEOUT_OTHER_BUTTON_TITLE     "Force Eject"
-#define FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE "Don't Warn Again"
-#define FUSE_TIMEOUT_ALERT_MESSAGE                                        \
+#define FUSE_DEFAULT_DAEMON_TIMEOUT                20     /* s */
+#define FUSE_MIN_DAEMON_TIMEOUT                    0      /* s */
+#define FUSE_MAX_DAEMON_TIMEOUT                    600    /* s */
+
+#define FUSE_DAEMON_TIMEOUT_DEFAULT_BUTTON_TITLE   "Keep Trying"
+#define FUSE_DAEMON_TIMEOUT_OTHER_BUTTON_TITLE     "Force Eject"
+#define FUSE_DAEMON_TIMEOUT_ALTERNATE_BUTTON_TITLE "Don't Warn Again"
+#define FUSE_DAEMON_TIMEOUT_ALERT_MESSAGE                                 \
   "The MacFUSE file system is not responding. You can eject this volume " \
   "immediately, but unsaved changes may be lost."
-#define FUSE_TIMEOUT_ALERT_TIMEOUT         120    /* s */
+#define FUSE_DAEMON_TIMEOUT_ALERT_TIMEOUT          120    /* s */
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
 
@@ -85,5 +90,8 @@
 #define FUSE_UIO_BACKUP_MAX                8
 
 #define FUSE_POSTUNMOUNT_SIGNAL            SIGKILL
+
+#define MACOSX_ADMIN_GROUP_NAME            "admin"
+#define MACFUSE_TUNABLES_ADMIN             "macfuse.tunables.admin_group"
 
 #endif /* _FUSE_PARAM_H_ */

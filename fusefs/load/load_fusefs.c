@@ -26,49 +26,52 @@
 #include <sys/errno.h>
 #include <unistd.h>
 
-/*****************************************************************************/
+#include <grp.h>
+#include <fuse_param.h>
 
 /* Local Definitions */
-
 #define LOAD_COMMAND "/sbin/kextload"
 #define FUSE_MODULE_PATH "/Library/Extensions/fusefs.kext"
 
-/*****************************************************************************/
-
-int main(int argc, const char *argv[])
+int
+main(__unused int argc, __unused const char *argv[])
 {
-	#pragma unused(argc, argv)
-	int pid;
-	int result = -1;
-	union wait status;
-	
-	pid = fork();
-	if (pid == 0)
-	{
-		result = execl(LOAD_COMMAND, LOAD_COMMAND, FUSE_MODULE_PATH, NULL);
-		/* We can only get here if the exec failed */
-		goto Return;
-	}
-	
-	if (pid == -1)
-	{
-		result = errno;
-		goto Return;
-	}
-	
-	/* Success! */
-	if ((wait4(pid, (int *) & status, 0, NULL) == pid) && (WIFEXITED(status)))
-	{
-		result = status.w_retcode;
-	}
-	else
-	{
-		result = -1;
-	}
-	
-Return:
+    int pid;
+    int result = -1;
+    union wait status;
+    
+    pid = fork();
+    if (pid == 0) {
+        result = execl(LOAD_COMMAND, LOAD_COMMAND, FUSE_MODULE_PATH, NULL);
+        /* We can only get here if the exec failed */
+        goto out;
+    }
+    
+    if (pid == -1) {
+        result = errno;
+        goto out;
+    }
+    
+    /* Success! */
+    if ((wait4(pid, (int *) & status, 0, NULL) == pid) && (WIFEXITED(status))) {
+        result = status.w_retcode;
+    } else {
+        result = -1;
+    }
 
-	_exit(result);
+    if (result == 0) {
+        int admin_gid = 0;
+        struct group *g = getgrnam(MACOSX_ADMIN_GROUP_NAME);
+        if (!g) {
+            goto out;
+        }
+        admin_gid = g->gr_gid;
+
+        /* if this fails, we don't care */
+        (void)sysctlbyname(MACFUSE_TUNABLES_ADMIN, NULL, NULL, &admin_gid,
+                           sizeof(admin_gid));
+    }
+    
+out:
+    _exit(result);
 }
-
-/*****************************************************************************/

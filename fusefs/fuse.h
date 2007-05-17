@@ -9,6 +9,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/event.h>
+#include <kern/thread_call.h>
 #include <libkern/OSMalloc.h>
 #include <libkern/locks.h>
 #include <IOKit/IOLib.h>

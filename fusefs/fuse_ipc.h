@@ -166,15 +166,18 @@ struct fuse_data {
     uint32_t                   blocksize;
     struct timespec            daemon_timeout;
     struct timespec           *daemon_timeout_p;
+    struct timespec            init_timeout;
     uint32_t                   iosize;
     uint32_t                   subtype;
     char                       volname[MAXPATHLEN];
+
+    thread_call_t              thread_call;
 };
 
 enum {
-    FUSE_TIMEOUT_NONE       = 0,
-    FUSE_TIMEOUT_PROCESSING = 1, 
-    FUSE_TIMEOUT_DEAD       = 2,
+    FUSE_DAEMON_TIMEOUT_NONE       = 0,
+    FUSE_DAEMON_TIMEOUT_PROCESSING = 1, 
+    FUSE_DAEMON_TIMEOUT_DEAD       = 2,
 };
 
 /* Not-Implemented Bits */
@@ -192,14 +195,15 @@ enum {
 #define FSESS_EXTENDED_SECURITY   0x00000100
 #define FSESS_JAIL_SYMLINKS       0x00000200
 #define FSESS_KILL_ON_UNMOUNT     0x00000400
-#define FSESS_NO_APPLESPECIAL     0x00000800
-#define FSESS_NO_ATTRCACHE        0x00001000
-#define FSESS_NO_READAHEAD        0x00002000
-#define FSESS_NO_SYNCWRITES       0x00004000
-#define FSESS_NO_SYNCONCLOSE      0x00008000
-#define FSESS_NO_VNCACHE          0x00010000
-#define FSESS_NO_UBC              0x00020000
-#define FSESS_VOL_RENAME          0x00040000
+#define FSESS_NO_ALERTS           0x00000800
+#define FSESS_NO_APPLESPECIAL     0x00001000
+#define FSESS_NO_ATTRCACHE        0x00002000
+#define FSESS_NO_READAHEAD        0x00004000
+#define FSESS_NO_SYNCWRITES       0x00008000
+#define FSESS_NO_SYNCONCLOSE      0x00010000
+#define FSESS_NO_VNCACHE          0x00020000
+#define FSESS_NO_UBC              0x00040000
+#define FSESS_VOL_RENAME          0x00080000
 
 static __inline__
 struct fuse_data *

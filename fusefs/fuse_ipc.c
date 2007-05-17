@@ -7,14 +7,13 @@
 #include <sys/malloc.h>
 
 #include "fuse.h"
+#include "fuse_internal.h"
 #include "fuse_ipc.h"
 #include "fuse_locking.h"
 #include "fuse_node.h"
 #include "fuse_sysctl.h"
 
 #include <fuse_param.h>
-
-#include <UserNotification/KUNCUserNotifications.h>
 
 static struct fuse_ticket *fticket_alloc(struct fuse_data *data);
 static void                fticket_refresh(struct fuse_ticket *ftick);
@@ -207,19 +206,26 @@ again:
         unsigned int rf;
 
         fuse_lck_mtx_lock(data->timeout_mtx);
+
+        if (data->dataflags & FSESS_NO_ALERTS) {
+            data->timeout_status = FUSE_DAEMON_TIMEOUT_DEAD;
+            fuse_lck_mtx_unlock(data->timeout_mtx);
+            goto alreadydead;
+        }
+
         switch (data->timeout_status) {
 
-        case FUSE_TIMEOUT_NONE:
-            data->timeout_status = FUSE_TIMEOUT_PROCESSING;
+        case FUSE_DAEMON_TIMEOUT_NONE:
+            data->timeout_status = FUSE_DAEMON_TIMEOUT_PROCESSING;
             fuse_lck_mtx_unlock(data->timeout_mtx);
             break;
 
-        case FUSE_TIMEOUT_PROCESSING:
+        case FUSE_DAEMON_TIMEOUT_PROCESSING:
             fuse_lck_mtx_unlock(data->timeout_mtx);
             goto again;
             break; /* NOTREACHED */
 
-        case FUSE_TIMEOUT_DEAD:
+        case FUSE_DAEMON_TIMEOUT_DEAD:
             fuse_lck_mtx_unlock(data->timeout_mtx);
             goto alreadydead;
             break; /* NOTREACHED */
@@ -237,34 +243,34 @@ again:
          */
 
         kr = KUNCUserNotificationDisplayAlert(
-                 FUSE_TIMEOUT_ALERT_TIMEOUT,          // timeout
+                 FUSE_DAEMON_TIMEOUT_ALERT_TIMEOUT,   // timeout
                  0,                                   // flags (stop alert)
                  NULL,                                // iconPath
                  NULL,                                // soundPath
                  NULL,                                // localizationPath
                  data->volname,                       // alertHeader
-                 FUSE_TIMEOUT_ALERT_MESSAGE,          // alertMessage
-                 FUSE_TIMEOUT_DEFAULT_BUTTON_TITLE,   // defaultButtonTitle
-                 FUSE_TIMEOUT_ALTERNATE_BUTTON_TITLE, // alternateButtonTitle
-                 FUSE_TIMEOUT_OTHER_BUTTON_TITLE,     // otherButtonTitle
+                 FUSE_DAEMON_TIMEOUT_ALERT_MESSAGE,
+                 FUSE_DAEMON_TIMEOUT_DEFAULT_BUTTON_TITLE,
+                 FUSE_DAEMON_TIMEOUT_ALTERNATE_BUTTON_TITLE,
+                 FUSE_DAEMON_TIMEOUT_OTHER_BUTTON_TITLE,
                  &rf);
 
         if (kr != KERN_SUCCESS) {
             /* force ejection if we couldn't show the dialog */
-            rf = kKUNCDefaultResponse;
+            rf = kKUNCOtherResponse;
         }
 
         fuse_lck_mtx_lock(data->timeout_mtx);
         switch (rf) {
         case kKUNCOtherResponse:     /* Force Eject      */
-            data->timeout_status = FUSE_TIMEOUT_DEAD;
+            data->timeout_status = FUSE_DAEMON_TIMEOUT_DEAD;
             fuse_lck_mtx_unlock(data->timeout_mtx);
             break;
 
         case kKUNCDefaultResponse:   /* Keep Trying      */
         case kKUNCAlternateResponse: /* Don't Warn Again */
         case kKUNCCancelResponse:    /* No Selection     */
-            data->timeout_status = FUSE_TIMEOUT_NONE;
+            data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
             if (rf == kKUNCOtherResponse) {
                 data->daemon_timeout_p = (struct timespec *)0;
             }
@@ -275,7 +281,7 @@ again:
         default:
             IOLog("MacFUSE: unknown response from alert panel (kr=%d, rf=%d)\n",
                   kr, rf);
-            data->timeout_status = FUSE_TIMEOUT_DEAD;
+            data->timeout_status = FUSE_DAEMON_TIMEOUT_DEAD;
             fuse_lck_mtx_unlock(data->timeout_mtx);
             break;
         }
@@ -400,8 +406,11 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
     data->rename_lock = lck_rw_alloc_init(fuse_lock_group, fuse_lock_attr);
 #endif
 
-    data->timeout_status = FUSE_TIMEOUT_NONE;
+    data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
     data->timeout_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
+
+    data->thread_call = thread_call_allocate(
+                            fuse_internal_thread_call_expiry_handler, data);
 
     return (data);
 }
@@ -412,6 +421,12 @@ fdata_destroy(struct fuse_data *data)
     struct fuse_ticket *ftick;
 
     debug_printf("data=%p, destroy.mntco = %d\n", data, data->mntco);
+
+    fuse_lck_mtx_lock(data->timeout_mtx);
+    (void)thread_call_cancel(data->thread_call);
+    (void)thread_call_free(data->thread_call); 
+    data->thread_call = (thread_call_t)0xdeadca11;
+    fuse_lck_mtx_unlock(data->timeout_mtx);
 
     lck_mtx_free(data->ms_mtx, fuse_lock_group);
     data->ms_mtx = NULL;
@@ -427,7 +442,7 @@ fdata_destroy(struct fuse_data *data)
     data->rename_lock = NULL;
 #endif
 
-    data->timeout_status = FUSE_TIMEOUT_NONE;
+    data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
     lck_mtx_free(data->timeout_mtx, fuse_lock_group);
 
     while ((ftick = fuse_pop_allticks(data))) {

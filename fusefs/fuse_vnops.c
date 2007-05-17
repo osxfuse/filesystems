@@ -34,6 +34,7 @@
 #include "fuse_ipc.h"
 #include "fuse_kludges.h"
 #include "fuse_knote.h"
+#include "fuse_locking.h"
 #include "fuse_node.h"
 #include "fuse_nodehash.h"
 #include <fuse_param.h>
@@ -655,7 +656,6 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
              */
 
             fuse_internal_vnode_disappear(vp, context);
-
             return EAGAIN;
 
             /*
@@ -1766,7 +1766,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
 
     if (!isdir && (fvdat->flag & FN_CREATING)) {
 
-        lck_mtx_lock(fvdat->createlock);
+        fuse_lck_mtx_lock(fvdat->createlock);
 
         if (fvdat->flag & FN_CREATING) { // check again
             if (fvdat->creator == current_thread()) {
@@ -1793,7 +1793,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
                 
                 fvdat->flag &= ~FN_CREATING;
 
-                lck_mtx_unlock(fvdat->createlock);
+                fuse_lck_mtx_unlock(fvdat->createlock);
                 wakeup((caddr_t)fvdat->creator); // wake up all
                 goto ok; /* return 0 */
             } else {
@@ -1816,7 +1816,7 @@ fuse_vnop_open(struct vnop_open_args *ap)
                 }
             }
         } else {
-            lck_mtx_unlock(fvdat->createlock);
+            fuse_lck_mtx_unlock(fvdat->createlock);
             /* Can proceed from here. */
         }
     }
