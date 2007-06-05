@@ -198,9 +198,9 @@ fticket_wait_answer(struct fuse_ticket *ftick)
     }
 
 again:
-    err = msleep(ftick, ftick->tk_aw_mtx, PCATCH, "fu_ans",
-                 data->daemon_timeout_p);
-    if (err == EAGAIN) {
+    err = fuse_msleep(ftick, ftick->tk_aw_mtx, PCATCH, "fu_ans",
+                      data->daemon_timeout_p);
+    if (err == EAGAIN) { /* same as EWOULDBLOCK */
 
         kern_return_t kr;
         unsigned int rf;
@@ -271,7 +271,7 @@ again:
         case kKUNCAlternateResponse: /* Don't Warn Again */
         case kKUNCCancelResponse:    /* No Selection     */
             data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
-            if (rf == kKUNCOtherResponse) {
+            if (rf == kKUNCAlternateResponse) {
                 data->daemon_timeout_p = (struct timespec *)0;
             }
             fuse_lck_mtx_unlock(data->timeout_mtx);
@@ -409,8 +409,14 @@ fdata_alloc(struct fuse_softc *fdev, struct proc *p)
     data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
     data->timeout_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
 
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    /* INIT_CALLOUT */
+    data->callout_status = INIT_CALLOUT_INACTIVE;
+    data->callout_mtx = lck_mtx_alloc_init(fuse_lock_group, fuse_lock_attr);
+
     data->thread_call = thread_call_allocate(
                             fuse_internal_thread_call_expiry_handler, data);
+#endif
 
     return (data);
 }
@@ -422,11 +428,15 @@ fdata_destroy(struct fuse_data *data)
 
     debug_printf("data=%p, destroy.mntco = %d\n", data, data->mntco);
 
-    fuse_lck_mtx_lock(data->timeout_mtx);
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    /* INIT_CALLOUT */
+    fuse_lck_mtx_lock(data->callout_mtx);
+    data->callout_status = INIT_CALLOUT_INACTIVE;
     (void)thread_call_cancel(data->thread_call);
     (void)thread_call_free(data->thread_call); 
     data->thread_call = (thread_call_t)0xdeadca11;
-    fuse_lck_mtx_unlock(data->timeout_mtx);
+    fuse_lck_mtx_unlock(data->callout_mtx);
+#endif
 
     lck_mtx_free(data->ms_mtx, fuse_lock_group);
     data->ms_mtx = NULL;
@@ -444,6 +454,10 @@ fdata_destroy(struct fuse_data *data)
 
     data->timeout_status = FUSE_DAEMON_TIMEOUT_NONE;
     lck_mtx_free(data->timeout_mtx, fuse_lock_group);
+
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    lck_mtx_free(data->callout_mtx, fuse_lock_group);
+#endif
 
     while ((ftick = fuse_pop_allticks(data))) {
         fticket_destroy(ftick);
@@ -479,11 +493,11 @@ fdata_kick_set(struct fuse_data *data)
     }
 
     data->dataflags |= FSESS_KICK;
-    wakeup_one((caddr_t)data);
+    fuse_wakeup_one((caddr_t)data);
     fuse_lck_mtx_unlock(data->ms_mtx);
 
     fuse_lck_mtx_lock(data->ticket_mtx);
-    wakeup(&data->ticketer);
+    fuse_wakeup(&data->ticketer);
     fuse_lck_mtx_unlock(data->ticket_mtx);
 
     vfs_event_signal(&vfs_statfs(data->mp)->f_fsid, VQ_NOTRESP, 0);
@@ -581,8 +595,8 @@ fuse_ticket_fetch(struct fuse_data *data)
     }
 
     if (!(data->dataflags & FSESS_INITED) && data->ticketer > 1) {
-        err = msleep(&data->ticketer, data->ticket_mtx, PCATCH | PDROP,
-                     "fu_ini", 0);
+        err = fuse_msleep(&data->ticketer, data->ticket_mtx, PCATCH | PDROP,
+                          "fu_ini", 0);
     } else {
         fuse_lck_mtx_unlock(data->ticket_mtx);
     }
@@ -667,7 +681,7 @@ fuse_insert_message(struct fuse_ticket *ftick)
 
     fuse_lck_mtx_lock(ftick->tk_data->ms_mtx);
     fuse_ms_push(ftick);
-    wakeup_one((caddr_t)ftick->tk_data);
+    fuse_wakeup_one((caddr_t)ftick->tk_data);
     fuse_lck_mtx_unlock(ftick->tk_data->ms_mtx);
 }
 
@@ -898,7 +912,7 @@ fuse_standard_handler(struct fuse_ticket *ftick, uio_t uio)
     } else {
         fticket_set_answered(ftick);
         ftick->tk_aw_errno = err;
-        wakeup(ftick);
+        fuse_wakeup(ftick);
     }
 
     fuse_lck_mtx_unlock(ftick->tk_aw_mtx);

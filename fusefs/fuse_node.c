@@ -134,7 +134,7 @@ FSNodeGetOrCreateFileVNodeByID(mount_t       mp,
 
     if (err == 0) {
         if (vnode_vtype(vn) != vtyp) {
-            fuse_internal_vnode_disappear(vn, context);
+            fuse_internal_vnode_disappear(vn, context, 1);
             vnode_put(vn);
             err = EAGAIN;
         }

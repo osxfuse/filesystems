@@ -11,15 +11,18 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <sys/attr.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/vnode.h>
 #include <libgen.h>
 #include <signal.h>
 #include <mach/mach.h>
@@ -37,6 +40,23 @@
 char *getproctitle(pid_t pid, char **title, int *len);
 void  showhelp(void);
 void  showversion(int doexit);
+
+static int FinderInfoSet(const char *path, uint32_t *type, uint32_t *creator);
+
+static const char dot_data[] = {
+     0x00, 0x05, 0x16, 0x07, 0x00, 0x02, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x02, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00,
+     0x00, 0x32, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
+     0x00, 0x02, 0x00, 0x00, 0x00, 0x52, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00                                                        
+};
+#define DOT_DATA_LEN (sizeof(dot_data)/sizeof(char))
 
 struct mntopt mopts[] = {
     MOPT_STDOPTS,
@@ -67,6 +87,7 @@ struct mntopt mopts[] = {
     { "uid=",                0, FUSE_MOPT_UID,                    1 }, // kused
     { "umask=",              0, FUSE_MOPT_UMASK,                  1 },
     { "use_ino",             0, FUSE_MOPT_USE_INO,                1 },
+    { "volicon",             0, FUSE_MOPT_VOLICON,                1 }, // kused
     { "volname=",            0, FUSE_MOPT_VOLNAME,                1 }, // kused
 
     /* negative ones */
@@ -408,9 +429,13 @@ extern kern_return_t DiskArbDiskAppearedWithMountpointPing_auto(
 ) __attribute__((weak_import));
 
 static int
-ping_diskarb(char *mntpath)
+ping_diskarb(char *mntpath, uint64_t altflags)
 {
     int ret;
+    int dot_fd;
+    size_t len;
+    char *p1, *p2;
+    char dot_path[MAXPATHLEN + 1] = { 0 };
     struct statfs sb;
     enum {
         kDiskArbDiskAppearedEjectableMask   = 1 << 1,
@@ -430,6 +455,26 @@ ping_diskarb(char *mntpath)
     ret = DiskArbInit();
 
     /* we ignore the return value from DiskArbInit() */
+
+    if (altflags & FUSE_MOPT_VOLICON) {
+        len = strlen(mntpath) + 2;
+        p1 = dirname(mntpath);
+        p2 = basename(mntpath);
+        if (p1 && p2 && (len <= MAXPATHLEN)) {
+            ret = snprintf(dot_path, MAXPATHLEN + 1, "%s/._%s", p1, p2);
+            if (ret == (int)len) {
+                dot_fd = open(dot_path, O_RDWR | O_CREAT | O_EXCL, 0644);
+                if (dot_fd >= 0) {
+                    uint32_t creator = FUSE_MAC_CREATOR;
+                    uint32_t type = FUSE_MAC_TYPE_ROOT;
+                    /* assume no interruption... just best effort */
+                    (void)write(dot_fd, dot_data, DOT_DATA_LEN);
+                    close(dot_fd);
+                    FinderInfoSet(dot_path, &type, &creator);
+                }
+            }
+        }
+    }
 
     ret = DiskArbDiskAppearedWithMountpointPing_auto(
               sb.f_mntfromname,
@@ -568,14 +613,19 @@ main(int argc, char **argv)
                 if (!strncmp(kmodp->version, MACFUSE_VERSION,
                              strlen(MACFUSE_VERSION))) {
                     kmod_ok = 1;
+                    break;
                 } else {
+                    vm_deallocate(mach_task_self(), (vm_address_t)kmods,
+                                  kmodBytes);
                     errx(1, "MacFUSE kernel extension version mismatch "
                             "(kernel has %s, %s has %s)",
-                        kmodp->version, PROGNAME, MACFUSE_VERSION);
+                         kmodp->version, PROGNAME, MACFUSE_VERSION);
                     /* break */
                 }
             }
         }
+
+        vm_deallocate(mach_task_self(), (vm_address_t)kmods, kmodBytes);
 
         if (!kmod_ok) {
             errx(1, "MacFUSE kernel extension not loaded");
@@ -836,7 +886,7 @@ main(int argc, char **argv)
                 if (hs_complete) {
                     if (args.altflags & FUSE_MOPT_PING_DISKARB) {
                         /* Let Disk Arbitration know. */
-                        if (ping_diskarb(mntpath)) {
+                        if (ping_diskarb(mntpath, altflags)) {
                             /* Somebody might want to exit here instead. */
                             fprintf(stderr, "%s@%d on %s (ping DiskArb)",
                                     MACFUSE_FS_TYPE, dindex, mntpath);
@@ -916,4 +966,46 @@ showversion(int doexit)
     if (doexit) {
         exit(EX_USAGE);
     }
+}
+
+typedef struct attrlist attrlist_t;
+
+struct FinderInfoAttrBuf {
+    unsigned long length;
+    fsobj_type_t  objType;
+    char          finderInfo[32];
+};
+typedef struct FinderInfoAttrBuf FinderInfoAttrBuf;
+
+static int
+FinderInfoSet(const char *path, uint32_t *type, uint32_t *creator)
+{
+    int               ret;
+    attrlist_t        attrList;
+    FinderInfoAttrBuf attrBuf;
+
+    attrList.commonattr = ATTR_CMN_FNDRINFO;
+
+    memset(&attrList, 0, sizeof(attrList));
+    attrList.bitmapcount = ATTR_BIT_MAP_COUNT;
+    attrList.commonattr  = ATTR_CMN_OBJTYPE | ATTR_CMN_FNDRINFO;
+    
+    ret = getattrlist(path, &attrList, &attrBuf, sizeof(attrBuf), 0);
+    if (ret != 0) {
+        return errno;
+    }   
+    
+    if ((ret == 0) && (attrBuf.objType != VREG) ) {
+        return EINVAL;
+    } else {
+         uint32_t be_type = htonl(*type);
+         uint32_t be_creator = htonl(*creator);
+         memcpy(&attrBuf.finderInfo[0], &be_type,    sizeof(uint32_t));
+         memcpy(&attrBuf.finderInfo[4], &be_creator, sizeof(uint32_t));
+         attrList.commonattr = ATTR_CMN_FNDRINFO;
+         ret = setattrlist(path, &attrList, attrBuf.finderInfo,
+                           sizeof(attrBuf.finderInfo), 0);
+    }
+
+    return ret;
 }

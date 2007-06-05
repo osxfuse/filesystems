@@ -6,8 +6,14 @@
 #ifndef _FUSE_PARAM_H_
 #define _FUSE_PARAM_H_
 
-#define M_MACFUSE_ENABLE_UNSUPPORTED 1
-#define M_MACFUSE_ENABLE_XATTR       1
+#define MACFUSE_BUNDLE_PATH            "/System/Library/Filesystems/fusefs.fs"
+
+#define M_MACFUSE_ENABLE_INIT_TIMEOUT  1
+#define M_MACFUSE_ENABLE_UNSUPPORTED   1
+#define M_MACFUSE_ENABLE_XATTR         1
+
+#define FUSE_MAC_CREATOR               0x46555345 /* FUSE */
+#define FUSE_MAC_TYPE_ROOT             0x524f4f54 /* ROOT */
 
 /*
  * This is the prefix ("fuse" by default) of the name of a FUSE device node
@@ -80,8 +86,8 @@
 #define FUSE_DAEMON_TIMEOUT_OTHER_BUTTON_TITLE     "Force Eject"
 #define FUSE_DAEMON_TIMEOUT_ALTERNATE_BUTTON_TITLE "Don't Warn Again"
 #define FUSE_DAEMON_TIMEOUT_ALERT_MESSAGE                                 \
-  "The MacFUSE file system is not responding. You can eject this volume " \
-  "immediately, but unsaved changes may be lost."
+  "There was a timeout waiting for the file system to respond. You can "  \
+  "eject this volume immediately, but unsaved changes may be lost."
 #define FUSE_DAEMON_TIMEOUT_ALERT_TIMEOUT          120    /* s */
 
 #define FUSE_MAXATTRIBUTESIZE              (128*1024)
@@ -92,6 +98,8 @@
 #define FUSE_POSTUNMOUNT_SIGNAL            SIGKILL
 
 #define MACOSX_ADMIN_GROUP_NAME            "admin"
-#define MACFUSE_TUNABLES_ADMIN             "macfuse.tunables.admin_group"
+
+#define SYSCTL_MACFUSE_TUNABLES_ADMIN      "macfuse.tunables.admin_group"
+#define SYSCTL_MACFUSE_VERSION_NUMBER      "macfuse.version.number"
 
 #endif /* _FUSE_PARAM_H_ */

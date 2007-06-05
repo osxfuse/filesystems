@@ -318,7 +318,7 @@ fuse_vnop_create(struct vnop_create_args *ap)
     uint64_t parentnid = VTOFUD(dvp)->nid;
     mode_t mode = MAKEIMODE(vap->va_type, vap->va_mode);
 
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     if (fuse_isdeadfs_nop(dvp)) {
         panic("MacFUSE: fuse_vnop_create(): called on a dead file system");
@@ -602,9 +602,12 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
     if ((err = fdisp_simple_putget_vp(&fdi, FUSE_GETATTR, vp, context))) {
         if ((err == ENOTCONN) && vnode_isvroot(vp)) {
             /* see comment at similar place in fuse_statfs() */
+            debug_printf("fuse_getattr c: returning ENOTCONN\n");
             goto fake;
         }
-        debug_printf("fuse_getattr c: returning ENOTCONN\n");
+        if (err == ENOENT) {
+            fuse_internal_vnode_disappear(vp, context, 1);
+        }
         return (err);
     }
 
@@ -655,7 +658,7 @@ fuse_vnop_getattr(struct vnop_getattr_args *ap)
              * revocation and tell the caller to try again, if interested.
              */
 
-            fuse_internal_vnode_disappear(vp, context);
+            fuse_internal_vnode_disappear(vp, context, 1);
             return EAGAIN;
 
             /*
@@ -954,7 +957,7 @@ fuse_vnop_kqfilt_add(struct vnop_kqfilt_add_args *ap)
 static int
 fuse_vnop_kqfilt_remove(__unused struct vnop_kqfilt_remove_args *ap)
 {
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     return ENOTSUP;
 }
@@ -1128,7 +1131,7 @@ fuse_vnop_lookup(struct vnop_lookup_args *ap)
     vfs_context_t context     = ap->a_context;
     mount_t mp                = vnode_mount(dvp);
 
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     int err                   = 0;
     int lookup_err            = 0;
@@ -1525,7 +1528,7 @@ fuse_vnop_mkdir(struct vnop_mkdir_args *ap)
 
     struct fuse_mkdir_in fmdi;
 
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     CHECK_BLANKET_DENIAL(dvp, context, EPERM);
 
@@ -1567,7 +1570,7 @@ fuse_vnop_mknod(struct vnop_mknod_args *ap)
 
     struct fuse_mknod_in fmni;
 
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     CHECK_BLANKET_DENIAL(dvp, context, EPERM);
 
@@ -1737,9 +1740,9 @@ fuse_vnop_open(struct vnop_open_args *ap)
 
     int error, isdir = 0, mode;
 
-    fuse_trace_printf_vnop();
-
     vp = ap->a_vp;
+
+    fuse_trace_printf_vnop();
 
     if (fuse_isdeadfs(vp)) {
         return ENXIO;
@@ -1794,12 +1797,12 @@ fuse_vnop_open(struct vnop_open_args *ap)
                 fvdat->flag &= ~FN_CREATING;
 
                 fuse_lck_mtx_unlock(fvdat->createlock);
-                wakeup((caddr_t)fvdat->creator); // wake up all
+                fuse_wakeup((caddr_t)fvdat->creator); // wake up all
                 goto ok; /* return 0 */
             } else {
                 debug_printf("contender going to sleep\n");
-                error = msleep(fvdat->creator, fvdat->createlock,
-                               PDROP | PINOD | PCATCH, "fuse_open", 0);
+                error = fuse_msleep(fvdat->creator, fvdat->createlock,
+                                    PDROP | PINOD | PCATCH, "fuse_open", 0);
                 /*
                  * msleep will drop the mutex. since we have PDROP specified,
                  * it will NOT regrab the mutex when it returns.
@@ -2560,7 +2563,7 @@ fuse_vnop_rename(struct vnop_rename_args *ap)
     struct componentname *tcnp = ap->a_tcnp;
     vfs_context_t context      = ap->a_context;
 
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     if (fuse_isdeadfs_nop(fdvp)) {
         panic("MacFUSE: fuse_vnop_rename(): called on a dead file system");
@@ -2690,7 +2693,7 @@ struct vnop_select_args {
 static int
 fuse_vnop_select(__unused struct vnop_select_args *ap)
 {
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
     return (1);
 }
 
@@ -2931,7 +2934,7 @@ fuse_vnop_setattr(struct vnop_setattr_args *ap)
              * revocation and tell the caller to try again, if interested.
              */
 
-            fuse_internal_vnode_disappear(vp, context);
+            fuse_internal_vnode_disappear(vp, context, 1);
 
             err = EAGAIN;
         }
@@ -3128,7 +3131,7 @@ fuse_vnop_symlink(struct vnop_symlink_args *ap)
     size_t len;
     struct fuse_dispatcher fdi;
         
-    fuse_trace_printf_vnop();
+    fuse_trace_printf_vnop_novp();
 
     if (fuse_isdeadfs_nop(dvp)) {
         panic("MacFUSE: fuse_vnop_symlink(): called on a dead file system");

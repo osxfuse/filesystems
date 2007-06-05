@@ -20,6 +20,7 @@
 
 #include <fuse_ioctl.h>
 #include "fuse_ipc.h"
+#include "fuse_kludges.h"
 #include "fuse_node.h"
 
 struct fuse_attr;
@@ -373,7 +374,7 @@ fuse_internal_forget_send(mount_t                 mp,
                           struct fuse_dispatcher *fdip);
 
 void
-fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context);
+fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context, int dorevoke);
 
 /* fuse start/stop */
 

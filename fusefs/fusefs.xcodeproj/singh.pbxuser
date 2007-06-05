@@ -31,6 +31,20 @@
 					PBXErrorsWarningsDataSource_LocationID,
 				);
 			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXExecutablesDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXExecutablesDataSource_NameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					22,
+					300,
+					489.5835,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXExecutablesDataSource_ActiveFlagID,
+					PBXExecutablesDataSource_NameID,
+					PBXExecutablesDataSource_CommentsID,
+				);
+			};
 			PBXConfiguration.PBXFileTableDataSource3.PBXFileTableDataSource = {
 				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
 				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
@@ -75,8 +89,8 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 201050219;
-			PBXWorkspaceStateSaveDate = 201050219;
+			PBXPerProjectTemplateStateSaveDate = 202365959;
+			PBXWorkspaceStateSaveDate = 202365959;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
@@ -420,6 +434,7 @@
 			sepNavIntBoundsRect = "{{0, 0}, {708, 47614}}";
 			sepNavSelRange = "{92251, 0}";
 			sepNavVisRect = "{{0, 44575}, {708, 269}}";
+			sepNavWindowFrame = "{{15, 172}, {887, 701}}";
 		};
 	};
 	54C6DDCD0B5EEB44002D9FD9 /* fuse_vnops.h */ = {

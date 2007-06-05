@@ -155,29 +155,38 @@ struct fuse_data {
     lck_rw_t                  *rename_lock;
 #endif
 
-    uint32_t                   timeout_status;
-    lck_mtx_t                 *timeout_mtx;
-
     uint32_t                   fuse_libabi_major;
     uint32_t                   fuse_libabi_minor;
 
     uint32_t                   max_write;
     uint32_t                   max_read;
     uint32_t                   blocksize;
-    struct timespec            daemon_timeout;
-    struct timespec           *daemon_timeout_p;
-    struct timespec            init_timeout;
     uint32_t                   iosize;
     uint32_t                   subtype;
     char                       volname[MAXPATHLEN];
 
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    uint32_t                   callout_status;
+    lck_mtx_t                 *callout_mtx;
     thread_call_t              thread_call;
+#endif
+
+    uint32_t                   timeout_status;
+    lck_mtx_t                 *timeout_mtx;
+    struct timespec            daemon_timeout;
+    struct timespec           *daemon_timeout_p;
+    struct timespec            init_timeout;
 };
 
 enum {
     FUSE_DAEMON_TIMEOUT_NONE       = 0,
     FUSE_DAEMON_TIMEOUT_PROCESSING = 1, 
     FUSE_DAEMON_TIMEOUT_DEAD       = 2,
+};
+
+enum {
+    INIT_CALLOUT_INACTIVE = 0,
+    INIT_CALLOUT_ACTIVE   = 1,
 };
 
 /* Not-Implemented Bits */

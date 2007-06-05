@@ -133,6 +133,8 @@ SYSCTL_INT(_macfuse_version, OID_AUTO, api_major, CTLFLAG_RD,
            &fuse_api_major, 0, "");
 SYSCTL_INT(_macfuse_version, OID_AUTO, api_minor, CTLFLAG_RD,
            &fuse_api_minor, 0, "");
+SYSCTL_STRING(_macfuse_version, OID_AUTO, number, CTLFLAG_RD,
+              MACFUSE_VERSION, 0, "");
 SYSCTL_STRING(_macfuse_version, OID_AUTO, string, CTLFLAG_RD,
               MACFUSE_VERSION ", " MACFUSE_TIMESTAMP, 0, "");
 
@@ -162,6 +164,7 @@ static struct sysctl_oid *fuse_sysctl_list[] =
     &sysctl__macfuse_tunables_max_freetickets,
     &sysctl__macfuse_version_api_major,
     &sysctl__macfuse_version_api_minor,
+    &sysctl__macfuse_version_number,
     &sysctl__macfuse_version_string,
     (struct sysctl_oid *)0
 };

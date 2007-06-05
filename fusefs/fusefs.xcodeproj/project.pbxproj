@@ -163,7 +163,7 @@
 		54C6DD210B5EE5EF002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
 		54C6DD240B5EE5EF002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		54C6DD250B5EE5EF002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
-		54C6DD790B5EEB44002D9FD9 /* API */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = API; sourceTree = "<group>"; };
+		54C6DD790B5EEB44002D9FD9 /* API.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = API.txt; sourceTree = "<group>"; };
 		54C6DD7D0B5EEB44002D9FD9 /* categories.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = categories.pbxbtree; sourceTree = "<group>"; };
 		54C6DD7E0B5EEB44002D9FD9 /* cdecls.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = cdecls.pbxbtree; sourceTree = "<group>"; };
 		54C6DD7F0B5EEB44002D9FD9 /* decls.pbxbtree */ = {isa = PBXFileReference; lastKnownFileType = file; path = decls.pbxbtree; sourceTree = "<group>"; };
@@ -245,16 +245,15 @@
 		54C6DDDD0B5EEB44002D9FD9 /* getproctitle.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = getproctitle.c; sourceTree = "<group>"; };
 		54C6DDDE0B5EEB44002D9FD9 /* mntopts.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = mntopts.h; sourceTree = "<group>"; };
 		54C6DDDF0B5EEB44002D9FD9 /* mount_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = mount_fusefs.c; sourceTree = "<group>"; };
-		54C6DDE00B5EEB44002D9FD9 /* TODO */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TODO; sourceTree = "<group>"; };
 		54C6DE390B5EEB75002D9FD9 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
 		54C6DE3C0B5EEB75002D9FD9 /* English */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		54C6DE3D0B5EEB75002D9FD9 /* version.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = version.plist; sourceTree = "<group>"; };
 		54C6DE4C0B5EECDB002D9FD9 /* fusefs.fs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = fusefs.fs; sourceTree = "<group>"; };
 		54C6DE6B0B5EEDD1002D9FD9 /* Contents */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Contents; path = fusefs.fs/Contents; sourceTree = "<group>"; };
-		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
+		54D47B800B4F610000A8FE1C /* load_fusefs */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = load_fusefs; sourceTree = BUILT_PRODUCTS_DIR; };
 		54D47B930B4F614C00A8FE1C /* load */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = folder; path = load; sourceTree = "<group>"; };
-		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
-		54D47BBC0B4F628200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = load_fusefs.c; sourceTree = "<group>"; };
+		54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = load_fusefs.c; path = load/load_fusefs.c; sourceTree = "<group>"; };
+		54D47BBC0B4F628200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = load_fusefs.c; path = load/load_fusefs.c; sourceTree = "<group>"; };
 		54D47BC00B4F62A200A8FE1C /* load_fusefs.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = load_fusefs.c; path = load/load_fusefs.c; sourceTree = "<group>"; };
 		54F862610B8029A400416A6F /* fuse_kludges.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = fuse_kludges.c; sourceTree = "<group>"; };
 		54F862620B8029A400416A6F /* fuse_kludges.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = fuse_kludges.h; sourceTree = "<group>"; };
@@ -399,7 +398,7 @@
 		54C6DD780B5EEB44002D9FD9 /* fusefs */ = {
 			isa = PBXGroup;
 			children = (
-				54C6DD790B5EEB44002D9FD9 /* API */,
+				54C6DD790B5EEB44002D9FD9 /* API.txt */,
 				54C6DD7A0B5EEB44002D9FD9 /* build */,
 				54C6DDB10B5EEB44002D9FD9 /* common */,
 				54C6DDB50B5EEB44002D9FD9 /* InfoPlist.strings */,
@@ -431,7 +430,6 @@
 				54C6DDD80B5EEB44002D9FD9 /* Info.plist */,
 				54C6DDD90B5EEB44002D9FD9 /* load */,
 				54C6DDDB0B5EEB44002D9FD9 /* mount */,
-				54C6DDE00B5EEB44002D9FD9 /* TODO */,
 			);
 			name = fusefs;
 			sourceTree = "<group>";
@@ -810,7 +808,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Create MacFUSE Tarball\n\n# If we are not running as root, just bail out.\nmy_uid=`/usr/bin/id -u`\nif [ $my_uid != 0 ]\nthen\n    exit 0\nfi\n\nMACFUSE_OUT_NAME=macfuse_out\nMACFUSE_OUT=/tmp/$MACFUSE_OUT_NAME\nMACFUSE_ROOT=$MACFUSE_OUT/pkgroot/\n\nsudo /bin/rm -rf /tmp/$MACFUSE_OUT_NAME\nsudo mkdir -p $MACFUSE_ROOT\nsudo mkdir -p $MACFUSE_ROOT/Library/Extensions/\nsudo mkdir -p $MACFUSE_ROOT/System/Library/Filesystems/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/lib/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/include/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/lib/pkgconfig/\n\nsudo cp -pR $BUILT_PRODUCTS_DIR/fusefs.kext $MACFUSE_ROOT/Library/Extensions/fusefs.kext\nsudo cp -pR $BUILT_PRODUCTS_DIR/fusefs.fs $MACFUSE_ROOT/System/Library/Filesystems/fusefs.fs\nsudo cp -pR $BUILT_PRODUCTS_DIR/load_fusefs $MACFUSE_ROOT/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs\nsudo cp -pR $BUILT_PRODUCTS_DIR/mount_fusefs $MACFUSE_ROOT/System/Library/Filesystems/fusefs.fs/mount_fusefs\n\nsudo cp -pR /usr/local/include/fuse.h $MACFUSE_ROOT/usr/local/include/fuse.h\nsudo cp -pR /usr/local/include/ulockmgr.h $MACFUSE_ROOT/usr/local/include/ulockmgr.h\nsudo cp -pR /usr/local/include/fuse $MACFUSE_ROOT/usr/local/include/fuse\nsudo cp -pR /usr/local/lib/libfuse.* $MACFUSE_ROOT/usr/local/lib/\nsudo cp -pR /usr/local/lib/libulockmgr.* $MACFUSE_ROOT/usr/local/lib/\nsudo cp -pR /usr/local/lib/pkgconfig/fuse.pc $MACFUSE_ROOT/usr/local/lib/pkgconfig/fuse.pc\n\nsudo chown -R root:wheel $MACFUSE_ROOT/*\nsudo chown root:admin $MACFUSE_ROOT/Library\nsudo chmod 41775 $MACFUSE_ROOT/Library\nsudo chmod u+s $MACFUSE_ROOT/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs\n\ncd $MACFUSE_ROOT\n\nMACFUSE_VERSION=`/usr/bin/printf '#include \"fuse_version.h\"\\nMACFUSE_VERSION_LITERAL' | /usr/bin/cpp -I$PROJECT_DIR/common -P - | $SED '/^$/d'`\nsudo rm \"/tmp/macfuse-core-\"$MACFUSE_VERSION\".tar*\"\nsudo rm -rf /tmp/macfuse-core-$MACFUSE_VERSION\nsudo mkdir -p /tmp/macfuse-core-$MACFUSE_VERSION\nsudo tar -cpvf \"/tmp/macfuse-core-$MACFUSE_VERSION/macfuse-core-\"$MACFUSE_VERSION\".tar\" .\ncd /tmp/macfuse-core-$MACFUSE_VERSION\nsudo bzip2 -9 \"macfuse-core-\"$MACFUSE_VERSION\".tar\"\nsudo rm -rf /tmp/$MACFUSE_OUT_NAME\n\n# Create the MacFUSE Installer Package\n\ncd $PROJECT_DIR/../packaging/macfuse-core/ && sudo ./make-pkg.sh \"$MACFUSE_VERSION\"";
+			shellScript = "# Create MacFUSE Tarball\n\n# If we are not running as root, just bail out.\nmy_uid=`/usr/bin/id -u`\nif [ $my_uid != 0 ]\nthen\n    exit 0\nfi\n\nMACFUSE_OUT_NAME=macfuse_out\nMACFUSE_OUT=/tmp/$MACFUSE_OUT_NAME\nMACFUSE_ROOT=$MACFUSE_OUT/pkgroot/\n\nsudo /bin/rm -rf $MACFUSE_OUT\nsudo mkdir -p $MACFUSE_ROOT\nsudo mkdir -p $MACFUSE_ROOT/Library/Extensions/\nsudo mkdir -p $MACFUSE_ROOT/System/Library/Filesystems/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/lib/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/include/\nsudo mkdir -p $MACFUSE_ROOT/usr/local/lib/pkgconfig/\n\nsudo cp -pR $BUILT_PRODUCTS_DIR/fusefs.kext $MACFUSE_ROOT/Library/Extensions/fusefs.kext\nsudo cp -pR $BUILT_PRODUCTS_DIR/fusefs.fs $MACFUSE_ROOT/System/Library/Filesystems/fusefs.fs\nsudo cp -pR $BUILT_PRODUCTS_DIR/load_fusefs $MACFUSE_ROOT/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs\nsudo cp -pR $BUILT_PRODUCTS_DIR/mount_fusefs $MACFUSE_ROOT/System/Library/Filesystems/fusefs.fs/mount_fusefs\n\nsudo cp -pR /usr/local/include/fuse.h $MACFUSE_ROOT/usr/local/include/fuse.h\nsudo cp -pR /usr/local/include/ulockmgr.h $MACFUSE_ROOT/usr/local/include/ulockmgr.h\nsudo cp -pR /usr/local/include/fuse $MACFUSE_ROOT/usr/local/include/fuse\nsudo cp -pR /usr/local/lib/libfuse.* $MACFUSE_ROOT/usr/local/lib/\nsudo cp -pR /usr/local/lib/libulockmgr.* $MACFUSE_ROOT/usr/local/lib/\nsudo cp -pR /usr/local/lib/pkgconfig/fuse.pc $MACFUSE_ROOT/usr/local/lib/pkgconfig/fuse.pc\n\nsudo chown -R root:wheel $MACFUSE_ROOT/*\nsudo chown root:admin $MACFUSE_ROOT/Library\nsudo chmod 41775 $MACFUSE_ROOT/Library\nsudo chmod u+s $MACFUSE_ROOT/Library/Extensions/fusefs.kext/Contents/Resources/load_fusefs\n\ncd $MACFUSE_ROOT\n\nMACFUSE_VERSION=`/usr/bin/printf '#include \"fuse_version.h\"\\nMACFUSE_VERSION_LITERAL' | /usr/bin/cpp -I$PROJECT_DIR/common -P - | $SED '/^$/d'`\nsudo rm -f \"/tmp/macfuse-core-\"$MACFUSE_VERSION\".tar*\"\nsudo rm -rf /tmp/macfuse-core-$MACFUSE_VERSION\nsudo mkdir -p /tmp/macfuse-core-$MACFUSE_VERSION\nsudo tar -cpvf \"/tmp/macfuse-core-$MACFUSE_VERSION/macfuse-core-\"$MACFUSE_VERSION\".tar\" .\ncd /tmp/macfuse-core-$MACFUSE_VERSION\nsudo bzip2 -9 \"macfuse-core-\"$MACFUSE_VERSION\".tar\"\nsudo rm -rf /tmp/$MACFUSE_OUT_NAME\n\n# Create the MacFUSE Installer Package\n\ncd $PROJECT_DIR/../packaging/macfuse-core/ && sudo ./make-pkg.sh \"$MACFUSE_VERSION\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 

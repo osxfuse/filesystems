@@ -165,8 +165,21 @@ fuse_internal_access(vnode_t                   vp,
     }
 
     if (err == ENOENT) {
-        IOLog("MacFUSE: revoking vnode %p (root=%d)\n", vp, vnode_isvroot(vp));
-        fuse_internal_vnode_disappear(vp, context);
+
+        int dorevoke = 1;
+
+        IOLog("MacFUSE: disappearing vnode %p (root=%d, type=%d, action=%x)\n",
+              vp, vnode_isvroot(vp), vnode_vtype(vp), action);
+
+        /*
+         * Finder's /.Trashes/<uid> issue... avoid deadlock
+         */
+        if (FUSE_KL_skiprevoke(vp, action)) {
+            dorevoke = 0;
+            IOLog("MacFUSE: skipping revoke on vnode %p\n", vp);
+        }
+
+        fuse_internal_vnode_disappear(vp, context, dorevoke);
     }
 
     return err;
@@ -538,8 +551,12 @@ fuse_internal_revoke(vnode_t vp, int flags, vfs_context_t context)
     struct fuse_vnode_data *fvdat = VTOFUD(vp);
 
     fvdat->flag |= FN_REVOKING;
+
+    IOLog("MacFUSE: revoking vnode %p\n", vp);
     ret = vn_revoke(vp, flags, context);
+
     fvdat->flag &= ~FN_REVOKING;
+    fvdat->flag |= FN_REVOKED;
 
     return ret;
 }
@@ -1121,9 +1138,9 @@ fuse_internal_forget_callback(struct fuse_ticket *ftick, __unused uio_t uio)
     debug_printf("ftick=%p, uio=%p\n", ftick, uio);
 
     fdi.tick = ftick;
-    fuse_internal_forget_send( (mount_t)0, (vfs_context_t)0, 
-                     ((struct fuse_in_header *)ftick->tk_ms_fiov.base)->nodeid,
-                     1, &fdi);
+
+    fuse_internal_forget_send(ftick->tk_data->mp, (vfs_context_t)0, 
+        ((struct fuse_in_header *)ftick->tk_ms_fiov.base)->nodeid, 1, &fdi);
 
     return 0;
 }
@@ -1158,16 +1175,28 @@ fuse_internal_forget_send(mount_t                 mp,
 
 __private_extern__
 void
-fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context)
+fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context, int dorevoke)
 {   
+    int err = 0;
+
     fuse_vncache_purge(vp);
 
-    (void)fuse_internal_revoke(vp, REVOKEALL, context);
+    if (dorevoke) {
+        err = fuse_internal_revoke(vp, REVOKEALL, context);
+        if (err) {
+            IOLog("MacFUSE: disappearing act: revoke failed (%d)\n", err);
+        }
 
-    (void)vnode_recycle(vp);
+        err = vnode_recycle(vp);
+        if (err) {
+            IOLog("MacFUSE: disappearing act: recycle failed (%d)\n", err);
+        }
+    }
 }
 
 /* fuse start/stop */
+
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
 
 __private_extern__
 void
@@ -1176,7 +1205,7 @@ fuse_internal_thread_call_expiry_handler(void *param0, void *param1)
     (void)param1;
     int pid = 0;
     struct fuse_data *data = (struct fuse_data *)param0;
-    fuse_lck_mtx_lock(data->timeout_mtx);
+    fuse_lck_mtx_lock(data->callout_mtx);
     pid = data->daemonpid;
     fdata_kick_set(data);
 
@@ -1190,12 +1219,14 @@ fuse_internal_thread_call_expiry_handler(void *param0, void *param1)
                                       FUSE_INIT_TIMEOUT_NOTICE_MESSAGE,
                                       FUSE_INIT_TIMEOUT_DEFAULT_BUTTON_TITLE);
 
-    fuse_lck_mtx_unlock(data->timeout_mtx);
+    fuse_lck_mtx_unlock(data->callout_mtx);
 
     if (pid) {
         proc_signal(pid, FUSE_POSTUNMOUNT_SIGNAL);
     }
 }
+
+#endif
 
 __private_extern__
 int
@@ -1243,13 +1274,17 @@ out:
         fdata_kick_set(data);
     }
 
-    fuse_lck_mtx_lock(data->timeout_mtx);
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    /* INIT_CALLOUT */
+    fuse_lck_mtx_lock(data->callout_mtx);
     (void)thread_call_cancel(data->thread_call);
-    fuse_lck_mtx_unlock(data->timeout_mtx);
+    data->callout_status = INIT_CALLOUT_INACTIVE;
+    fuse_lck_mtx_unlock(data->callout_mtx);
+#endif
 
     fuse_lck_mtx_lock(data->ticket_mtx);
     data->dataflags |= FSESS_INITED;
-    wakeup(&data->ticketer);
+    fuse_wakeup(&data->ticketer);
     fuse_lck_mtx_unlock(data->ticket_mtx);
 
     return (0);
@@ -1261,7 +1296,6 @@ fuse_internal_send_init(struct fuse_data *data, vfs_context_t context)
 {
     struct fuse_init_in   *fiii;
     struct fuse_dispatcher fdi;
-    uint64_t deadline;
 
     fdisp_init(&fdi, sizeof(*fiii));
     fdisp_make(&fdi, FUSE_INIT, data->mp, 0, context);
@@ -1271,11 +1305,18 @@ fuse_internal_send_init(struct fuse_data *data, vfs_context_t context)
     fiii->max_readahead = data->iosize * 16;
     fiii->flags = 0;
 
-    clock_interval_to_deadline(data->init_timeout.tv_sec, kSecondScale,
-                               &deadline);
-    fuse_lck_mtx_lock(data->timeout_mtx);
-    thread_call_enter_delayed(data->thread_call, deadline);
-    fuse_lck_mtx_unlock(data->timeout_mtx);
+#if M_MACFUSE_ENABLE_INIT_TIMEOUT
+    {
+        /* INIT_CALLOUT */
+        uint64_t deadline;
+        clock_interval_to_deadline(data->init_timeout.tv_sec, kSecondScale,
+                                   &deadline);
+        fuse_lck_mtx_lock(data->callout_mtx);
+        thread_call_enter_delayed(data->thread_call, deadline);
+        data->callout_status = INIT_CALLOUT_ACTIVE;
+        fuse_lck_mtx_unlock(data->callout_mtx);
+    }
+#endif
 
     fuse_insert_callback(fdi.tick, fuse_internal_init_callback);
     fuse_insert_message(fdi.tick);

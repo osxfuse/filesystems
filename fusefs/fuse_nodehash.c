@@ -408,7 +408,7 @@ extern errno_t HNodeLookupCreatingIfNecessary(dev_t dev, uint64_t ino, size_t fo
 
                 thisNode->waiting = TRUE;
                 
-                (void) msleep(thisNode, gHashMutex, PINOD, "HNodeLookupCreatingIfNecessary", NULL);
+                (void) fuse_msleep(thisNode, gHashMutex, PINOD, "HNodeLookupCreatingIfNecessary", NULL);
                 
                 // msleep drops and reacquires the mutex; the hash table may have changed, 
                 // so we loop.
@@ -570,7 +570,7 @@ static void HNodeAttachComplete(HNodeRef hnode)
     hnode->attachOutstanding = FALSE;
 
     if (hnode->waiting) {
-        wakeup(hnode);
+        fuse_wakeup(hnode);
         hnode->waiting = FALSE;
     }
 }

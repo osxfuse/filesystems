@@ -224,7 +224,7 @@ fuse_device_close(dev_t dev, __unused int flags, __unused int devtype,
             fuse_lck_mtx_lock(ftick->tk_aw_mtx);
             fticket_set_answered(ftick);
             ftick->tk_aw_errno = ENOTCONN;
-            wakeup(ftick);
+            fuse_wakeup(ftick);
             fuse_lck_mtx_unlock(ftick->tk_aw_mtx);
         }
 
@@ -275,7 +275,7 @@ again:
     }
 
     if (!(ftick = fuse_ms_pop(data))) {
-        err = msleep(data, data->ms_mtx, PCATCH, "fu_msg", 0);
+        err = fuse_msleep(data, data->ms_mtx, PCATCH, "fu_msg", 0);
         if (err != 0) {
             fuse_lck_mtx_unlock(data->ms_mtx);
             return (fdata_kick_get(data) ? ENODEV : err);

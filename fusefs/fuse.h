@@ -28,6 +28,7 @@
 //#define FUSE_KTRACE_OP     1
 //#define FUSE_TRACE         1
 //#define FUSE_TRACE_LK      1
+//#define FUSE_TRACE_MSLEEP  1
 //#define FUSE_TRACE_OP      1
 //#define FUSE_TRACE_VNCACHE 1
 #define FUSE_TRACK_STATS 1
@@ -43,11 +44,46 @@
 #endif
 
 #ifdef FUSE_TRACE_OP
-#define fuse_trace_printf_vfsop() IOLog("%s\n", __FUNCTION__)
-#define fuse_trace_printf_vnop()  IOLog("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vfsop()     IOLog("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vnop_novp() IOLog("%s\n", __FUNCTION__)
+#define fuse_trace_printf_vnop()      IOLog("%s vp=%p\n", __FUNCTION__, vp)
 #else
-#define fuse_trace_printf_vfsop() {}
-#define fuse_trace_printf_vnop()  {}
+#define fuse_trace_printf_vfsop()     {}
+#define fuse_trace_printf_vnop()      {}
+#define fuse_trace_printf_vnop_novp() {}
+#endif
+
+#ifdef FUSE_TRACE_MSLEEP
+
+static __inline__ int
+fuse_msleep(void *chan, lck_mtx_t *mtx, int pri, const char *wmesg,
+            struct timespec *ts)
+{
+    int ret;
+
+    IOLog("0: msleep(%p, %s)\n", (chan), (wmesg));
+    ret = msleep(chan, mtx, pri, wmesg, ts);
+    IOLog("1: msleep(%p, %s)\n", (chan), (wmesg));
+
+    return ret;
+}
+#define fuse_wakeup(chan)                          \
+{                                                  \
+    IOLog("1: wakeup(%p)\n", (chan));              \
+    wakeup((chan));                                \
+    IOLog("0: wakeup(%p)\n", (chan));              \
+}
+#define fuse_wakeup_one(chan)                      \
+{                                                  \
+    IOLog("1: wakeup_one(%p)\n", (chan));          \
+    wakeup_one((chan));                            \
+    IOLog("0: wakeup_one(%p)\n", (chan));          \
+}
+#else
+#define fuse_msleep(chan, mtx, pri, wmesg, ts) \
+    msleep((chan), (mtx), (pri), (wmesg), (ts))
+#define fuse_wakeup(chan)     wakeup((chan))
+#define fuse_wakeup_one(chan) wakeup_one((chan))
 #endif
 
 #ifdef FUSE_KTRACE_OP

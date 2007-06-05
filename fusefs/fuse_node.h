@@ -25,6 +25,7 @@ enum {
 #define FN_DIRECT_IO 0x00000004
 #define FN_NULL_ACL  0x00000008
 #define FN_HAS_ACL   0x00000010
+#define FN_REVOKED   0x00000020
 
 struct fuse_vnode_data {
     uint32_t   fMagic;
