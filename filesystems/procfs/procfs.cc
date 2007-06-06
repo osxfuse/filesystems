@@ -9,46 +9,71 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.2"
+#define MACFUSE_PROCFS_VERSION "1.5"
 #define FUSE_USE_VERSION 26
 
-#include <stdio.h>
-#include <string.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <dirent.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/sysctl.h>
-#include <mach/mach.h>
-#include <Carbon/Carbon.h>
-#include <IOKit/IOKitLib.h>
-#include <CoreFoundation/CoreFoundation.h>
 
 #include <grp.h>
 #include <pwd.h>
 
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#include <mach/vm_region.h>
+#include <mach/vm_statistics.h>
+
+#include <Carbon/Carbon.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+
 #include <cassert>
 #include <vector>
 #include <pcrecpp.h>
+
 #include <fuse.h>
+
+#include "procfs_displays.h"
+#include "procfs_proc_info.h"
+#include "sequencegrab/procfs_sequencegrab.h"
 
 #if MACFUSE_PROCFS_ENABLE_TPM
 #include "procfs_tpm.h"
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
 
-static mach_port_t p_default_set = 0;
-static mach_port_t p_default_set_control = 0;
-static host_priv_t host_priv;
-static processor_port_array_t processor_list;
-static natural_t processor_count = 0;
+static int procfs_ui = 0;
+#define PROCFS_DEFAULT_FILE_SIZE 65536
+
 static int total_file_patterns = 0;
 static int total_directory_patterns = 0;
 static int total_link_patterns = 0;
+
+static processor_port_array_t processor_list;
+static mach_port_t  p_default_set = 0;
+static mach_port_t  p_default_set_control = 0;
+static host_priv_t  host_priv;
+static natural_t    processor_count = 0;
 static io_connect_t lightsensor_port = 0;
 static io_connect_t motionsensor_port = 0;
 static unsigned int sms_gIndex = 0;
-static IOItemCount sms_gStructureInputSize = 0;
-static IOByteCount sms_gStructureOutputSize = 0;
+static IOItemCount  sms_gStructureInputSize = 0;
+static IOByteCount  sms_gStructureOutputSize = 0;
+
+/* camera */
+static pthread_mutex_t  camera_lock;
+static int              camera_busy = 0;
+static CFMutableDataRef camera_tiff = (CFMutableDataRef)0;
+
+/* display */
+static pthread_mutex_t  display_lock;
+static int              display_busy = 0;
+static CFMutableDataRef display_tiff = (CFMutableDataRef)0;
 
 static pcrecpp::RE *valid_process_pattern = new pcrecpp::RE("/(\\d+)");
 
@@ -168,6 +193,25 @@ static void fini_port_list(mach_port_name_array_t name_list,
 struct procfs_dispatcher_entry;
 typedef struct procfs_dispatcher_entry * procfs_dispatcher_entry_t;
 
+typedef int (*procfs_open_handler_t)(procfs_dispatcher_entry_t  e,
+                                     const char                *argv[],
+                                     const char                *path,
+                                     struct fuse_file_info     *fi);
+
+typedef int (*procfs_release_handler_t)(procfs_dispatcher_entry_t  e,
+                                        const char                *argv[],
+                                        const char                *path,
+                                        struct fuse_file_info     *fi);
+typedef int (*procfs_opendir_handler_t)(procfs_dispatcher_entry_t  e,
+                                        const char                *argv[],
+                                        const char                *path,
+                                        struct fuse_file_info     *fi);
+
+typedef int (*procfs_releasedir_handler_t)(procfs_dispatcher_entry_t  e,
+                                           const char                *argv[],
+                                           const char                *path,
+                                           struct fuse_file_info     *fi);
+
 typedef int (*procfs_getattr_handler_t)(procfs_dispatcher_entry_t  e,
                                         const char                *argv[],
                                         struct stat               *stbuf);
@@ -192,18 +236,54 @@ typedef int (*procfs_readlink_handler_t)(procfs_dispatcher_entry_t  e,
                                          size_t                    size);
 
 typedef struct procfs_dispatcher_entry {
-    char                     *pattern;
-    pcrecpp::RE              *compiled_pattern;
-    int                       argc;
-    procfs_getattr_handler_t  getattr;
-    procfs_read_handler_t     read;
-    procfs_readdir_handler_t  readdir;
-    procfs_readlink_handler_t readlink;
-    const char               *content_files[32];
-    const char               *content_directories[32];
+    int                         flag;
+    char                       *pattern;
+    pcrecpp::RE                *compiled_pattern;
+    int                         argc;
+    procfs_open_handler_t       open;
+    procfs_release_handler_t    release;
+    procfs_opendir_handler_t    opendir;
+    procfs_releasedir_handler_t releasedir;
+    procfs_getattr_handler_t    getattr;
+    procfs_read_handler_t       read;
+    procfs_readdir_handler_t    readdir;
+    procfs_readlink_handler_t   readlink;
+    const char                 *content_files[32];
+    const char                 *content_directories[32];
 };
 
+/* flags */
+#define PROCFS_FLAG_ISDOTFILE 0x00000001
+
 #define PROCFS_MAX_ARGS       3
+
+#define OPEN_HANDLER(handler) \
+int \
+procfs_open_##handler(procfs_dispatcher_entry_t  e,      \
+                      const char                *argv[], \
+                      const char                *path,   \
+                      struct fuse_file_info     *fi)     \
+
+#define RELEASE_HANDLER(handler) \
+int \
+procfs_release_##handler(procfs_dispatcher_entry_t  e,      \
+                         const char                 *argv[], \
+                         const char                 *path,   \
+                         struct fuse_file_info      *fi)     \
+
+#define OPENDIR_HANDLER(handler) \
+int \
+procfs_opendir_##handler(procfs_dispatcher_entry_t  e,      \
+                         const char                *argv[], \
+                         const char                *path,   \
+                         struct fuse_file_info     *fi)     \
+
+#define RELEASEDIR_HANDLER(handler) \
+int \
+procfs_releasedir_##handler(procfs_dispatcher_entry_t  e,      \
+                            const char                 *argv[], \
+                            const char                 *path,   \
+                            struct fuse_file_info      *fi)     \
 
 #define GETATTR_HANDLER(handler) \
 int \
@@ -236,79 +316,162 @@ procfs_readlink_##handler(procfs_dispatcher_entry_t  e,      \
                           char                      *buf,    \
                           size_t                     size)   \
 
-#define PROTO_READ_HANDLER(handler)     READ_HANDLER(handler)
-#define PROTO_READDIR_HANDLER(handler)  READDIR_HANDLER(handler)
-#define PROTO_READLINK_HANDLER(handler) READLINK_HANDLER(handler)
-#define PROTO_GETATTR_HANDLER(handler)  GETATTR_HANDLER(handler)
+#define PROTO_OPEN_HANDLER(handler)       OPEN_HANDLER(handler)
+#define PROTO_RELEASE_HANDLER(handler)    RELEASE_HANDLER(handler)
+#define PROTO_OPENDIR_HANDLER(handler)    OPENDIR_HANDLER(handler)
+#define PROTO_RELEASEDIR_HANDLER(handler) RELEASEDIR_HANDLER(handler)
+#define PROTO_READ_HANDLER(handler)       READ_HANDLER(handler)
+#define PROTO_READDIR_HANDLER(handler)    READDIR_HANDLER(handler)
+#define PROTO_READLINK_HANDLER(handler)   READLINK_HANDLER(handler)
+#define PROTO_GETATTR_HANDLER(handler)    GETATTR_HANDLER(handler)
 
-#define DECL_FILE(pattern, argc, getattrp, readp) \
-    {                              \
-        pattern,                   \
-        new pcrecpp::RE(pattern),  \
-        argc,                      \
-        procfs_getattr_##getattrp, \
-        procfs_read_##readp,       \
-        procfs_readdir_enotdir,    \
-        procfs_readlink_einval,    \
-        { NULL },                  \
-        { NULL }                   \
+#define DECL_FILE(pattern, argc, openp, releasep, getattrp, readp) \
+    {                                        \
+        0,                                   \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        argc,                                \
+        procfs_open_##openp,                 \
+        procfs_release_##releasep,           \
+        procfs_opendir_enotdir,              \
+        procfs_releasedir_enotdir,           \
+        procfs_getattr_##getattrp,           \
+        procfs_read_##readp,                 \
+        procfs_readdir_enotdir,              \
+        procfs_readlink_einval,              \
+        { NULL },                            \
+        { NULL }                             \
     },
 
-#define DECL_DIRECTORY(pattern, argc, getattrp, readdirp, contents, ...) \
-    {                              \
-        pattern,                   \
-        new pcrecpp::RE(pattern),  \
-        argc,                      \
-        procfs_getattr_##getattrp, \
-        procfs_read_eisdir,        \
-        procfs_readdir_##readdirp, \
-        procfs_readlink_einval,    \
-        contents,                  \
-        __VA_ARGS__                \
+#define DECL_FILE_WITHFLAGS(flag, pattern, argc, openp, releasep, getattrp, readp) \
+    {                                        \
+        flag,                                \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        argc,                                \
+        procfs_open_##openp,                 \
+        procfs_release_##releasep,           \
+        procfs_opendir_enotdir,              \
+        procfs_releasedir_enotdir,           \
+        procfs_getattr_##getattrp,           \
+        procfs_read_##readp,                 \
+        procfs_readdir_enotdir,              \
+        procfs_readlink_einval,              \
+        { NULL },                            \
+        { NULL }                             \
+    },
+
+#define DECL_DIRECTORY(pattern, argc, opendirp, releasedirp, getattrp, readdirp, contents, ...) \
+    {                                        \
+        0,                                   \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        argc,                                \
+        procfs_open_eisdir,                  \
+        procfs_release_eisdir,               \
+        procfs_opendir_##opendirp,           \
+        procfs_releasedir_##releasedirp,     \
+        procfs_getattr_##getattrp,           \
+        procfs_read_eisdir,                  \
+        procfs_readdir_##readdirp,           \
+        procfs_readlink_einval,              \
+        contents,                            \
+        __VA_ARGS__                          \
     },
 
 #define DECL_DIRECTORY_COMPACT(pattern, contents, ...) \
-    {                                     \
-        pattern,                          \
-        new pcrecpp::RE(pattern),         \
-        0,                                \
-        procfs_getattr_default_directory, \
-        procfs_read_eisdir,               \
-        procfs_readdir_default,           \
-        procfs_readlink_einval,           \
-        contents,                         \
-        ##__VA_ARGS__                     \
+    {                                        \
+        0,                                   \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        0,                                   \
+        procfs_open_eisdir,                  \
+        procfs_release_eisdir,               \
+        procfs_opendir_default_directory,    \
+        procfs_releasedir_default_directory, \
+        procfs_getattr_default_directory,    \
+        procfs_read_eisdir,                  \
+        procfs_readdir_default,              \
+        procfs_readlink_einval,              \
+        contents,                            \
+        ##__VA_ARGS__                        \
     },
 
-#define DECL_LINK(pattern, argc, getattrp, readlinkp) \
-    {                                \
-        pattern,                     \
-        new pcrecpp::RE(pattern),    \
-        argc,                        \
-        procfs_getattr_##getattrp,   \
-        procfs_read_einval,          \
-        procfs_readdir_enotdir,      \
-        procfs_readlink_##readlinkp, \
-        { NULL },                    \
-        { NULL }                     \
+#define DECL_LINK(pattern, argc, openp, releasep, getattrp, readlinkp) \
+    {                                        \
+        0,                                   \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        argc,                                \
+        procfs_open_##openp,                 \
+        procfs_release_##releasep,           \
+        procfs_opendir_enotdir,              \
+        procfs_releasedir_enotdir,           \
+        procfs_getattr_##getattrp,           \
+        procfs_read_einval,                  \
+        procfs_readdir_enotdir,              \
+        procfs_readlink_##readlinkp,         \
+        { NULL },                            \
+        { NULL }                             \
     },
 
 #define DECL_LINK_COMPACT(pattern, argc, readlinkp) \
-    {                                \
-        pattern,                     \
-        new pcrecpp::RE(pattern),    \
-        argc,                        \
-        procfs_getattr_default_link, \
-        procfs_read_einval,          \
-        procfs_readdir_enotdir,      \
-        procfs_readlink_##readlinkp, \
-        { NULL },                    \
-        { NULL }                     \
+    {                                        \
+        0,                                   \
+        pattern,                             \
+        new pcrecpp::RE(pattern),            \
+        argc,                                \
+        procfs_open_default_file,            \
+        procfs_release_default_file,         \
+        procfs_opendir_enotdir,              \
+        procfs_releasedir_enotdir,           \
+        procfs_getattr_default_link,         \
+        procfs_read_einval,                  \
+        procfs_readdir_enotdir,              \
+        procfs_readlink_##readlinkp,         \
+        { NULL },                            \
+        { NULL }                             \
     },
+
+PROTO_OPEN_HANDLER(default_file);
+PROTO_OPEN_HANDLER(eisdir);
+PROTO_OPEN_HANDLER(proc__windows__identify);
+PROTO_OPEN_HANDLER(system__hardware__camera__screenshot);
+PROTO_OPEN_HANDLER(system__hardware__displays__display__screenshot);
+
+PROTO_RELEASE_HANDLER(default_file);
+PROTO_RELEASE_HANDLER(eisdir);
+PROTO_RELEASE_HANDLER(proc__windows__identify);
+PROTO_RELEASE_HANDLER(system__hardware__camera__screenshot);
+PROTO_RELEASE_HANDLER(system__hardware__displays__display__screenshot);
+
+PROTO_OPENDIR_HANDLER(default_directory);
+PROTO_OPENDIR_HANDLER(enotdir);
+
+PROTO_RELEASEDIR_HANDLER(default_directory);
+PROTO_RELEASEDIR_HANDLER(enotdir);
+
+PROTO_GETATTR_HANDLER(default_file);
+PROTO_GETATTR_HANDLER(default_file_finder_info);
+PROTO_GETATTR_HANDLER(default_directory);
+PROTO_GETATTR_HANDLER(default_link);
+PROTO_GETATTR_HANDLER(byname__name);
+PROTO_GETATTR_HANDLER(system__hardware__camera__screenshot);
+PROTO_GETATTR_HANDLER(system__hardware__displays__display);
+PROTO_GETATTR_HANDLER(system__hardware__displays__display__screenshot);
+#if MACFUSE_PROCFS_ENABLE_TPM
+PROTO_GETATTR_HANDLER(system__hardware__tpm__keyslots__slot);
+PROTO_GETATTR_HANDLER(system__hardware__tpm__pcrs__pcr);
+#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+PROTO_GETATTR_HANDLER(proc__task__ports__port);
+PROTO_GETATTR_HANDLER(proc__task__threads__thread);
 
 PROTO_READ_HANDLER(einval);
 PROTO_READ_HANDLER(eisdir);
+PROTO_READ_HANDLER(zero);
+PROTO_READ_HANDLER(default_file_finder_info);
 PROTO_READ_HANDLER(proc__carbon);
+PROTO_READ_HANDLER(proc__fds);
 PROTO_READ_HANDLER(proc__generic);
 PROTO_READ_HANDLER(proc__task__absolutetime_info);
 PROTO_READ_HANDLER(proc__task__basic_info);
@@ -324,97 +487,165 @@ PROTO_READ_HANDLER(proc__task__threads__thread__states__float);
 PROTO_READ_HANDLER(proc__task__threads__thread__states__thread);
 PROTO_READ_HANDLER(proc__task__tokens);
 PROTO_READ_HANDLER(proc__task__vmmap);
+PROTO_READ_HANDLER(proc__task__vmmap_r);
+PROTO_READ_HANDLER(proc__windows__generic);
 PROTO_READ_HANDLER(proc__xcred);
-
-PROTO_READ_HANDLER(hardware__xsensor);
-PROTO_READ_HANDLER(hardware__cpus__cpu__data);
+PROTO_READ_HANDLER(system__firmware__variables);
+PROTO_READ_HANDLER(system__hardware__camera__screenshot);
+PROTO_READ_HANDLER(system__hardware__cpus__cpu__data);
+PROTO_READ_HANDLER(system__hardware__displays__display__info);
+PROTO_READ_HANDLER(system__hardware__displays__display__screenshot);
 #if MACFUSE_PROCFS_ENABLE_TPM
-PROTO_READ_HANDLER(hardware__tpm__hwmodel);
-PROTO_READ_HANDLER(hardware__tpm__hwvendor);
-PROTO_READ_HANDLER(hardware__tpm__hwversion);
-PROTO_READ_HANDLER(hardware__tpm__keyslots__slot);
-PROTO_READ_HANDLER(hardware__tpm__pcrs__pcr);
+PROTO_READ_HANDLER(system__hardware__tpm__hwmodel);
+PROTO_READ_HANDLER(system__hardware__tpm__hwvendor);
+PROTO_READ_HANDLER(system__hardware__tpm__hwversion);
+PROTO_READ_HANDLER(system__hardware__tpm__keyslots__slot);
+PROTO_READ_HANDLER(system__hardware__tpm__pcrs__pcr);
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
+PROTO_READ_HANDLER(system__hardware__xsensor);
 
 PROTO_READDIR_HANDLER(default);
 PROTO_READDIR_HANDLER(enotdir);
+PROTO_READDIR_HANDLER(byname);
 PROTO_READDIR_HANDLER(proc__task__ports);
 PROTO_READDIR_HANDLER(proc__task__threads);
 PROTO_READDIR_HANDLER(root);
-PROTO_READDIR_HANDLER(hardware__cpus);
-PROTO_READDIR_HANDLER(hardware__cpus__cpu);
+PROTO_READDIR_HANDLER(system__hardware__cpus);
+PROTO_READDIR_HANDLER(system__hardware__cpus__cpu);
+PROTO_READDIR_HANDLER(system__hardware__displays);
+PROTO_READDIR_HANDLER(system__hardware__displays__display);
 #if MACFUSE_PROCFS_ENABLE_TPM
-PROTO_READDIR_HANDLER(hardware__tpm__keyslots);
-PROTO_READDIR_HANDLER(hardware__tpm__pcrs);
+PROTO_READDIR_HANDLER(system__hardware__tpm__keyslots);
+PROTO_READDIR_HANDLER(system__hardware__tpm__pcrs);
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
-
-PROTO_GETATTR_HANDLER(default_file);
-PROTO_GETATTR_HANDLER(default_directory);
-PROTO_GETATTR_HANDLER(default_link);
-#if MACFUSE_PROCFS_ENABLE_TPM
-PROTO_GETATTR_HANDLER(hardware__tpm__keyslots__slot);
-PROTO_GETATTR_HANDLER(hardware__tpm__pcrs__pcr);
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
-PROTO_GETATTR_HANDLER(proc__task__ports__port);
-PROTO_GETATTR_HANDLER(proc__task__threads__thread);
 
 PROTO_READLINK_HANDLER(einval);
+PROTO_READLINK_HANDLER(byname__name);
 
 static struct procfs_dispatcher_entry
 procfs_link_table[] = {
+
+    DECL_LINK(
+        "/byname/(.+)",
+        1,
+        default_file,
+        default_file,
+        byname__name,
+        byname__name
+    )
 };
 
 static struct procfs_dispatcher_entry
 procfs_file_table[] = {
 
-    DECL_FILE(
-        "/hardware/(lightsensor|motionsensor|mouse)/data",
-        1,
+    DECL_FILE_WITHFLAGS(
+        PROCFS_FLAG_ISDOTFILE,
+        "/system/.*\\._.*|/\\d+/.*\\._.*",
+        0,
         default_file,
-        hardware__xsensor
+        default_file,
+        default_file_finder_info,
+        default_file_finder_info
     )
 
     DECL_FILE(
-        "/hardware/cpus/(\\d+)/data",
+        "/system/firmware/variables",
+        0,
+        default_file,
+        default_file,
+        default_file,
+        system__firmware__variables
+    )
+
+    DECL_FILE(
+        "/system/hardware/(lightsensor|motionsensor|mouse)/data",
         1,
         default_file,
-        hardware__cpus__cpu__data
+        default_file,
+        default_file,
+        system__hardware__xsensor
+    )
+
+    DECL_FILE(
+        "/system/hardware/camera/screenshot.tiff",
+        0,
+        system__hardware__camera__screenshot,
+        system__hardware__camera__screenshot,
+        system__hardware__camera__screenshot,
+        system__hardware__camera__screenshot
+    )
+
+    DECL_FILE(
+        "/system/hardware/cpus/(\\d+)/data",
+        1,
+        default_file,
+        default_file,
+        default_file,
+        system__hardware__cpus__cpu__data
+    )
+
+    DECL_FILE(
+        "/system/hardware/displays/(\\d+)/info",
+        1,
+        default_file,
+        default_file,
+        default_file,
+        system__hardware__displays__display__info
+    )
+
+    DECL_FILE(
+        "/system/hardware/displays/(\\d+)/screenshot.tiff",
+        1,
+        system__hardware__displays__display__screenshot,
+        system__hardware__displays__display__screenshot,
+        system__hardware__displays__display__screenshot,
+        system__hardware__displays__display__screenshot
     )
 
 #if MACFUSE_PROCFS_ENABLE_TPM
     DECL_FILE(
-        "/hardware/tpm/hwmodel",
+        "/system/hardware/tpm/hwmodel",
         0,
         default_file,
-        hardware__tpm__hwmodel
+        default_file,
+        default_file,
+        system__hardware__tpm__hwmodel
     )
 
     DECL_FILE(
-        "/hardware/tpm/hwvendor",
+        "/system/hardware/tpm/hwvendor",
         0,
         default_file,
-        hardware__tpm__hwvendor
+        default_file,
+        default_file,
+        system__hardware__tpm__hwvendor
     )
 
     DECL_FILE(
-        "/hardware/tpm/hwversion",
+        "/system/hardware/tpm/hwversion",
         0,
         default_file,
-        hardware__tpm__hwversion
+        default_file,
+        default_file,
+        system__hardware__tpm__hwversion
     )
 
     DECL_FILE(
-        "/hardware/tpm/keyslots/key(\\d+)",
+        "/system/hardware/tpm/keyslots/key(\\d+)",
         1,
-        hardware__tpm__keyslots__slot,
-        hardware__tpm__keyslots__slot
+        default_file,
+        default_file,
+        system__hardware__tpm__keyslots__slot,
+        system__hardware__tpm__keyslots__slot
     )
 
     DECL_FILE(
-        "/hardware/tpm/pcrs/pcr(\\d+)",
+        "/system/hardware/tpm/pcrs/pcr(\\d+)",
         1,
-        hardware__tpm__pcrs__pcr,
-        hardware__tpm__pcrs__pcr
+        default_file,
+        default_file,
+        system__hardware__tpm__pcrs__pcr,
+        system__hardware__tpm__pcrs__pcr
     )
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
 
@@ -422,12 +653,25 @@ procfs_file_table[] = {
         "/(\\d+)/carbon/(name|psn)",
         2,
         default_file,
+        default_file,
+        default_file,
         proc__carbon
+    )
+
+    DECL_FILE(
+        "/(\\d+)/fds",
+        1,
+        default_file,
+        default_file,
+        default_file,
+        proc__fds
     )
 
     DECL_FILE(
         "/(\\d+)/(cmdline|jobc|paddr|pgid|ppid|tdev|tpgid|wchan)",
         2,
+        default_file,
+        default_file,
         default_file,
         proc__generic
     )
@@ -436,12 +680,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/absolutetime_info/(threads_system|threads_user|total_system|total_user)",
         2,
         default_file,
+        default_file,
+        default_file,
         proc__task__absolutetime_info
     )
 
     DECL_FILE(
         "/(\\d+)/task/basic_info/(policy|resident_size|suspend_count|system_time|user_time|virtual_size)",
         2,
+        default_file,
+        default_file,
         default_file,
         proc__task__basic_info
     )
@@ -450,12 +698,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/events_info/(cow_faults|csw|faults|messages_received|messages_sent|pageins|syscalls_mach|syscalls_unix)",
         2,
         default_file,
+        default_file,
+        default_file,
         proc__task__events_info
     )
 
     DECL_FILE(
         "/(\\d+)/task/thread_times_info/(system_time|user_time)",
         2,
+        default_file,
+        default_file,
         default_file,
         proc__task__thread_times_info
     )
@@ -464,12 +716,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/mach_name",
         1,
         default_file,
+        default_file,
+        default_file,
         proc__task__mach_name
     )
 
     DECL_FILE(
         "/(\\d+)/task/ports/([a-f\\d]+)/(msgcount|qlimit|seqno|sorights|task_rights)",
         3,
+        default_file,
+        default_file,
         default_file,
         proc__task__ports__port
     )
@@ -478,12 +734,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/role",
         1,
         default_file,
+        default_file,
+        default_file,
         proc__task__role
     )
 
     DECL_FILE(
         "/(\\d+)/task/threads/([a-f\\d]+)/basic_info/(cpu_usage|flags|policy|run_state|sleep_time|suspend_count|system_time|user_time)",
         3,
+        default_file,
+        default_file,
         default_file,
         proc__task__threads__thread__basic_info
     )
@@ -492,12 +752,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/threads/([a-f\\d]+)/states/debug/(dr[0-7])",
         3,
         default_file,
+        default_file,
+        default_file,
         proc__task__threads__thread__states__debug
     )
 
     DECL_FILE(
         "/(\\d+)/task/threads/([a-f\\d]+)/states/exception/(err|faultvaddr|trapno)",
         3,
+        default_file,
+        default_file,
         default_file,
         proc__task__threads__thread__states__exception
     )
@@ -506,12 +770,16 @@ procfs_file_table[] = {
         "/(\\d+)/task/threads/([a-f\\d]+)/states/float/(fpu_fcw|fpu_fsw|fpu_ftw|fpu_fop|fpu_ip|fpu_cs|fpu_dp|fpu_ds|fpu_mxcsr|fpu_mxcsrmask)",
         3,
         default_file,
+        default_file,
+        default_file,
         proc__task__threads__thread__states__float
     )
 
     DECL_FILE(
         "/(\\d+)/task/threads/([a-f\\d]+)/states/thread/(e[a-d]x|edi|esi|ebp|esp|ss|eflags|eip|[cdefg]s)",
         3,
+        default_file,
+        default_file,
         default_file,
         proc__task__threads__thread__states__thread
     )
@@ -520,6 +788,8 @@ procfs_file_table[] = {
         "/(\\d+)/task/tokens/(audit|security)",
         2,
         default_file,
+        default_file,
+        default_file,
         proc__task__tokens
     )
 
@@ -527,12 +797,43 @@ procfs_file_table[] = {
         "/(\\d+)/task/vmmap",
         1,
         default_file,
+        default_file,
+        default_file,
         proc__task__vmmap
+    )
+
+    DECL_FILE(
+        "/(\\d+)/task/vmmap_r",
+        1,
+        default_file,
+        default_file,
+        default_file,
+        proc__task__vmmap_r
+    )
+
+    DECL_FILE(
+        "/(\\d+)/windows/(all|onscreen)",
+        2,
+        default_file,
+        default_file,
+        default_file,
+        proc__windows__generic
+    )
+
+    DECL_FILE(
+        "/(\\d+)/windows/identify",
+        1,
+        proc__windows__identify,
+        proc__windows__identify,
+        default_file,
+        zero
     )
 
     DECL_FILE(
         "/(\\d+)/(ucred|pcred)/(groups|rgid|ruid|svgid|svuid|uid)",
         3,
+        default_file,
+        default_file,
         default_file,
         proc__xcred
     )
@@ -544,78 +845,145 @@ procfs_directory_table[] = {
         "/",
         0,
         default_directory,
+        default_directory,
+        default_directory,
         root,
         { NULL },
-        { "hardware", NULL }
+        { ".VolumeIcon.icns", "byname", "system", NULL }
+    )
+
+    DECL_DIRECTORY(
+        "/byname",
+        0,
+        default_directory,
+        default_directory,
+        default_directory,
+        byname,
+        { NULL },
+        { NULL }
     )
 
     DECL_DIRECTORY_COMPACT(
-        "/hardware",
+        "/system",
+        { NULL },
+        { "firmware", "hardware", NULL },
+    )
+
+    DECL_DIRECTORY_COMPACT(
+        "/system/firmware",
+        { "variables", NULL },
+        { NULL }
+    )
+
+    DECL_DIRECTORY_COMPACT(
+        "/system/hardware",
         { NULL },
 #if MACFUSE_PROCFS_ENABLE_TPM
-        { "cpus", "lightsensor", "motionsensor", "mouse", "tpm", NULL }
+        {
+            "camera", "cpus", "displays", "lightsensor", "motionsensor",
+             "mouse", "tpm", NULL
+        }
 #else
-        { "cpus", "lightsensor", "motionsensor", "mouse", NULL }
+        {
+            "camera", "cpus", "displays", "lightsensor", "motionsensor",
+            "mouse", NULL
+        }
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
     )
 
+    DECL_DIRECTORY_COMPACT(
+        "/system/hardware/camera",
+        { "screenshot.tiff", NULL },
+        { NULL },
+    )
+
     DECL_DIRECTORY(
-        "/hardware/cpus",
+        "/system/hardware/cpus",
         0,
         default_directory,
-        hardware__cpus,
+        default_directory,
+        default_directory,
+        system__hardware__cpus,
         { NULL },
         { NULL },
     )
 
     DECL_DIRECTORY(
-        "/hardware/cpus/(\\d+)",
+        "/system/hardware/cpus/(\\d+)",
         1,
         default_directory,
-        hardware__cpus__cpu,
+        default_directory,
+        default_directory,
+        system__hardware__cpus__cpu,
+        { "data", NULL },
+        { NULL },
+    )
+
+    DECL_DIRECTORY(
+        "/system/hardware/displays",
+        0,
+        default_directory,
+        default_directory,
+        default_directory,
+        system__hardware__displays,
+        { NULL },
+        { NULL },
+    )
+
+    DECL_DIRECTORY(
+        "/system/hardware/displays/(\\d+)",
+        1,
+        default_directory,
+        default_directory,
+        system__hardware__displays__display,
+        system__hardware__displays__display,
+        { "info", "screenshot.tiff", NULL },
+        { NULL },
+    )
+
+    DECL_DIRECTORY_COMPACT(
+        "/system/hardware/lightsensor",
         { "data", NULL },
         { NULL },
     )
 
     DECL_DIRECTORY_COMPACT(
-        "/hardware/lightsensor",
+        "/system/hardware/motionsensor",
         { "data", NULL },
         { NULL },
     )
 
     DECL_DIRECTORY_COMPACT(
-        "/hardware/motionsensor",
-        { "data", NULL },
-        { NULL },
-    )
-
-    DECL_DIRECTORY_COMPACT(
-        "/hardware/mouse",
+        "/system/hardware/mouse",
         { "data", NULL },
         { NULL },
     )
 
 #if MACFUSE_PROCFS_ENABLE_TPM
     DECL_DIRECTORY_COMPACT(
-        "/hardware/tpm",
+        "/system/hardware/tpm",
         { "hwmodel", "hwvendor", "hwversion", NULL },
         { "keyslots", "pcrs" }
     )
 
     DECL_DIRECTORY(
-        "/hardware/tpm/keyslots",
+        "/system/hardware/tpm/keyslots",
         0,
         default_directory,
-        hardware__tpm__keyslots,
+        default_directory,
+        default_directory,
+        system__hardware__tpm__keyslots,
         { NULL },
         { NULL },
     )
 
     DECL_DIRECTORY(
-        "/hardware/tpm/pcrs",
+        "/system/hardware/tpm/pcrs",
         0,
         default_directory,
-        hardware__tpm__pcrs,
+        default_directory,
+        default_directory,
+        system__hardware__tpm__pcrs,
         { NULL },
         { NULL },
     )
@@ -623,7 +991,10 @@ procfs_directory_table[] = {
 
     DECL_DIRECTORY_COMPACT(
         "/\\d+",
-        { "cmdline", "jobc", "paddr", "pgid", "ppid", "tdev", "tpgid", "wchan", NULL },
+        {
+            "cmdline", "fds", "jobc", "paddr", "pgid", "ppid", "tdev", "tpgid",
+            "wchan", "windows", NULL
+        },
         { "carbon", "pcred", "task", "ucred", NULL }
     )
 
@@ -641,10 +1012,10 @@ procfs_directory_table[] = {
 
     DECL_DIRECTORY_COMPACT(
         "/\\d+/task",
-        { "mach_name", "role", NULL },
+        { "mach_name", "role", "vmmap", "vmmap_r", NULL },
         {
             "absolutetime_info", "basic_info", "events_info", "ports",
-            "thread_times_info", "threads", "tokens", "vmmap", NULL
+            "thread_times_info", "threads", "tokens", NULL
         }
     )
 
@@ -679,6 +1050,8 @@ procfs_directory_table[] = {
         "/(\\d+)/task/ports",
         1,
         default_directory,
+        default_directory,
+        default_directory,
         proc__task__ports,
         { NULL },
         { NULL }
@@ -687,6 +1060,8 @@ procfs_directory_table[] = {
     DECL_DIRECTORY(
         "/(\\d+)/task/ports/([a-f\\d]+)",
         2,
+        default_directory,
+        default_directory,
         proc__task__ports__port,
         default,
         { "msgcount", "qlimit", "seqno", "sorights", "task_rights", NULL },
@@ -703,6 +1078,8 @@ procfs_directory_table[] = {
         "/(\\d+)/task/threads",
         1,
         default_directory,
+        default_directory,
+        default_directory,
         proc__task__threads,
         { NULL },
         { NULL }
@@ -711,6 +1088,8 @@ procfs_directory_table[] = {
     DECL_DIRECTORY(
         "/(\\d+)/task/threads/([a-f\\d])+",
         2,
+        default_directory,
+        default_directory,
         proc__task__threads__thread,
         default,
         { NULL },
@@ -773,7 +1152,177 @@ procfs_directory_table[] = {
         { "groups", "uid", NULL },
         { NULL }
     )
+
+    DECL_DIRECTORY_COMPACT(
+        "/\\d+/windows",
+        { "all", "onscreen", "identify", NULL },
+        { NULL }
+    )
 };
+
+// BEGIN: OPEN/OPENDIR
+
+//
+// int
+// procfs_open/opendir_<handler>(procfs_dispatcher_entry_t  e,
+//                               const char                *argv[],
+//                               const char                *path,
+//                               struct fuse_file_info     *fi)
+
+OPEN_HANDLER(default_file)
+{
+    return 0;
+}
+
+OPEN_HANDLER(eisdir)
+{
+    return -EISDIR;
+}
+
+OPEN_HANDLER(proc__windows__identify)
+{
+    if (fi->fh != 0) { /* locking */
+        return 0;
+    } else {
+        fi->fh = 1;
+    }
+    char *whandler = NULL;
+    if ((whandler = getenv("MACFUSE_PROCFS_WHANDLER")) == NULL) {
+        goto bail;
+    }
+    int npid = vfork();
+    if (npid == 0) {
+        execl(whandler, whandler, "-r", "1", "-p", argv[0], NULL);
+        return 0;
+    }
+
+bail:
+    return 0;
+}
+
+OPEN_HANDLER(system__hardware__camera__screenshot)
+{
+    pthread_mutex_lock(&camera_lock);
+    if (camera_busy) {
+        pthread_mutex_unlock(&camera_lock);
+        return -EBUSY;
+    } else {
+        camera_busy = 1;
+        pthread_mutex_unlock(&camera_lock);
+    }
+
+    int ret = PROCFS_GetTIFFFromCamera(&camera_tiff);
+
+    return ret;
+}
+
+OPEN_HANDLER(system__hardware__displays__display__screenshot)
+{
+    pthread_mutex_lock(&display_lock);
+    if (display_busy) {
+        pthread_mutex_unlock(&display_lock);
+        return -EBUSY;
+    } else {
+        display_busy = 1;
+        pthread_mutex_unlock(&display_lock);
+    }
+
+    unsigned long index = strtol(argv[0], NULL, 10);
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    if (index >= display_count) {
+        return -ENOENT;
+    }
+
+    if (display_tiff) {
+        CFRelease(display_tiff);
+        display_tiff = (CFMutableDataRef)0;
+    }
+
+    int ret = PROCFS_GetTIFFForDisplayAtIndex(index, &display_tiff);
+    if (ret) {
+        if (display_tiff) {
+            CFRelease(display_tiff);
+            display_tiff = (CFMutableDataRef)0;
+        }
+        return -EIO;
+    }
+
+    return 0;
+}
+
+OPENDIR_HANDLER(default_directory)
+{
+    return 0;
+}
+
+OPENDIR_HANDLER(enotdir)
+{
+    return -ENOTDIR;
+}
+
+// END: OPEN/OPENDIR
+
+
+// BEGIN: RELEASE/RELEASEDIR
+
+//
+// int
+// procfs_release/releasedir_<handler>(procfs_dispatcher_entry_t  e,
+//                                     const char                *argv[],
+//                                     const char                *path,
+//                                     struct fuse_file_info     *fi)
+
+RELEASE_HANDLER(default_file)
+{
+    return 0;
+}
+
+RELEASE_HANDLER(eisdir)
+{
+    return -EISDIR;
+}
+
+RELEASE_HANDLER(proc__windows__identify)
+{
+    fi->fh = 0;
+
+    return 0;
+}
+
+RELEASE_HANDLER(system__hardware__camera__screenshot)
+{
+    pthread_mutex_lock(&camera_lock);
+    camera_busy = 0;
+    pthread_mutex_unlock(&camera_lock);
+
+    return 0;
+}
+
+RELEASE_HANDLER(system__hardware__displays__display__screenshot)
+{
+    pthread_mutex_lock(&display_lock);
+    display_busy = 0;
+    if (display_tiff) {
+        CFRelease(display_tiff);
+        display_tiff = (CFMutableDataRef)0;
+    }
+    pthread_mutex_unlock(&display_lock);
+
+    return 0;
+}
+
+RELEASEDIR_HANDLER(default_directory)
+{
+    return 0;
+}
+
+RELEASEDIR_HANDLER(enotdir)
+{
+    return -ENOTDIR;
+}
+
+// END: RELEASE/RELEASEDIR
 
 
 // BEGIN: GETATTR
@@ -783,18 +1332,36 @@ procfs_directory_table[] = {
 //  procfs_getattr_<handler>(procfs_dispatcher_entry_t  e,
 //                           const char                *argv[],
 //                           struct stat               *stbuf)
-
                           
+
 GETATTR_HANDLER(default_file)
 {                         
     time_t current_time = time(NULL);
     stbuf->st_mode = S_IFREG | 0444;             
     stbuf->st_nlink = 1;  
     stbuf->st_size = 0;
+    if (procfs_ui) {
+        stbuf->st_size = PROCFS_DEFAULT_FILE_SIZE;
+    }
     stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
 
     return 0;
 }   
+
+GETATTR_HANDLER(default_file_finder_info)
+{
+    if (!procfs_ui) {
+        return -ENOENT;
+    }
+
+    time_t current_time = time(NULL);
+    stbuf->st_mode = S_IFREG | 0444;             
+    stbuf->st_nlink = 1;  
+    stbuf->st_size = 82;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+
+    return 0;
+}
     
 GETATTR_HANDLER(default_directory)
 {
@@ -817,8 +1384,109 @@ GETATTR_HANDLER(default_link)
     return 0;
 }
 
+GETATTR_HANDLER(byname__name)
+{
+    const char *target_Pname = argv[0];
+    struct stat the_stat;
+    char the_name[MAXNAMLEN + 1];  
+
+    ProcessSerialNumber psn;
+    OSErr osErr = noErr;
+    OSStatus status;
+    CFStringRef Pname;
+    pid_t Pid;
+
+    psn.highLongOfPSN = kNoProcess;
+    psn.lowLongOfPSN  = kNoProcess;
+
+    while ((osErr = GetNextProcess(&psn)) != procNotFound) {
+        status = GetProcessPID(&psn, &Pid);
+        if (status != noErr) {
+            continue;
+        }
+        Pname = (CFStringRef)0;
+        status = CopyProcessName(&psn, &Pname);
+        if (status != noErr) {
+            if (Pname) {
+                CFRelease(Pname);
+                Pname = (CFStringRef)0;
+            }
+            continue;
+        }
+        if (strcmp(target_Pname, CFStringGetCStringPtr(Pname,
+                                     kCFStringEncodingMacRoman)) != 0) {
+            Pid = 0;
+        }
+
+        CFRelease(Pname);
+        Pname = (CFStringRef)0;
+
+        if (Pid) {
+            break;
+        }
+    }
+
+    if (!Pid) {
+        return -ENOENT;
+    }
+
+    time_t current_time = time(NULL);
+    stbuf->st_mode = S_IFLNK | 0755;
+    stbuf->st_nlink = 1;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    int len = snprintf(the_name, MAXNAMLEN, "../%u", Pid);
+    the_stat.st_size = len;
+
+    return 0;
+}
+
+GETATTR_HANDLER(system__hardware__displays__display)
+{
+    unsigned long index = strtol(argv[0], NULL, 10);
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    if (index >= display_count) {
+        return -ENOENT;
+    }
+
+    time_t current_time = time(NULL);
+
+    stbuf->st_mode = S_IFDIR | 0555;
+    stbuf->st_nlink = 1;
+    stbuf->st_size = 0;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    
+    return 0;
+}
+
+GETATTR_HANDLER(system__hardware__camera__screenshot)
+{
+    time_t current_time = time(NULL);
+
+    stbuf->st_mode = S_IFREG | 0444;
+    stbuf->st_nlink = 1;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    stbuf->st_size = PROCFS_GetTIFFSizeFromCamera();
+
+    return 0;
+}
+
+GETATTR_HANDLER(system__hardware__displays__display__screenshot)
+{
+    unsigned long index = strtol(argv[0], NULL, 10);
+
+    time_t current_time = time(NULL);
+
+    stbuf->st_mode = S_IFREG | 0444;
+    stbuf->st_nlink = 1;
+    stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+    stbuf->st_size = PROCFS_GetTIFFSizeForDisplayAtIndex(index);
+
+    return 0;
+}
+
 #if MACFUSE_PROCFS_ENABLE_TPM
-GETATTR_HANDLER(hardware__tpm__keyslots__slot)
+GETATTR_HANDLER(system__hardware__tpm__keyslots__slot)
 {
     uint32_t keys[256];
     unsigned long slotno = strtol(argv[0], NULL, 10);
@@ -855,7 +1523,7 @@ GETATTR_HANDLER(hardware__tpm__keyslots__slot)
     return 0;
 }
 
-GETATTR_HANDLER(hardware__tpm__pcrs__pcr)
+GETATTR_HANDLER(system__hardware__tpm__pcrs__pcr)
 {
     time_t current_time = time(NULL);
     stbuf->st_mode = S_IFREG | 0444;
@@ -1070,7 +1738,81 @@ READ_HANDLER(eisdir)
     return -EISDIR;
 }
 
-READ_HANDLER(hardware__cpus__cpu__data)
+READ_HANDLER(zero)
+{
+    return 0;
+}
+
+READ_HANDLER(default_file_finder_info)
+{
+    if (!procfs_ui) {
+        return -ENOENT;
+    }
+
+    char tmpbuf[] = {
+        0x0, 0x5, 0x16, 0x7, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x2,
+        0x0, 0x0, 0x0, 0x9, 0x0, 0x0, 0x0, 0x32, 0x0, 0x0, 0x0, 0x20, 0x0,
+        0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x52, 0x0, 0x0, 0x0, 0x0, 0x54, 0x45,
+       0x58, 0x54, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+        0x0, 0x0, 0x0, 0x0,
+    };
+    int len = 82;
+
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else             
+        size = 0;
+
+    return size;
+}
+
+READ_HANDLER(system__firmware__variables)
+{
+    io_registry_entry_t    options;
+    CFMutableDictionaryRef optionsDict;
+    kern_return_t          kr = KERN_FAILURE;
+
+    options = IORegistryEntryFromPath(kIOMasterPortDefault,
+                                      kIODeviceTreePlane ":/options");
+    if (options) {
+        kr = IORegistryEntryCreateCFProperties(options, &optionsDict, 0, 0);
+        if (kr == KERN_SUCCESS) {
+            CFDataRef xml = CFPropertyListCreateXMLData(kCFAllocatorDefault,
+                                (CFPropertyListRef)optionsDict);
+
+            int len = CFDataGetLength(xml);
+            if (len < 0) {
+                kr = KERN_FAILURE;
+                goto done;
+            }
+
+            const UInt8 *tmpbuf = CFDataGetBytePtr(xml);
+   
+            if (offset < len) {
+                if (offset + size > len)
+                    size = len - offset;
+                memcpy(buf, tmpbuf + offset, size);
+            } else
+                size = 0;
+done:
+            CFRelease(xml);
+            CFRelease(optionsDict);
+        }
+        IOObjectRelease(options);
+    }
+   
+    if (kr != KERN_SUCCESS) {
+        return -EIO;
+    }
+
+    return size;
+}
+
+READ_HANDLER(system__hardware__cpus__cpu__data)
 {
     int len;
     kern_return_t kr;
@@ -1137,7 +1879,115 @@ READ_HANDLER(hardware__cpus__cpu__data)
         size = 0;
     
     return size;
+}
 
+READ_HANDLER(system__hardware__displays__display__info)
+{
+    char tmpbuf[4096];
+    unsigned long index = strtol(argv[0], NULL, 10);
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    if (index >= display_count) {
+        return -ENOENT;
+    }
+
+    size_t len = 4096;
+    int ret = PROCFS_GetInfoForDisplayAtIndex(index, tmpbuf, &len);
+    if (ret) {
+        return -EIO;
+    }
+
+    if (len < 0) {
+        return -EIO;
+    }   
+            
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else           
+        size = 0;
+
+    return size;
+}
+
+READ_HANDLER(system__hardware__camera__screenshot)
+{
+    size_t max_len = PROCFS_GetTIFFSizeFromCamera();
+    size_t len = (size_t)CFDataGetLength(camera_tiff);
+
+    if (len > max_len) {
+        return -EIO;
+    }
+
+    CFDataSetLength(camera_tiff, max_len);
+
+    const UInt8 *tmpbuf = CFDataGetBytePtr(camera_tiff);
+        
+    if (len < 0) {
+        return -EIO; 
+    }
+
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else
+        size = 0;
+
+    return size;
+}
+
+READ_HANDLER(system__hardware__displays__display__screenshot)
+{
+    unsigned long index = strtol(argv[0], NULL, 10);
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    if (index >= display_count) {
+        return -ENOENT;
+
+    }
+    pthread_mutex_lock(&display_lock);
+    if (!display_tiff) {
+        pthread_mutex_unlock(&display_lock);
+        return -EIO;
+    }
+    CFRetain(display_tiff);
+    pthread_mutex_unlock(&display_lock);
+
+    size_t max_len = PROCFS_GetTIFFSizeForDisplayAtIndex(index);
+    size_t len = (size_t)CFDataGetLength(display_tiff);
+
+    if (len > max_len) {
+        pthread_mutex_lock(&display_lock);
+        CFRelease(display_tiff);
+        pthread_mutex_unlock(&display_lock);
+        return -EIO;
+    }
+
+    CFDataSetLength(display_tiff, max_len);
+    len = max_len;
+    const UInt8 *tmpbuf = CFDataGetBytePtr(display_tiff);
+
+    if (len < 0) {
+        pthread_mutex_lock(&display_lock);
+        CFRelease(display_tiff);
+        pthread_mutex_unlock(&display_lock);
+        return -EIO;
+    }
+
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else
+        size = 0;
+
+    pthread_mutex_lock(&display_lock);
+    CFRelease(display_tiff);
+    pthread_mutex_unlock(&display_lock);
+
+    return size;
 }
 
 typedef struct {
@@ -1159,7 +2009,7 @@ enum { sms_maxConfigurationID = 2 };
 
 static int sms_configurationID = -1;
 
-READ_HANDLER(hardware__xsensor)
+READ_HANDLER(system__hardware__xsensor)
 {
     int len = -1;
     kern_return_t kr;
@@ -1241,7 +2091,7 @@ gotdata:
  */
 
 #if MACFUSE_PROCFS_ENABLE_TPM
-READ_HANDLER(hardware__tpm__hwmodel)
+READ_HANDLER(system__hardware__tpm__hwmodel)
 {
     int len;
     char tmpbuf[4096];
@@ -1262,7 +2112,7 @@ READ_HANDLER(hardware__tpm__hwmodel)
     return size;
 }
 
-READ_HANDLER(hardware__tpm__hwvendor)
+READ_HANDLER(system__hardware__tpm__hwvendor)
 {
     int len;
     char tmpbuf[4096];
@@ -1283,7 +2133,7 @@ READ_HANDLER(hardware__tpm__hwvendor)
     return size;
 }
 
-READ_HANDLER(hardware__tpm__hwversion)
+READ_HANDLER(system__hardware__tpm__hwversion)
 {
     int major, minor, version, rev, len;
     char tmpbuf[4096];
@@ -1308,7 +2158,7 @@ READ_HANDLER(hardware__tpm__hwversion)
     return size;
 }
 
-READ_HANDLER(hardware__tpm__keyslots__slot)
+READ_HANDLER(system__hardware__tpm__keyslots__slot)
 {
     char tmpbuf[32] = { 0 };
     int len;
@@ -1345,7 +2195,7 @@ READ_HANDLER(hardware__tpm__keyslots__slot)
     return size;
 }
 
-READ_HANDLER(hardware__tpm__pcrs__pcr)
+READ_HANDLER(system__hardware__tpm__pcrs__pcr)
 {
     uint32_t pcrs, the_pcr;
     unsigned char pcr_data[20];
@@ -1426,6 +2276,28 @@ gotdata:
         return -EIO;
     }   
         
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else
+        size = 0;
+
+    return size;
+}
+
+READ_HANDLER(proc__fds)
+{
+    pid_t pid = atoi(argv[0]);
+    char tmpbuf[65536];
+    int len = 65536;
+
+    int ret = procfs_proc_pidinfo(pid, tmpbuf, &len);
+
+    if (ret) {
+        return -EIO;
+    }
+
     if (offset < len) {
         if (offset + size > len)
             size = len - offset;
@@ -2323,8 +3195,8 @@ READ_HANDLER(proc__task__vmmap)
 {
     int len = -1;
     kern_return_t kr;
-#define MAX_VMDATA_SIZE 65536 /* XXX */
-    char tmpbuf[MAX_VMDATA_SIZE];
+#define MAX_VMMAP_SIZE 65536 /* XXX */
+    char tmpbuf[MAX_VMMAP_SIZE];
     task_t the_task;
     pid_t pid = strtol(argv[0], NULL, 10);
 
@@ -2350,10 +3222,10 @@ READ_HANDLER(proc__task__vmmap)
         kr = vm_region(the_task, &address, &vmsize, flavor,
                        (vm_region_info_t)&info, &info_count, &object);
         if (kr == KERN_SUCCESS) {
-            if (len >= MAX_VMDATA_SIZE) {
+            if (len >= MAX_VMMAP_SIZE) {
                 goto gotdata;
             }
-            len += snprintf(tmpbuf + len, MAX_VMDATA_SIZE - len,
+            len += snprintf(tmpbuf + len, MAX_VMMAP_SIZE - len,
             "%08x-%08x %8uK %c%c%c/%c%c%c %11s %6s %10s uwir=%hu sub=%u\n",
                             address, (address + vmsize), (vmsize >> 10),
                             (info.protection & VM_PROT_READ)        ? 'r' : '-',
@@ -2385,6 +3257,331 @@ gotdata:
     }
 
     READ_PROC_TASK_EPILOGUE();
+}
+
+static int
+M_get_vmmap_entries(task_t task)
+{
+    kern_return_t kr      = KERN_SUCCESS;
+    vm_address_t  address = 0;
+    vm_size_t     size    = 0;
+    int           n       = 1;
+
+    while (1) {
+        mach_msg_type_number_t count;
+        struct vm_region_submap_info_64 info;
+        uint32_t nesting_depth;
+  
+        count = VM_REGION_SUBMAP_INFO_COUNT_64;
+        kr = vm_region_recurse_64(task, &address, &size, &nesting_depth,
+                                  (vm_region_info_64_t)&info, &count);
+        if (kr == KERN_INVALID_ADDRESS) {
+            break;
+        } else if (kr) {
+            mach_error("vm_region:", kr);
+            break; /* last region done */
+        }
+
+        if (info.is_submap) {
+            nesting_depth++;
+        } else {
+            address += size;
+            n++;
+        }
+    }
+
+    return n;
+}
+
+#define CAST_DOWN(type, addr) (((type)((uintptr_t)(addr))))
+
+static char *
+get_user_tag_description(unsigned int user_tag)
+{
+    char *description = "unknown";
+
+    switch (user_tag) {
+    
+    case VM_MEMORY_MALLOC:
+        description = "MALLOC";
+        break;
+    case VM_MEMORY_MALLOC_SMALL:
+        description = "MALLOC_SMALL";
+        break;
+    case VM_MEMORY_MALLOC_LARGE:
+        description = "MALLOC_LARGE";
+        break;
+    case VM_MEMORY_MALLOC_HUGE:
+        description = "MALLOC_HUGE";
+        break;
+    case VM_MEMORY_SBRK:
+        description = "SBRK";
+        break;
+    case VM_MEMORY_REALLOC:
+        description = "REALLOC";
+        break;
+    case VM_MEMORY_MALLOC_TINY:
+        description = "MALLOC_TINY";
+        break;
+    case VM_MEMORY_ANALYSIS_TOOL:
+        description = "ANALYSIS_TOOL";
+        break;
+    case VM_MEMORY_MACH_MSG:
+        description = "MACH_MSG";
+        break;
+    case VM_MEMORY_IOKIT:
+        description = "IOKIT";
+        break;
+    case VM_MEMORY_STACK:
+        description = "STACK";
+        break;
+    case VM_MEMORY_GUARD:
+        description = "MEMORY_GUARD";
+        break;
+    case VM_MEMORY_SHARED_PMAP:
+        description = "SHARED_PMAP";
+        break;
+    case VM_MEMORY_DYLIB:
+        description = "DYLIB";
+        break;
+    case VM_MEMORY_APPKIT:
+        description = "AppKit";
+        break;
+    case VM_MEMORY_FOUNDATION:
+        description = "Foundation";
+        break;
+    case VM_MEMORY_COREGRAPHICS:
+        description = "CoreGraphics";
+        break;
+    case VM_MEMORY_CARBON:
+        description = "Carbon";
+        break;
+    case VM_MEMORY_JAVA:
+        description = "Java";
+        break;
+    case VM_MEMORY_ATS:
+        description = "ATS";
+        break;
+    case VM_MEMORY_DYLD:
+        description = "DYLD";
+        break;
+    case VM_MEMORY_DYLD_MALLOC:
+        description = "DYLD_MALLOC";
+        break;
+    case VM_MEMORY_APPLICATION_SPECIFIC_1:
+        description = "APPLICATION_SPECIFIC_1";
+        break;
+    case VM_MEMORY_APPLICATION_SPECIFIC_16:
+        description = "APPLICATION_SPECIFIC_16";
+        break;
+    default:
+        break;
+    }
+
+    return description;
+}
+
+READ_HANDLER(proc__task__vmmap_r)
+{ 
+    int len = -1;
+    kern_return_t kr;
+    uint32_t nesting_depth = 0;
+    struct vm_region_submap_info_64 vbr;
+    mach_msg_type_number_t vbrcount = 0;
+#define MAX_VMMAP_R_SIZE 262144 /* XXX */
+    char tmpbuf[MAX_VMMAP_R_SIZE];
+    task_t the_task;
+    int segment_count;
+    pid_t pid = strtol(argv[0], NULL, 10);
+
+    kr = task_for_pid(mach_task_self(), pid, &the_task);
+    if (kr != KERN_SUCCESS) {
+        return -EIO;
+    }
+
+    mach_vm_size_t vmsize;
+    mach_vm_address_t address;
+
+    kr = KERN_SUCCESS;
+    address = 0;
+    len = 0;
+
+    segment_count = M_get_vmmap_entries(the_task);
+
+    while (segment_count > 0) {
+        while (1) { /* next region */
+            vbrcount = VM_REGION_SUBMAP_INFO_COUNT_64;
+            if ((kr = mach_vm_region_recurse(the_task, &address, &vmsize,
+                                             &nesting_depth,
+                                             (vm_region_recurse_info_t)&vbr,
+                                             &vbrcount)) != KERN_SUCCESS) {
+                break;
+            }
+            if (address + vmsize > VM_MAX_ADDRESS) {
+                kr = KERN_INVALID_ADDRESS;
+                break;
+            }
+            if (vbr.is_submap) {
+                nesting_depth++;
+                continue;
+            } else {
+                break;
+            }
+        } /* while (1) */
+
+        if (kr != KERN_SUCCESS) {
+            if (kr != KERN_INVALID_ADDRESS) {
+                if (the_task != MACH_PORT_NULL) {
+                    mach_port_deallocate(mach_task_self(), the_task);
+                }
+                return -EIO;
+            }
+            break;
+        }
+
+        if (len >= MAX_VMMAP_R_SIZE) {
+            goto gotdata;
+        }
+
+        /* XXX: 32-bit only */
+
+        len += snprintf(tmpbuf + len, MAX_VMMAP_R_SIZE - len,
+            "%08x-%08x %8uK %c%c%c/%c%c%c ",
+                        CAST_DOWN(uint32_t,address),
+                        CAST_DOWN(uint32_t,(address + vmsize)),
+                        CAST_DOWN(uint32_t,(vmsize >> 10)),
+                        (vbr.protection & VM_PROT_READ)        ? 'r' : '-',
+                        (vbr.protection & VM_PROT_WRITE)       ? 'w' : '-',
+                        (vbr.protection & VM_PROT_EXECUTE)     ? 'x' : '-',
+                        (vbr.max_protection & VM_PROT_READ)    ? 'r' : '-',
+                        (vbr.max_protection & VM_PROT_WRITE)   ? 'w' : '-',
+                        (vbr.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
+
+        if (vbr.is_submap) {
+            len += snprintf(tmpbuf + len, MAX_VMMAP_R_SIZE - len,
+                            "%20s %s\n", "(submap)",
+                            get_user_tag_description(vbr.user_tag));
+        } else {
+            len += snprintf(tmpbuf + len, MAX_VMMAP_R_SIZE - len,
+                            "%6d %6d %6d %s\n",
+                            vbr.pages_resident,
+                            vbr.pages_swapped_out,
+                            vbr.pages_dirtied,
+                            get_user_tag_description(vbr.user_tag));
+        }
+
+        address += vmsize;
+        segment_count--;
+
+    } /* while (segment_count > 0) */
+
+gotdata:
+
+    if (the_task != MACH_PORT_NULL) {
+        mach_port_deallocate(mach_task_self(), the_task);
+    }
+
+    READ_PROC_TASK_EPILOGUE();
+}
+
+typedef mach_port_t   CGSConnectionID;
+typedef mach_port_t   CGSWindowID;
+
+extern "C" {
+
+extern CGSConnectionID _CGSDefaultConnection(void);
+extern CGError CGSGetWindowLevel(CGSConnectionID connectionID,
+                                 CGSWindowID windowID, CGWindowLevel *level);
+extern CGError CGSGetConnectionIDForPSN(CGSConnectionID connectionID,
+                                        ProcessSerialNumber *psn,
+                                        CGSConnectionID *out);
+extern CGError CGSGetOnScreenWindowList(CGSConnectionID connectionID,
+                                        CGSConnectionID targetConnectionID,
+                                        int maxCount,
+                                        CGSWindowID *windowList,
+                                        int *outCount);
+extern CGError CGSGetWindowList(CGSConnectionID connectionID,
+                                CGSConnectionID targetConnectionID,
+                                int maxCount,
+                                CGSWindowID *windowList,
+                                int *outCount);
+extern CGError CGSGetScreenRectForWindow(CGSConnectionID connectionID,
+                                         CGSWindowID windowID, CGRect *outRect);
+}
+
+READ_HANDLER(proc__windows__generic)
+{
+    pid_t pid = atoi(argv[0]);
+    const char *whichfile = argv[1];
+    ProcessSerialNumber psn;
+
+    OSStatus status = GetProcessForPID(pid, &psn);
+    if (status != noErr) {
+        return 0; /* technically not an error in this case */
+    }
+
+    CGSConnectionID conn;
+    CGError err = CGSGetConnectionIDForPSN(0, &psn, &conn);
+    if (err != kCGErrorSuccess) {
+        return 0; /* just be nice */
+    }
+
+#define MAX_WINDOWS 256
+    CGSWindowID windowIDs[MAX_WINDOWS];
+    int windowCount = 0;
+
+    if (strcmp(whichfile, "all") == 0) {
+        err = CGSGetWindowList(_CGSDefaultConnection(), conn, MAX_WINDOWS,
+                               windowIDs, &windowCount);
+    } else if (strcmp(whichfile, "onscreen") == 0) {
+        err = CGSGetOnScreenWindowList(_CGSDefaultConnection(), conn,
+                                       MAX_WINDOWS, windowIDs, &windowCount);
+    }
+
+    if (err != kCGErrorSuccess) {
+        return -EIO;
+    }
+
+    if (windowCount == 0) {
+        return 0;
+    }
+
+#define MAX_WINDOWDATA 16384
+    char tmpbuf[MAX_WINDOWDATA];
+    int i, len = 0;
+
+    for (i = 0; i < windowCount; i++) { 
+
+        if (len > MAX_WINDOWDATA) {
+           goto gotdata;
+        }
+
+        CGRect rect;
+        err = CGSGetScreenRectForWindow(_CGSDefaultConnection(), windowIDs[i],
+                                        &rect);
+        CGWindowLevel level;
+        CGError err2 = CGSGetWindowLevel(_CGSDefaultConnection(), windowIDs[i],
+                                         &level);
+        len += snprintf(tmpbuf + len, MAX_WINDOWDATA - len,
+                        "%-4d %-6x %.0f x %.0f @ (%.0f, %.0f, %d)\n",
+                        i + 1, windowIDs[i],
+                        (err == kCGErrorSuccess)  ? rect.size.width  : -1,
+                        (err == kCGErrorSuccess)  ? rect.size.height : -1,
+                        (err == kCGErrorSuccess)  ? rect.origin.x    : -1,
+                        (err == kCGErrorSuccess)  ? rect.origin.y    : -1,
+                        (err2 == kCGErrorSuccess) ? level            : -1);
+    }
+
+gotdata:
+
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else
+        size = 0;
+
+    return size;
 }
 
 READ_HANDLER(proc__xcred)
@@ -2496,11 +3693,11 @@ procfs_populate_directory(const char           **content_files,
     const char **name;
 
     memset(&dir_stat, 0, sizeof(dir_stat));
-    dir_stat.st_mode = S_IFDIR | 755;
+    dir_stat.st_mode = S_IFDIR | 555;
     dir_stat.st_size = 0;
 
     memset(&file_stat, 0, sizeof(file_stat));
-    dir_stat.st_mode = S_IFREG | 644;
+    dir_stat.st_mode = S_IFREG | 444;
     dir_stat.st_size = 0;
 
     if (filler(buf, ".", NULL, 0)) {
@@ -2533,6 +3730,20 @@ procfs_populate_directory(const char           **content_files,
             if (filler(buf, *name, &file_stat, 0)) {
                 bufferfull = 1;
                 goto out;
+            }
+        }
+    }
+
+    if (procfs_ui) {
+        name = content_files;
+        if (name) {
+            for (; *name; name++) {
+                char dot_name[MAXPATHLEN + 1];
+                snprintf(dot_name, MAXPATHLEN, "._%s", *name);
+                if (filler(buf, dot_name, &file_stat, 0)) {
+                    bufferfull = 1;
+                    goto out;
+                }
             }
         }
     }
@@ -2580,7 +3791,52 @@ READDIR_HANDLER(root)
     return 0;
 }
 
-READDIR_HANDLER(hardware__cpus)
+READDIR_HANDLER(byname)
+{
+    int len;
+    char the_name[MAXNAMLEN + 1];  
+    struct stat the_stat;
+
+    ProcessSerialNumber psn;
+    OSErr osErr = noErr;
+    OSStatus status;
+    CFStringRef Pname;
+    pid_t Pid;
+
+    psn.highLongOfPSN = kNoProcess;
+    psn.lowLongOfPSN  = kNoProcess;
+    memset(&the_stat, 0, sizeof(the_stat));
+
+    while ((osErr = GetNextProcess(&psn)) != procNotFound) {
+        status = GetProcessPID(&psn, &Pid);
+        if (status != noErr) {
+            continue;
+        }
+        Pname = (CFStringRef)0;
+        status = CopyProcessName(&psn, &Pname);
+        if (status != noErr) {
+            if (Pname) {
+                CFRelease(Pname);
+                Pname = (CFStringRef)0;
+            }
+            continue;
+        }
+        the_stat.st_mode = S_IFLNK | 0755;
+        the_stat.st_nlink = 1;
+        len = snprintf(the_name, MAXNAMLEN, "../%u", Pid);
+        the_stat.st_size = len;
+        if (filler(buf, CFStringGetCStringPtr(Pname, kCFStringEncodingMacRoman),
+                   &the_stat, 0)) {
+            CFRelease(Pname);
+            break;
+        }
+        CFRelease(Pname);
+    }
+
+    return 0;
+}
+
+READDIR_HANDLER(system__hardware__cpus)
 {
     int len;
     unsigned int i;
@@ -2601,12 +3857,47 @@ READDIR_HANDLER(hardware__cpus)
     return 0;
 }
 
-READDIR_HANDLER(hardware__cpus__cpu)
+READDIR_HANDLER(system__hardware__cpus__cpu)
 {
     return 0;
 }
 
-READDIR_HANDLER(hardware__tpm__keyslots)
+READDIR_HANDLER(system__hardware__displays)
+{
+    int len;
+    unsigned int i;
+    char the_name[MAXNAMLEN + 1];
+    struct stat the_stat;
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    memset(&the_stat, 0, sizeof(the_stat));
+
+    for (i = 0; i < display_count; i++) {
+        the_stat.st_mode = S_IFDIR | 0555;
+        the_stat.st_nlink = 1;
+        len = snprintf(the_name, MAXNAMLEN, "%d", i);
+        if (filler(buf, the_name, &the_stat, 0)) {
+            break;
+        }
+    }
+
+    return 0;
+
+}
+
+READDIR_HANDLER(system__hardware__displays__display)
+{
+    unsigned long index = strtol(argv[0], NULL, 10);
+    CGDisplayCount display_count = PROCFS_GetDisplayCount();
+
+    if (index >= display_count) {
+        return -ENOENT;
+    }
+
+    return 0;
+}
+
+READDIR_HANDLER(system__hardware__tpm__keyslots)
 {
 #if MACFUSE_PROCFS_ENABLE_TPM
     unsigned int i, len;
@@ -2648,7 +3939,7 @@ READDIR_HANDLER(hardware__tpm__keyslots)
     return 0;
 }
 
-READDIR_HANDLER(hardware__tpm__pcrs)
+READDIR_HANDLER(system__hardware__tpm__pcrs)
 {
 #if MACFUSE_PROCFS_ENABLE_TPM
     unsigned int i, len;
@@ -2762,6 +4053,58 @@ READLINK_HANDLER(einval)
     return -EINVAL;
 }
 
+READLINK_HANDLER(byname__name)
+{
+    const char *target_Pname = argv[0];
+    char the_name[MAXNAMLEN + 1];  
+
+    ProcessSerialNumber psn;
+    OSErr osErr = noErr;
+    OSStatus status;
+    CFStringRef Pname;
+    pid_t Pid;
+
+    psn.highLongOfPSN = kNoProcess;
+    psn.lowLongOfPSN  = kNoProcess;
+
+    while ((osErr = GetNextProcess(&psn)) != procNotFound) {
+        status = GetProcessPID(&psn, &Pid);
+        if (status != noErr) {
+            continue;
+        }
+        Pname = (CFStringRef)0;
+        status = CopyProcessName(&psn, &Pname);
+        if (status != noErr) {
+            if (Pname) {
+                CFRelease(Pname);
+                Pname = (CFStringRef)0;
+            }
+            continue;
+        }
+        if (strcmp(target_Pname, CFStringGetCStringPtr(Pname,
+                                     kCFStringEncodingMacRoman)) != 0) {
+            Pid = 0;
+        }
+
+        CFRelease(Pname);
+        Pname = (CFStringRef)0;
+
+        if (Pid) {
+            break;
+        }
+    }
+
+    if (!Pid) {
+        return -ENOENT;
+    }
+
+    (void)snprintf(the_name, MAXNAMLEN, "../%u", Pid);
+
+    strncpy(buf, the_name, size - 1);
+
+    return 0;
+}
+
 // END: READLINK
 
 
@@ -2775,7 +4118,8 @@ READLINK_HANDLER(einval)
 #define EXIT_ON_MACH_ERROR(msg, retval) \
     if (kr != KERN_SUCCESS) { mach_error(msg ":" , kr); exit((retval)); }
 
-static void *procfs_init(struct fuse_conn_info *conn)
+static void *
+procfs_init(struct fuse_conn_info *conn)
 {
     int i;
     kern_return_t kr;
@@ -2849,16 +4193,156 @@ static void *procfs_init(struct fuse_conn_info *conn)
     total_link_patterns =
         sizeof(procfs_link_table)/sizeof(struct procfs_dispatcher_entry);
    
+    pthread_mutex_init(&camera_lock, NULL);
+    pthread_mutex_init(&display_lock, NULL);
+
+    camera_tiff = CFDataCreateMutable(kCFAllocatorDefault, (CFIndex)0);
+
     return NULL;
 }
 
-static void procfs_destroy(void *arg)
+static void
+procfs_destroy(void *arg)
 {
     (void)mach_port_deallocate(mach_task_self(), p_default_set);
     (void)mach_port_deallocate(mach_task_self(), p_default_set_control);
+
+    pthread_mutex_destroy(&camera_lock);
+    pthread_mutex_destroy(&display_lock);
+
+    CFRelease(camera_tiff);
 }
 
-static int procfs_getattr(const char *path, struct stat *stbuf)
+#define PROCFS_OPEN_RELEASE_COMMON()                                          \
+    int i;                                                                    \
+    procfs_dispatcher_entry_t e;                                              \
+    string arg1, arg2, arg3;                                                  \
+    const char *real_argv[PROCFS_MAX_ARGS];                                   \
+                                                                              \
+    if (valid_process_pattern->PartialMatch(path, &arg1)) {                   \
+        pid_t check_pid = atoi(arg1.c_str());                                 \
+        if (getpgid(check_pid) == -1) {                                       \
+            return -ENOENT;                                                   \
+        }                                                                     \
+    }                                                                         \
+                                                                              \
+    for (i = 0; i < PROCFS_MAX_ARGS; i++) {                                   \
+        real_argv[i] = (char *)0;                                             \
+    }                                                                         \
+                                                                              \
+    for (i = 0; i < total_file_patterns; i++) {                               \
+        e = &procfs_file_table[i];                                            \
+        if ((e->flag & PROCFS_FLAG_ISDOTFILE) & !procfs_ui) {                 \
+            continue;                                                         \
+        }                                                                     \
+        switch (e->argc) {                                                    \
+        case 0:                                                               \
+            if (e->compiled_pattern->FullMatch(path)) {                       \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 1:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1)) {                \
+                real_argv[0] = arg1.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 2:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1, &arg2)) {         \
+                real_argv[0] = arg1.c_str();                                  \
+                real_argv[1] = arg2.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 3:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1, &arg2, &arg3)) {  \
+                real_argv[0] = arg1.c_str();                                  \
+                real_argv[1] = arg2.c_str();                                  \
+                real_argv[2] = arg3.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        default:                                                              \
+            break;                                                            \
+        }                                                                     \
+    }                                                                         \
+                                                                              \
+    for (i = 0; i < total_link_patterns; i++) {                               \
+        e = &procfs_link_table[i];                                            \
+        switch (e->argc) {                                                    \
+        case 0:                                                               \
+            if (e->compiled_pattern->FullMatch(path)) {                       \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 1:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1)) {                \
+                real_argv[0] = arg1.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 2:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1, &arg2)) {         \
+                real_argv[0] = arg1.c_str();                                  \
+                real_argv[1] = arg2.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        case 3:                                                               \
+            if (e->compiled_pattern->FullMatch(path, &arg1, &arg2, &arg3)) {  \
+                real_argv[0] = arg1.c_str();                                  \
+                real_argv[1] = arg2.c_str();                                  \
+                real_argv[2] = arg3.c_str();                                  \
+                goto out;                                                     \
+            }                                                                 \
+            break;                                                            \
+                                                                              \
+        default:                                                              \
+            break;                                                            \
+        }                                                                     \
+    }                                                                         \
+                                                                              \
+    return -ENOENT;                                                           \
+                                                                              \
+out:                                                                          \
+
+static int
+procfs_open(const char *path, struct fuse_file_info *fi)
+{
+    PROCFS_OPEN_RELEASE_COMMON()
+
+    return e->open(e, real_argv, path, fi);
+}
+
+static int
+procfs_release(const char *path, struct fuse_file_info *fi)
+{
+    PROCFS_OPEN_RELEASE_COMMON()
+
+    return e->release(e, real_argv, path, fi);
+}
+
+static int
+procfs_opendir(const char *path, struct fuse_file_info *fi)
+{
+    return 0;
+}
+
+static int
+procfs_releasedir(const char *path, struct fuse_file_info *fi)
+{
+    return 0;
+}
+
+static int
+procfs_getattr(const char *path, struct stat *stbuf)
 {
     int i;
     procfs_dispatcher_entry_t e;
@@ -2916,6 +4400,9 @@ static int procfs_getattr(const char *path, struct stat *stbuf)
 
     for (i = 0; i < total_file_patterns; i++) {
         e = &procfs_file_table[i];
+        if ((e->flag & PROCFS_FLAG_ISDOTFILE) & !procfs_ui) {
+            continue;
+        }
         switch (e->argc) {
         case 0:
             if (e->compiled_pattern->FullMatch(path)) {
@@ -2954,6 +4441,9 @@ static int procfs_getattr(const char *path, struct stat *stbuf)
 
     for (i = 0; i < total_link_patterns; i++) {
         e = &procfs_link_table[i];
+        if ((e->flag & PROCFS_FLAG_ISDOTFILE) & !procfs_ui) {
+            continue;
+        }
         switch (e->argc) {
         case 0:
             if (e->compiled_pattern->FullMatch(path)) {
@@ -2997,11 +4487,12 @@ out:
 }
 
 
-static int procfs_readdir(const char             *path,
-                          void                   *buf,
-                          fuse_fill_dir_t        filler,
-                          off_t                  offset,
-                          struct fuse_file_info *fi)
+static int
+procfs_readdir(const char             *path,
+               void                   *buf,
+               fuse_fill_dir_t        filler,
+               off_t                  offset,
+               struct fuse_file_info *fi)
 {
     int i;
     procfs_dispatcher_entry_t e;
@@ -3070,7 +4561,8 @@ out:
     return 0;
 }
 
-static int procfs_readlink(const char *path, char *buf, size_t size)
+static int
+procfs_readlink(const char *path, char *buf, size_t size)
 {
     int i;
     procfs_dispatcher_entry_t e;
@@ -3082,7 +4574,12 @@ static int procfs_readlink(const char *path, char *buf, size_t size)
     }
 
     for (i = 0; i < total_link_patterns; i++) {
+
         e = &procfs_link_table[i];
+
+        if ((e->flag & PROCFS_FLAG_ISDOTFILE) & !procfs_ui) {
+            continue;
+        }
 
         switch (e->argc) {
         case 0:
@@ -3112,8 +4609,9 @@ out:
     return e->readlink(e, real_argv, buf, size);
 }
 
-static int procfs_read(const char *path, char *buf, size_t size, off_t offset,
-                      struct fuse_file_info *fi)
+static int
+procfs_read(const char *path, char *buf, size_t size, off_t offset,
+            struct fuse_file_info *fi)
 {
     int i;
     procfs_dispatcher_entry_t e;
@@ -3127,6 +4625,10 @@ static int procfs_read(const char *path, char *buf, size_t size, off_t offset,
     for (i = 0; i < total_file_patterns; i++) {
 
         e = &procfs_file_table[i];
+
+        if ((e->flag & PROCFS_FLAG_ISDOTFILE) & !procfs_ui) {
+            continue;
+        }
 
         switch (e->argc) {
         case 0:
@@ -3163,11 +4665,25 @@ static int procfs_read(const char *path, char *buf, size_t size, off_t offset,
             return -EIO;
         }
     }   
-    
+
     return -EIO;
     
 out:    
     return e->read(e, real_argv, buf, size, offset, fi);
+}
+
+static int
+procfs_statfs(const char *path, struct statvfs *buf)
+{
+    (void)path;
+
+    buf->f_namemax = 255;
+    buf->f_bsize = 1048576;
+    buf->f_frsize = 1048576;
+    buf->f_blocks = buf->f_bfree = buf->f_bavail =
+        1000ULL * 1024 * 1024 * 1024 / buf->f_frsize;
+    buf->f_files = buf->f_ffree = 1000000000;
+    return 0;
 }
 
 static struct fuse_operations procfs_oper;
@@ -3175,28 +4691,40 @@ static struct fuse_operations procfs_oper;
 static void
 procfs_oper_populate(struct fuse_operations *oper)
 {
-    oper->init     = procfs_init;
-    oper->destroy  = procfs_destroy;
-    oper->getattr  = procfs_getattr;
-    oper->read     = procfs_read;
-    oper->readdir  = procfs_readdir;
-    oper->readlink = procfs_readlink;
+    oper->init       = procfs_init;
+    oper->destroy    = procfs_destroy;
+    oper->statfs     = procfs_statfs;
+    oper->open       = procfs_open;
+    oper->release    = procfs_release;
+    oper->opendir    = procfs_opendir;
+    oper->releasedir = procfs_releasedir;
+    oper->getattr    = procfs_getattr;
+    oper->read       = procfs_read;
+    oper->readdir    = procfs_readdir;
+    oper->readlink   = procfs_readlink;
 }
 
-static char *def_opts = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro";
+static char *def_opts = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char *def_opts_ui = "-oallow_other,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
 
 int
 main(int argc, char *argv[])
 {
     int i;
     char **new_argv;
+    char *extra_opts = def_opts;
+
+    if (getenv("MACFUSE_PROCFS_UI")) {
+        procfs_ui = 1;
+        extra_opts = def_opts_ui;
+    }
 
     argc++;
     new_argv = (char **)malloc(sizeof(char *) * argc);
     for (i = 0; i < (argc - 1); i++) {
         new_argv[i] = argv[i];
     }
-    argv[i] = def_opts;
+    argv[i] = extra_opts;
 
     procfs_oper_populate(&procfs_oper);
     return fuse_main(argc, argv, &procfs_oper, NULL);

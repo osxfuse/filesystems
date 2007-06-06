@@ -3,7 +3,14 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
+/*
+ * MacFUSE-Based procfs
+ * TPM Files
+ */
+
 extern "C" {
+
+#if MACFUSE_PROCFS_ENABLE_TPM
 
 #include "procfs_tpm.h"
 
@@ -86,5 +93,7 @@ TPM_GetCapability_Key_Handle(uint16_t * num, uint32_t keys[])
 		keys[i] = ntohl(*(uint32_t *) (blob + 16 + 4 * i));
 	return (ret);
 }
+
+#endif /* MACFUSE_PROCFS_ENABLE_TPM */
 
 }

@@ -3,6 +3,10 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
+/*
+ * MacFUSE-Based procfs
+ */
+
 #ifndef _PROCFS_TPM_H_
 #define _PROCFS_TPM_H_
 
