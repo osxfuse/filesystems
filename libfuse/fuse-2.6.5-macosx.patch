@@ -1,6 +1,6 @@
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-06-04 01:20:11.000000000 -0700
++++ new/README.MacFUSE	2007-06-05 16:47:13.000000000 -0700
 @@ -0,0 +1,7 @@
 +MacFUSE Project Page:
 +
@@ -8,10 +8,10 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +
 +Making a Universal build:
 +
-+CFLAGS="-D__FreeBSD__=10 -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++CFLAGS="-D__FreeBSD__=10 -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc -framework CoreFoundation" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/configure new/configure
 --- old/configure	2007-04-29 02:13:15.000000000 -0700
-+++ new/configure	2007-06-04 01:20:11.000000000 -0700
++++ new/configure	2007-06-05 16:46:06.000000000 -0700
 @@ -11284,7 +11284,8 @@
  fi
  
@@ -24,7 +24,7 @@ diff -Naur old/configure new/configure
  echo $ECHO_N "checking for library containing clock_gettime... $ECHO_C" >&6; }
 diff -Naur old/example/fusexmp.c new/example/fusexmp.c
 --- old/example/fusexmp.c	2006-12-09 10:51:13.000000000 -0800
-+++ new/example/fusexmp.c	2007-06-04 01:20:11.000000000 -0700
++++ new/example/fusexmp.c	2007-06-05 16:46:06.000000000 -0700
 @@ -45,8 +45,25 @@
      int res;
  
@@ -102,7 +102,7 @@ diff -Naur old/example/fusexmp.c new/example/fusexmp.c
      return 0;
 diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
 --- old/example/fusexmp_fh.c	2007-04-15 12:31:57.000000000 -0700
-+++ new/example/fusexmp_fh.c	2007-06-04 01:20:11.000000000 -0700
++++ new/example/fusexmp_fh.c	2007-06-05 16:46:06.000000000 -0700
 @@ -32,8 +32,9 @@
      int res;
  
@@ -212,7 +212,7 @@ diff -Naur old/example/fusexmp_fh.c new/example/fusexmp_fh.c
      .access	= xmp_access,
 diff -Naur old/fuse.pc.in new/fuse.pc.in
 --- old/fuse.pc.in	2006-12-09 10:52:22.000000000 -0800
-+++ new/fuse.pc.in	2007-06-04 01:20:11.000000000 -0700
++++ new/fuse.pc.in	2007-06-05 16:46:06.000000000 -0700
 @@ -4,7 +4,7 @@
  includedir=@includedir@
  
@@ -225,7 +225,7 @@ diff -Naur old/fuse.pc.in new/fuse.pc.in
 +Cflags: -I${includedir}/fuse -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64
 diff -Naur old/lib/Makefile.in new/lib/Makefile.in
 --- old/lib/Makefile.in	2007-04-29 02:13:27.000000000 -0700
-+++ new/lib/Makefile.in	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/Makefile.in	2007-06-05 16:46:06.000000000 -0700
 @@ -60,8 +60,12 @@
  	fuse_loop.c fuse_loop_mt.c fuse_lowlevel.c fuse_misc.h \
  	fuse_mt.c fuse_opt.c fuse_session.c fuse_signals.c helper.c \
@@ -267,7 +267,7 @@ diff -Naur old/lib/Makefile.in new/lib/Makefile.in
  libulockmgr_la_LDFLAGS = -version-number 1:0:1
 diff -Naur old/lib/fuse.c new/lib/fuse.c
 --- old/lib/fuse.c	2007-02-02 03:57:48.000000000 -0800
-+++ new/lib/fuse.c	2007-06-04 01:20:28.000000000 -0700
++++ new/lib/fuse.c	2007-06-05 16:46:06.000000000 -0700
 @@ -57,6 +57,11 @@
      int auto_cache;
      int intr;
@@ -727,7 +727,7 @@ diff -Naur old/lib/fuse.c new/lib/fuse.c
 +#endif
 diff -Naur old/lib/fuse_lowlevel.c new/lib/fuse_lowlevel.c
 --- old/lib/fuse_lowlevel.c	2006-12-09 10:52:22.000000000 -0800
-+++ new/lib/fuse_lowlevel.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/fuse_lowlevel.c	2007-06-05 16:46:06.000000000 -0700
 @@ -1395,9 +1395,11 @@
      return 0;
  }
@@ -749,7 +749,7 @@ diff -Naur old/lib/fuse_lowlevel.c new/lib/fuse_lowlevel.c
 +#endif
 diff -Naur old/lib/fuse_mt.c new/lib/fuse_mt.c
 --- old/lib/fuse_mt.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_mt.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/fuse_mt.c	2007-06-05 16:46:06.000000000 -0700
 @@ -120,4 +120,6 @@
      return fuse_session_loop_mt(fuse_get_session(f));
  }
@@ -759,7 +759,7 @@ diff -Naur old/lib/fuse_mt.c new/lib/fuse_mt.c
 +#endif
 diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
 --- old/lib/fuse_session.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_session.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/fuse_session.c	2007-06-05 16:46:06.000000000 -0700
 @@ -15,6 +15,9 @@
  #include <string.h>
  #include <assert.h>
@@ -814,7 +814,7 @@ diff -Naur old/lib/fuse_session.c new/lib/fuse_session.c
      struct fuse_session *se = (struct fuse_session *) malloc(sizeof(*se));
 diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
 --- old/lib/fuse_signals.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/fuse_signals.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/fuse_signals.c	2007-06-05 16:46:06.000000000 -0700
 @@ -13,12 +13,34 @@
  #include <signal.h>
  
@@ -852,7 +852,7 @@ diff -Naur old/lib/fuse_signals.c new/lib/fuse_signals.c
  static int set_one_signal_handler(int sig, void (*handler)(int))
 diff -Naur old/lib/helper.c new/lib/helper.c
 --- old/lib/helper.c	2006-12-09 10:52:22.000000000 -0800
-+++ new/lib/helper.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/helper.c	2007-06-05 16:46:06.000000000 -0700
 @@ -264,6 +264,10 @@
      if (fd)
          *fd = fuse_chan_fd(ch);
@@ -903,7 +903,7 @@ diff -Naur old/lib/helper.c new/lib/helper.c
 +#endif
 diff -Naur old/lib/mount.c new/lib/mount.c
 --- old/lib/mount.c	2007-01-02 09:10:33.000000000 -0800
-+++ new/lib/mount.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/mount.c	2007-06-05 16:46:06.000000000 -0700
 @@ -304,5 +304,7 @@
      return res;
  }
@@ -914,20 +914,21 @@ diff -Naur old/lib/mount.c new/lib/mount.c
 +#endif
 diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 --- old/lib/mount_bsd.c	2006-12-09 10:51:14.000000000 -0800
-+++ new/lib/mount_bsd.c	2007-06-04 01:20:11.000000000 -0700
-@@ -6,6 +6,11 @@
++++ new/lib/mount_bsd.c	2007-06-05 16:46:53.000000000 -0700
+@@ -6,6 +6,12 @@
      See the file COPYING.LIB.
  */
  
 +#if (__FreeBSD__ >= 10)
 +#undef _POSIX_C_SOURCE
 +#include <sys/types.h>
++#include <CoreFoundation/CoreFoundation.h>
 +#endif
 +
  #include "fuse_i.h"
  #include "fuse_opt.h"
  
-@@ -21,8 +26,75 @@
+@@ -21,8 +27,75 @@
  #include <string.h>
  #include <paths.h>
  
@@ -979,7 +980,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +
 +    while ((terminated_pid = wait4(pid, (int *)&status, 0, NULL)) < 0) {
 +        /* retry if EINTR, else break out with error */
-+        if ( errno != EINTR ) {
++        if (errno != EINTR) {
 +            break;
 +        }
 +    }
@@ -1003,7 +1004,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  
  enum {
      KEY_ALLOW_ROOT,
-@@ -30,6 +102,10 @@
+@@ -30,6 +103,10 @@
      KEY_HELP,
      KEY_VERSION,
      KEY_KERN
@@ -1014,7 +1015,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  };
  
  struct mount_opts {
-@@ -108,11 +184,44 @@
+@@ -108,11 +185,44 @@
      FUSE_OPT_KEY("noprivate",           KEY_KERN),
      FUSE_OPT_KEY("noneglect_shares",    KEY_KERN),
      FUSE_OPT_KEY("nopush_symlinks_in",  KEY_KERN),
@@ -1059,7 +1060,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      FUSE_OPT_END
  };
  
-@@ -149,6 +258,15 @@
+@@ -149,6 +259,15 @@
      case KEY_KERN:
          return fuse_opt_add_opt(&mo->kernel_opts, arg);
  
@@ -1075,7 +1076,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      case KEY_HELP:
          mount_help();
          mo->ishelp = 1;
-@@ -199,8 +317,21 @@
+@@ -199,8 +318,21 @@
      if (rv)
          return;
  
@@ -1097,7 +1098,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  void fuse_kern_unmount(const char *mountpoint, int fd)
-@@ -222,13 +353,29 @@
+@@ -222,13 +354,29 @@
      if (*ep != '\0')
          return;
  
@@ -1127,7 +1128,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      int ibg, len;
  
      len = sizeof(ibg);
-@@ -237,6 +384,7 @@
+@@ -237,6 +385,7 @@
          return 0;
  
      return ibg;
@@ -1135,7 +1136,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  }
  
  
-@@ -247,6 +395,20 @@
+@@ -247,6 +396,35 @@
      char *fdnam, *dev;
      int pid;
  
@@ -1146,8 +1147,23 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +    }
 +
 +    if (checkloadable()) {
-+        if (loadkmod()) {
-+            fprintf(stderr, "fusefs file system is not available\n");
++        int result = loadkmod();
++        if (result) {
++            if (result == EBUSY) {
++                CFOptionFlags responseFlags;
++                CFUserNotificationDisplayNotice(
++                    (CFTimeInterval)0,
++                    kCFUserNotificationCautionAlertLevel,
++                    (CFURLRef)0,
++                    (CFURLRef)0,
++                    (CFURLRef)0,
++                    CFSTR("MacFUSE Version Mismatch"),
++                    CFSTR("MacFUSE has been updated but an incompatible or old version of the MacFUSE kernel extension is already loaded. It failed to unload, possibly because a MacFUSE volume is currently mounted.\n\nPlease eject all MacFUSE volumes and try again, or simply restart the system for changes to take effect."),
++                    CFSTR("OK")
++                );
++            }
++            fprintf(stderr, "fusefs file system is not available (%d)\n",
++                    result);
 +            return -1;
 +        }
 +    }
@@ -1156,7 +1172,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      fdnam = getenv("FUSE_DEV_FD");
  
      if (fdnam) {
-@@ -267,12 +429,29 @@
+@@ -267,12 +445,29 @@
  
      dev = getenv("FUSE_DEV_NAME");
  
@@ -1192,7 +1208,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
      }
  
  mount:
-@@ -322,11 +501,31 @@
+@@ -322,11 +517,31 @@
              perror("fuse: failed to exec mount program");
              exit(1);
          }
@@ -1224,7 +1240,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
  
  out:
      return fd;
-@@ -360,4 +559,6 @@
+@@ -360,4 +575,6 @@
      return res;
  }
  
@@ -1233,7 +1249,7 @@ diff -Naur old/lib/mount_bsd.c new/lib/mount_bsd.c
 +#endif
 diff -Naur old/lib/ulockmgr.c new/lib/ulockmgr.c
 --- old/lib/ulockmgr.c	2007-01-02 09:10:33.000000000 -0800
-+++ new/lib/ulockmgr.c	2007-06-04 01:20:11.000000000 -0700
++++ new/lib/ulockmgr.c	2007-06-05 16:46:06.000000000 -0700
 @@ -18,9 +18,19 @@
  #include <assert.h>
  #include <signal.h>
