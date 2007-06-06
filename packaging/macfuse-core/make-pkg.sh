@@ -79,7 +79,7 @@ then
 fi
 
 # Copy the uninstall script
-UNINSTALL_DST="$DISTRIBUTION_FOLDER/System/Library/Filesystems/fusefs.fs/uninstall-macfuse-core.sh"
+UNINSTALL_DST="$DISTRIBUTION_FOLDER/System/Library/Filesystems/fusefs.fs/Support/uninstall-macfuse-core.sh"
 sudo cp "$UNINSTALL_SCRIPT" "$UNINSTALL_DST"
 sudo chmod 755 "$UNINSTALL_DST"
 sudo chown root:wheel "$UNINSTALL_DST"
