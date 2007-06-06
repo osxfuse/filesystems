@@ -553,6 +553,41 @@ out:
     return 0;
 }
 
+static int
+check_kext_status(void)
+{
+    int    result = -1;
+    char   version[MAXHOSTNAMELEN + 1] = { 0 };
+    size_t version_len = MAXHOSTNAMELEN;
+    size_t version_len_desired = 0;
+    struct vfsconf vfc = { 0 };
+
+    result = getvfsbyname(MACFUSE_FS_TYPE, &vfc);
+    if (result) { /* MacFUSE is not already loaded */
+        return ESRCH;
+    }
+
+    /* some version of MacFUSE is already loaded; let us check it out */
+
+    result = sysctlbyname(SYSCTL_MACFUSE_VERSION_NUMBER, version,
+                          &version_len, (void *)NULL, (size_t)0);
+    if (result) {
+        return result;
+    }
+
+    /* sysctlbyname() includes the trailing '\0' in version_len */
+    version_len_desired = strlen(MACFUSE_VERSION) + 1;
+
+    if ((version_len != version_len_desired) ||
+        strncmp(MACFUSE_VERSION, version, version_len)) {
+        return EINVAL;
+    }
+
+    /* what's currently loaded is good */
+
+    return 0;
+}
+
 // We will be called as follows by the FUSE library:
 //
 //   mount_<MACFUSE_FS_TYPE> -o OPTIONS... <fdnam> <mountpoint>
@@ -560,6 +595,7 @@ out:
 int
 main(int argc, char **argv)
 {
+    int       result    = -1;
     int       mntflags  = 0;
     int       fd        = -1;
     int32_t   dindex    = -1;
@@ -592,44 +628,25 @@ main(int argc, char **argv)
         showhelp();
     }
 
-    if (!getenv("MOUNT_FUSEFS_IGNORE_VERSION_MISMATCH")) {
-        int                     kmod_ok = 0;
-        kern_return_t           kr;
-        kmod_info_array_t       kmods;
-        mach_msg_type_number_t  kmodBytes = 0;
-        int                     kmodCount = 0;
-        kmod_info_t            *kmodp;
-        mach_port_t             host_port = mach_host_self();
+    result = check_kext_status();
 
-        kr = kmod_get_info(host_port, (void *)&kmods, &kmodBytes);
-        (void)mach_port_deallocate(mach_task_self(), host_port);
-        if (kr != KERN_SUCCESS) {
-            errx(kr, "failed to retrieve kernel extension information");
-        }
+    switch (result) {
 
-        for (kmodp = (kmod_info_t *)kmods; kmodp->next; kmodp++, kmodCount++) {
-            if (!strncmp(kmodp->name, MACFUSE_BUNDLE_IDENTIFIER,
-                         strlen(MACFUSE_BUNDLE_IDENTIFIER))) {
-                if (!strncmp(kmodp->version, MACFUSE_VERSION,
-                             strlen(MACFUSE_VERSION))) {
-                    kmod_ok = 1;
-                    break;
-                } else {
-                    vm_deallocate(mach_task_self(), (vm_address_t)kmods,
-                                  kmodBytes);
-                    errx(1, "MacFUSE kernel extension version mismatch "
-                            "(kernel has %s, %s has %s)",
-                         kmodp->version, PROGNAME, MACFUSE_VERSION);
-                    /* break */
-                }
-            }
-        }
+    case 0:
+        break;
 
-        vm_deallocate(mach_task_self(), (vm_address_t)kmods, kmodBytes);
+    case ESRCH:
+        errx(1, "the MacFUSE kernel extension is not loaded");
+        break;
 
-        if (!kmod_ok) {
-            errx(1, "MacFUSE kernel extension not loaded");
-        }
+    case EINVAL:
+        errx(1, "the loaded MacFUSE kernel extension has a mismatched version");
+        break;
+
+    default:
+        errx(1, "failed to query the loaded MacFUSE kernel extension (%d)",
+             result);
+        break;
     }
 
     do {

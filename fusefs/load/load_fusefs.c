@@ -21,6 +21,7 @@
  * @APPLE_LICENSE_HEADER_END@
  */
 
+#include <stdio.h>
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -37,7 +38,7 @@
 /* Local Definitions */
 #define LOAD_COMMAND        "/sbin/kextload"
 #define UNLOAD_COMMAND      "/sbin/kextunload"
-#define MACFUSE_MODULE_PATH "/Library/Extensions/fusefs.kext"
+#define MACFUSE_MODULE_PATH MACFUSE_BUNDLE_PATH "/Support/fusefs.kext"
 
 int
 main(__unused int argc, __unused const char *argv[])
@@ -104,7 +105,7 @@ need_unloading:
 
     if (result != 0) {
         /* unloading failed */
-        result = -EBUSY;
+        result = EBUSY;
         goto out;
     }
 
