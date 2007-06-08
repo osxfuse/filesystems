@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.51"
+#define MACFUSE_PROCFS_VERSION "1.52"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
