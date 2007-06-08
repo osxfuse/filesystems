@@ -1,5 +1,7 @@
 extern "C" {
 
+#if __i386__
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -358,5 +360,7 @@ out:
 
     return 0;
 }
+
+#endif /* __i386__ */
 
 }

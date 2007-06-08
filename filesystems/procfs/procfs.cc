@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.5"
+#define MACFUSE_PROCFS_VERSION "1.51"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
@@ -471,7 +471,9 @@ PROTO_READ_HANDLER(eisdir);
 PROTO_READ_HANDLER(zero);
 PROTO_READ_HANDLER(default_file_finder_info);
 PROTO_READ_HANDLER(proc__carbon);
+#if __i386__
 PROTO_READ_HANDLER(proc__fds);
+#endif /* __i386__ */
 PROTO_READ_HANDLER(proc__generic);
 PROTO_READ_HANDLER(proc__task__absolutetime_info);
 PROTO_READ_HANDLER(proc__task__basic_info);
@@ -658,6 +660,7 @@ procfs_file_table[] = {
         proc__carbon
     )
 
+#if __i386__
     DECL_FILE(
         "/(\\d+)/fds",
         1,
@@ -666,6 +669,7 @@ procfs_file_table[] = {
         default_file,
         proc__fds
     )
+#endif /* __i386__ */
 
     DECL_FILE(
         "/(\\d+)/(cmdline|jobc|paddr|pgid|ppid|tdev|tpgid|wchan)",
@@ -992,7 +996,11 @@ procfs_directory_table[] = {
     DECL_DIRECTORY_COMPACT(
         "/\\d+",
         {
-            "cmdline", "fds", "jobc", "paddr", "pgid", "ppid", "tdev", "tpgid",
+            "cmdline",
+#if __i386__
+            "fds",
+#endif /* __i386__ */
+            "jobc", "paddr", "pgid", "ppid", "tdev", "tpgid",
             "wchan", "windows", NULL
         },
         { "carbon", "pcred", "task", "ucred", NULL }
@@ -2286,6 +2294,7 @@ gotdata:
     return size;
 }
 
+#if __i386__
 READ_HANDLER(proc__fds)
 {
     pid_t pid = atoi(argv[0]);
@@ -2307,6 +2316,7 @@ READ_HANDLER(proc__fds)
 
     return size;
 }
+#endif /* __i386__ */
 
 #define HANDLE_GENERIC_ITEM(item, fmt, datasrc)     \
     if (strcmp(whichfile, item) == 0) {             \
