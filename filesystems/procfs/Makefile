@@ -6,7 +6,7 @@
 # http://code.google.com/p/macfuse/
 
 CPPFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk
-LDFLAGS=-L/usr/local/lib -lfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak_library /usr/lib/libproc.dylib
+LDFLAGS=-L/usr/local/lib -lfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc
 SEQUENCEGRAB_LDFLAGS=-framework AudioUnit -framework Cocoa -framework CoreAudioKit -framework Foundation -framework QuartzCore -framework QuickTime -framework QuartzCore
 
 # Configure this depending on where you installed pcrecpp
