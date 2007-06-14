@@ -1616,6 +1616,15 @@ fuse_vnop_mmap(struct vnop_mmap_args *ap)
         panic("MacFUSE: fuse_vnop_mmap(): called on a dead file system");
     }
 
+    if (fuse_isdirectio(vp)) {
+        /*
+         * We should be returning ENODEV here, but ubc_map() translates
+         * all errors except ENOPERM to 0. Even then, this is not going
+         * to prevent the mmap()!
+         */
+        return EPERM;
+    }
+
     CHECK_BLANKET_DENIAL(vp, context, ENOENT);
 
     if (fufh_type == FUFH_INVALID) { // nothing to do
@@ -1663,6 +1672,13 @@ fuse_vnop_mnomap(struct vnop_mnomap_args *ap)
 
     if (fuse_isdeadfs_nop(vp)) {
         return 0;
+    }
+
+    if (fuse_isdirectio(vp)) {
+        /*
+         * ubc_unmap() doesn't care about the return value.
+         */
+        return ENODEV;
     }
 
 #if M_MACFUSE_EXPERIMENTAL_JUNK
@@ -1908,11 +1924,14 @@ fuse_vnop_pagein(struct vnop_pagein_args *ap)
     flags     = ap->a_flags;
     context   = ap->a_context;
 
-    if (fuse_isdeadfs_nop(vp)) {
+    if (fuse_isdeadfs_nop(vp) || fuse_isdirectio(vp)) {
         if (!(flags & UPL_NOCOMMIT)) {
             ubc_upl_abort_range(pl, pl_offset, size,
                                 UPL_ABORT_FREE_ON_EMPTY | UPL_ABORT_ERROR);
         }
+        /*
+         * Will cause PAGER_ERROR (pager unable to read or write page).
+         */
         return ENOTSUP;
     }
 
@@ -1948,11 +1967,14 @@ fuse_vnop_pageout(struct vnop_pageout_args *ap)
 
     fuse_trace_printf_vnop();
 
-    if (fuse_isdeadfs_nop(vp)) {
+    if (fuse_isdeadfs_nop(vp) || fuse_isdirectio(vp)) {
         if (!(ap->a_flags & UPL_NOCOMMIT)) {
             ubc_upl_abort_range(ap->a_pl, ap->a_pl_offset, ap->a_size,
                                 UPL_ABORT_FREE_ON_EMPTY | UPL_ABORT_ERROR);
         }
+        /*
+         * Will cause PAGER_ERROR (pager unable to read or write page).
+         */
         return ENOTSUP;
     }
 
@@ -3174,7 +3196,7 @@ fuse_vnop_write(struct vnop_write_args *ap)
     int           ioflag  = ap->a_ioflag;
     vfs_context_t context = ap->a_context;
 
-    int          error;
+    int          error = 0;
     int          lflag;
     off_t        offset;
     off_t        zero_off;
@@ -3302,7 +3324,12 @@ fuse_vnop_write(struct vnop_write_args *ap)
 
             uio_setresid(uio, (uio_resid(uio) + diff));
             uio_setoffset(uio, (uio_offset(uio) - diff));
+
         } /* while */
+
+        if (!error) {
+            fuse_invalidate_attr(vp);
+        }
 
         fuse_ticket_drop(fdi.tick);
 
