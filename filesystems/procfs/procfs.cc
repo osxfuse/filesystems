@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.52"
+#define MACFUSE_PROCFS_VERSION "1.54"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
@@ -1397,6 +1397,7 @@ GETATTR_HANDLER(byname__name)
     const char *target_Pname = argv[0];
     struct stat the_stat;
     char the_name[MAXNAMLEN + 1];  
+    Boolean strstatus = false;
 
     ProcessSerialNumber psn;
     OSErr osErr = noErr;
@@ -1421,8 +1422,12 @@ GETATTR_HANDLER(byname__name)
             }
             continue;
         }
-        if (strcmp(target_Pname, CFStringGetCStringPtr(Pname,
-                                     kCFStringEncodingMacRoman)) != 0) {
+
+        strstatus = CFStringGetCString(Pname, the_name, MAXNAMLEN,
+                                       kCFStringEncodingASCII);
+        if (strstatus != true) {
+            Pid = 0;
+        } else if (strcmp(target_Pname, the_name) != 0) {
             Pid = 0;
         }
 
@@ -3805,6 +3810,7 @@ READDIR_HANDLER(byname)
 {
     int len;
     char the_name[MAXNAMLEN + 1];  
+    Boolean strstatus = false;
     struct stat the_stat;
 
     ProcessSerialNumber psn;
@@ -3835,8 +3841,16 @@ READDIR_HANDLER(byname)
         the_stat.st_nlink = 1;
         len = snprintf(the_name, MAXNAMLEN, "../%u", Pid);
         the_stat.st_size = len;
-        if (filler(buf, CFStringGetCStringPtr(Pname, kCFStringEncodingMacRoman),
-                   &the_stat, 0)) {
+
+        strstatus = CFStringGetCString(Pname, the_name, MAXNAMLEN,
+                                       kCFStringEncodingASCII);
+        if (strstatus == false) {
+            CFRelease(Pname);
+            Pname = (CFStringRef)0;
+            continue;
+        }
+
+        if (filler(buf, the_name, &the_stat, 0)) {
             CFRelease(Pname);
             break;
         }
@@ -4067,6 +4081,7 @@ READLINK_HANDLER(byname__name)
 {
     const char *target_Pname = argv[0];
     char the_name[MAXNAMLEN + 1];  
+    Boolean strstatus = false;
 
     ProcessSerialNumber psn;
     OSErr osErr = noErr;
@@ -4091,8 +4106,11 @@ READLINK_HANDLER(byname__name)
             }
             continue;
         }
-        if (strcmp(target_Pname, CFStringGetCStringPtr(Pname,
-                                     kCFStringEncodingMacRoman)) != 0) {
+
+        strstatus = CFStringGetCString(Pname, the_name, MAXNAMLEN,
+                                       kCFStringEncodingASCII);
+
+        if (strcmp(target_Pname, the_name) != 0) {
             Pid = 0;
         }
 
