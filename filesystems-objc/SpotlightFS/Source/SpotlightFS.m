@@ -129,6 +129,25 @@ static NSString *DecodePath(NSString *path) {
   return userCreatedFolders;
 }
 
+// -isUserCreatedFolder:
+//
+// Returns YES if the specified folder is a user created folder. Also try
+// prepending a leading slash to the user created folders, incase |path| starts
+// with a slash.
+//
+- (BOOL)isUserCreatedFolder:(NSString *)path {
+  NSArray *folders = [self userCreatedFolders];
+  NSString *folder = nil;
+  NSEnumerator *folderEnumerator = [folders objectEnumerator];
+  while ((folder = [folderEnumerator nextObject])) {
+    if ([folder isEqualToString:path])
+      return YES;
+    if ([[@"/" stringByAppendingPathComponent:folder] isEqualToString:path])
+      return YES;
+  }
+  return NO;
+}
+
 // -setUserCreatedFolders:
 //
 // Sets the folder names to use for the top-level user-created folders.
@@ -341,20 +360,27 @@ static NSString *DecodePath(NSString *path) {
   return NO;
 }
 
+// By default, directories are not writeable, with the notable exceptions below:
+// - Slash is writable
+// - User created directories in slash are writable
 - (NSDictionary *)fileAttributesAtPath:(NSString *)path {
   if (!path)
     return nil;
   
   NSMutableDictionary *attr = nil;
+  int mode = 0500;
   
   NSString *pathdir = [path stringByDeletingLastPathComponent];
   NSString *smarter = [@"/" stringByAppendingString:kSmarterFolder];
   
-  if ([pathdir isEqualToString:@"/"]
-      || [pathdir isEqualToString:smarter]) {
+  if ([pathdir isEqualToString:@"/"] || [pathdir isEqualToString:smarter]) {
+    
+    if ([path isEqualToString:@"/"] || [self isUserCreatedFolder:path]) {
+      mode = 0700;
+    }
     
     attr = [NSDictionary dictionaryWithObjectsAndKeys:
-      [NSNumber numberWithInt:0500], NSFilePosixPermissions,
+      [NSNumber numberWithInt:mode], NSFilePosixPermissions,
       [NSNumber numberWithInt:geteuid()], NSFileOwnerAccountID,
       [NSNumber numberWithInt:getegid()], NSFileGroupOwnerAccountID,
       [NSDate date], NSFileCreationDate,

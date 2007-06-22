@@ -45,6 +45,10 @@
 //
 - (NSArray *)userCreatedFolders;
 
+// Returns YES if |path| is a user created folder.
+//
+- (BOOL)isUserCreatedFolder:(NSString *)path;
+
 // Sets the full user-created folders array.
 //
 - (void)setUserCreatedFolders:(NSArray *)folders;
