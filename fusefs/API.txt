@@ -1,6 +1,0 @@
-Of the 38 FUSE methods in FUSE API version 7.8, the following  methods are
-currently not supported on MacFUSE:
-
-FUSE_GETLK	We use VFS-provided file locking instead.
-FUSE_SETLK	We use VFS-provided file locking instead.
-FUSE_BMAP	TBD (fuse_vnop_blockmap -> one or more calls to FUSE_BMAP).

@@ -1,1 +1,0 @@
-Packaging stuff for MacFUSE.
