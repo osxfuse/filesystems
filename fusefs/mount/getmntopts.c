@@ -73,7 +73,7 @@ getmntopts(options, m0, flagp, altflagp)
 	const char *options;
 	const struct mntopt *m0;
 	int *flagp;
-	uint64_t *altflagp;
+	u_int64_t *altflagp;
 {
 	const struct mntopt *m;
 	int negative, len;

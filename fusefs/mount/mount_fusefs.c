@@ -69,6 +69,7 @@ struct mntopt mopts[] = {
     { "debug",               0, FUSE_MOPT_DEBUG,                  1 }, // kused
     { "default_permissions", 0, FUSE_MOPT_DEFAULT_PERMISSIONS,    1 },
     { "defer_auth",          0, FUSE_MOPT_DEFER_AUTH,             1 }, // kused
+    { "direct_io",           0, FUSE_MOPT_DIRECT_IO,              1 }, // kused
     { "extended_security",   0, FUSE_MOPT_EXTENDED_SECURITY,      1 }, // kused
     { "fd=",                 0, FUSE_MOPT_FD,                     1 },
     { "fsid=" ,              0, FUSE_MOPT_FSID,                   1 }, // kused

@@ -258,26 +258,16 @@
 							<array>
 								<string>089C166AFE841209C02AAC07</string>
 								<string>54C6DE6B0B5EEDD1002D9FD9</string>
-								<string>5400F2A00C15546C0074E8DA</string>
 								<string>1C37FBAC04509CD000000102</string>
-								<string>5400F2B90C15558A0074E8DA</string>
-								<string>5400F2BA0C15558A0074E8DA</string>
-								<string>5400F2BB0C15558A0074E8DA</string>
-								<string>5400F2BC0C15558A0074E8DA</string>
-								<string>54C6DE6B0B5EEDD1002D9FD9</string>
-								<string>5400F2A00C15546C0074E8DA</string>
-								<string>5400F2BD0C15558A0074E8DA</string>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
 									<integer>57</integer>
-									<integer>52</integer>
-									<integer>51</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 676}, {186, 548}}</string>
+							<string>{{0, 0}, {186, 548}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -377,9 +367,9 @@
 			</array>
 			<key>TableOfContents</key>
 			<array>
-				<string>5400F2BE0C15558A0074E8DA</string>
+				<string>548A4D900C22694300053D5A</string>
 				<string>1CE0B1FE06471DED0097A5F4</string>
-				<string>5400F2BF0C15558A0074E8DA</string>
+				<string>548A4D910C22694300053D5A</string>
 				<string>1CE0B20306471E060097A5F4</string>
 				<string>1CE0B20506471E060097A5F4</string>
 			</array>
@@ -521,6 +511,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>5403C7EA0ACA9BB300CD9322</string>
 		<string>/work/macfuse/fusefs/fusefs.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -545,7 +536,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>fuse_vnops.c</string>
+								<string></string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -562,8 +553,6 @@
 							<string>301pt</string>
 						</dict>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -603,7 +592,7 @@
 			<key>TableOfContents</key>
 			<array>
 				<string>5403C7EA0ACA9BB300CD9322</string>
-				<string>54D48F740C0FDC26003EA758</string>
+				<string>548A4D920C22694300053D5A</string>
 				<string>1CD0528F0623707200166675</string>
 				<string>XCMainBuildResultsModuleGUID</string>
 			</array>
@@ -614,7 +603,7 @@
 			<key>WindowToolGUID</key>
 			<string>5403C7EA0ACA9BB300CD9322</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>

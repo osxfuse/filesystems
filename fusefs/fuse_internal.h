@@ -288,7 +288,7 @@ fuse_internal_strategy_buf(struct vnop_strategy_args *ap);
  */
 static __inline__
 int
-fuse_is_shortcircuit_xattr(char *name)
+fuse_is_shortcircuit_xattr(const char *name)
 {
     if (bcmp(name, XATTR_FINDERINFO_NAME, sizeof(XATTR_FINDERINFO_NAME)) == 0) {
         return 1;
@@ -372,6 +372,9 @@ fuse_internal_forget_send(mount_t                 mp,
                           uint64_t                nodeid,
                           uint64_t                nlookup,
                           struct fuse_dispatcher *fdip);
+
+void
+fuse_internal_interrupt_send(struct fuse_ticket *ftick);
 
 void
 fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context, int dorevoke);

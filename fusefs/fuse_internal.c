@@ -1175,6 +1175,23 @@ fuse_internal_forget_send(mount_t                 mp,
 
 __private_extern__
 void
+fuse_internal_interrupt_send(struct fuse_ticket *ftick)
+{
+    struct fuse_dispatcher fdi;
+    struct fuse_interrupt_in *fii;
+
+    fdi.tick = ftick;
+    fdisp_init(&fdi, sizeof(*fii));
+    fdisp_make(&fdi, FUSE_INTERRUPT, ftick->tk_data->mp, (uint64_t)0,
+               (vfs_context_t)0);
+    fii = fdi.indata;
+    fii->unique = ftick->tk_unique;
+    fticket_invalidate(fdi.tick);
+    fuse_insert_message(fdi.tick);
+}
+
+__private_extern__
+void
 fuse_internal_vnode_disappear(vnode_t vp, vfs_context_t context, int dorevoke)
 {   
     int err = 0;

@@ -63,6 +63,8 @@ fuse_filehandle_xlate_from_fflags(int fflags)
     } else {
         panic("MacFUSE: What kind of a flag is this (%x)?", fflags);
     }
+
+    return FUFH_INVALID;
 }
 
 static __inline__

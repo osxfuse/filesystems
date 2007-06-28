@@ -260,6 +260,15 @@ fuse_vfs_mount(mount_t mp, __unused vnode_t devvp, user_addr_t udata,
         mntopts |= FSESS_KILL_ON_UNMOUNT;
     }
 
+    if (fusefs_args.altflags & FUSE_MOPT_DIRECT_IO) {
+        mntopts |= FSESS_NO_UBC;
+    }
+
+    if (mntopts & FSESS_NO_UBC) {
+        /* If no buffer cache, disallow exec from file system. */
+        vfs_setflags(mp, MNT_NOEXEC);
+    }
+
     err = 0;
 
     vfs_setfsprivate(mp, NULL);

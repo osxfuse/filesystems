@@ -13,6 +13,9 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 
+/*
+ * For user-space code, this comes from <AvailabilityMacros.h>
+ */
 #ifndef MAC_OS_X_VERSION_10_5
 #define MAC_OS_X_VERSION_10_5 1050
 #endif

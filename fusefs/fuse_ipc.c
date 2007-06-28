@@ -298,6 +298,11 @@ alreadydead:
         /* goto out; */
     }
 
+    /*
+     * If interrupted, we want to do:
+     *     fuse_internal_interrupt_send(ftick);
+     */
+
 out:
     fuse_lck_mtx_unlock(ftick->tk_aw_mtx);
 
@@ -463,7 +468,11 @@ fdata_destroy(struct fuse_data *data)
         fticket_destroy(ftick);
     }
 
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= MAC_OS_X_VERSION_10_5
+    kauth_cred_unref(&(data->daemoncred));
+#else
     kauth_cred_rele(data->daemoncred);
+#endif
 
 #if M_MACFUSE_EXPERIMENTAL_JUNK
     lck_rw_free(data->mhierlock, fuse_lock_group);
