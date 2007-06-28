@@ -2,10 +2,10 @@
 {
 	089C1669FE841209C02AAC07 /* Project object */ = {
 		activeBuildConfigurationName = Release;
-		activeExecutable = 54D47B810B4F610000A8FE1C /* load_fusefs */;
-		activeTarget = 32A4FEB80562C75700D090E7 /* fusefs */;
+		activeExecutable = 540966F30C33BEC900F5E227 /* mount_fusefs */;
+		activeTarget = 540966160C33B4CB00F5E227 /* mount_fusefs */;
 		addToTargets = (
-			32A4FEB80562C75700D090E7 /* fusefs */,
+			54D47B7F0B4F610000A8FE1C /* load_fusefs */,
 		);
 		breakpoints = (
 			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
@@ -13,10 +13,24 @@
 		breakpointsGroup = 5403C7EC0ACA9BB300CD9322 /* XCBreakpointsBucket */;
 		codeSenseManager = 5494A9290ACA12160020068B /* Code sense */;
 		executables = (
-			5494A9430ACA5BF10020068B /* mount_fusefs */,
-			54D47B810B4F610000A8FE1C /* load_fusefs */,
+			540966F30C33BEC900F5E227 /* mount_fusefs */,
+			540966F60C33BEC900F5E227 /* load_fusefs */,
 		);
 		perUserDictionary = {
+			PBXConfiguration.PBXFileTableDataSource3.PBXBookmarksDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXBookmarksDataSource_NameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					200,
+					200,
+					300,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXBookmarksDataSource_LocationID,
+					PBXBookmarksDataSource_NameID,
+					PBXBookmarksDataSource_CommentsID,
+				);
+			};
 			PBXConfiguration.PBXFileTableDataSource3.PBXErrorsWarningsDataSource = {
 				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
 				PBXFileTableDataSourceColumnSortingKey = PBXErrorsWarningsDataSource_LocationID;
@@ -37,7 +51,7 @@
 				PBXFileTableDataSourceColumnWidthsKey = (
 					22,
 					300,
-					489.5835,
+					489,
 				);
 				PBXFileTableDataSourceColumnsKey = (
 					PBXExecutablesDataSource_ActiveFlagID,
@@ -58,6 +72,58 @@
 					20,
 				);
 				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_FiletypeID,
+					PBXFileDataSource_Filename_ColumnID,
+					PBXFileDataSource_Built_ColumnID,
+					PBXFileDataSource_ObjectSize_ColumnID,
+					PBXFileDataSource_Errors_ColumnID,
+					PBXFileDataSource_Warnings_ColumnID,
+					PBXFileDataSource_Target_ColumnID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXFindDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFindDataSource_LocationID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					200,
+					120,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFindDataSource_MessageID,
+					PBXFindDataSource_LocationID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.PBXSymbolsDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXSymbolsDataSource_SymbolNameID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					16,
+					200,
+					50,
+					200,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXSymbolsDataSource_SymbolTypeIconID,
+					PBXSymbolsDataSource_SymbolNameID,
+					PBXSymbolsDataSource_SymbolTypeID,
+					PBXSymbolsDataSource_ReferenceNameID,
+				);
+			};
+			PBXConfiguration.PBXFileTableDataSource3.XCSCMDataSource = {
+				PBXFileTableDataSourceColumnSortingDirectionKey = "-1";
+				PBXFileTableDataSourceColumnSortingKey = PBXFileDataSource_Filename_ColumnID;
+				PBXFileTableDataSourceColumnWidthsKey = (
+					20,
+					20,
+					578,
+					20,
+					48.1626,
+					43,
+					43,
+					20,
+				);
+				PBXFileTableDataSourceColumnsKey = (
+					PBXFileDataSource_SCM_ColumnID,
 					PBXFileDataSource_FiletypeID,
 					PBXFileDataSource_Filename_ColumnID,
 					PBXFileDataSource_Built_ColumnID,
@@ -89,118 +155,23 @@
 					PBXFileDataSource_Warnings_ColumnID,
 				);
 			};
-			PBXPerProjectTemplateStateSaveDate = 203581749;
-			PBXWorkspaceStateSaveDate = 203581749;
+			PBXPerProjectTemplateStateSaveDate = 204717769;
+			PBXWorkspaceStateSaveDate = 204717769;
 		};
 		sourceControlManager = 5494A9280ACA12160020068B /* Source Control */;
 		userBuildSettings = {
 		};
 	};
-	089C167EFE841241C02AAC07 /* English */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
-			sepNavSelRange = "{81, 0}";
-			sepNavVisRect = "{{0, 0}, {904, 627}}";
-			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
-		};
-	};
 	1A224C3CFF42312311CA2CB7 /* fuse_main.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2310}}";
-			sepNavSelRange = "{342, 22}";
-			sepNavVisRect = "{{0, 0}, {702, 269}}";
-		};
+		isa = PBXFileReference;
+		fileEncoding = 4;
+		lastKnownFileType = sourcecode.c.c;
+		name = fuse_main.c;
+		path = /work/macfuse/test/fuse_main.c;
+		sourceTree = "<absolute>";
 	};
 	32A4FEB80562C75700D090E7 /* fusefs */ = {
 		activeExec = 0;
-	};
-	32A4FEC30562C75700D090E7 /* Info.plist */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
-			sepNavSelRange = "{778, 0}";
-			sepNavVisRect = "{{0, 0}, {904, 627}}";
-			sepNavWindowFrame = "{{38, 96}, {949, 756}}";
-		};
-	};
-	54008CFD0B2F734700F90F14 /* fuse_version.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
-			sepNavSelRange = "{0, 0}";
-			sepNavVisRect = "{{0, 0}, {904, 627}}";
-			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
-		};
-	};
-	5403C7940ACA636A00CD9322 /* fuse_kernel.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 5334}}";
-			sepNavSelRange = "{2395, 19}";
-			sepNavVisRect = "{{0, 797}, {702, 269}}";
-		};
-	};
-	5403C7980ACA640B00CD9322 /* fuse_nodehash.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {914, 12012}}";
-			sepNavSelRange = "{10981, 2}";
-			sepNavVisRect = "{{0, 3737}, {702, 269}}";
-		};
-	};
-	5403C7AA0ACA679D00CD9322 /* fuse_device.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 6174}}";
-			sepNavSelRange = "{3694, 27}";
-			sepNavVisRect = "{{0, 2309}, {702, 269}}";
-			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
-		};
-	};
-	5403C7AE0ACA711B00CD9322 /* fuse.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 882}}";
-			sepNavSelRange = "{282, 26}";
-			sepNavVisRect = "{{0, 0}, {702, 269}}";
-		};
-	};
-	5403C7B00ACA85EC00CD9322 /* fuse_ipc.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 10318}}";
-			sepNavSelRange = "{18363, 0}";
-			sepNavVisRect = "{{0, 8525}, {702, 269}}";
-		};
-	};
-	5403C7B10ACA85EC00CD9322 /* fuse_ipc.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 4326}}";
-			sepNavSelRange = "{8763, 0}";
-			sepNavVisRect = "{{0, 4057}, {702, 269}}";
-		};
-	};
-	5403C7C20ACA8F5C00CD9322 /* fuse_node.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2016}}";
-			sepNavSelRange = "{3803, 0}";
-			sepNavVisRect = "{{0, 1469}, {702, 269}}";
-		};
-	};
-	5403C7D10ACA949D00CD9322 /* fuse_file.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 1232}}";
-			sepNavSelRange = "{1978, 0}";
-			sepNavVisRect = "{{0, 0}, {702, 269}}";
-		};
-	};
-	5403C7D20ACA949D00CD9322 /* fuse_vfsops.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 15820}}";
-			sepNavSelRange = "{32253, 0}";
-			sepNavVisRect = "{{0, 14265}, {702, 269}}";
-		};
-	};
-	5403C7D30ACA949D00CD9322 /* fuse_vnops.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 37436}}";
-			sepNavSelRange = "{72799, 0}";
-			sepNavVisRect = "{{0, 36427}, {702, 269}}";
-			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
-		};
 	};
 	5403C7EC0ACA9BB300CD9322 /* XCBreakpointsBucket */ = {
 		isa = XCBreakpointsBucket;
@@ -209,88 +180,13 @@
 			54F9A8BB0ACFAE410090FCAF /* fuse_main.c:86 */,
 		);
 	};
-	5411E2EC0B2D644F00B8F324 /* fuse_locking.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 4564}}";
-			sepNavSelRange = "{316, 57}";
-			sepNavVisRect = "{{0, 195}, {702, 269}}";
-		};
-	};
-	5411E2ED0B2D644F00B8F324 /* fuse_locking.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 616}}";
-			sepNavSelRange = "{1276, 0}";
-			sepNavVisRect = "{{0, 0}, {702, 269}}";
-		};
-	};
-	5434066A0B79C3AA00471672 /* fuse_knote.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 1792}}";
-			sepNavSelRange = "{1500, 77}";
-			sepNavVisRect = "{{0, 456}, {702, 269}}";
-		};
-	};
-	548908390ACC7D1B00D891F8 /* fuse_sysctl.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 1106}}";
-			sepNavSelRange = "{2678, 0}";
-			sepNavVisRect = "{{0, 209}, {702, 269}}";
-		};
-	};
-	548FDFF30B3202A80008D620 /* fuse_file.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 1792}}";
-			sepNavSelRange = "{3117, 0}";
-			sepNavVisRect = "{{0, 209}, {702, 269}}";
-		};
-	};
-	548FDFF40B3202A80008D620 /* fuse_internal.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 15526}}";
-			sepNavSelRange = "{11503, 0}";
-			sepNavVisRect = "{{0, 6355}, {702, 269}}";
-		};
-	};
-	548FDFF50B3202A80008D620 /* fuse_internal.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 3402}}";
-			sepNavSelRange = "{7575, 0}";
-			sepNavVisRect = "{{0, 3119}, {702, 269}}";
-		};
-	};
-	548FDFF70B3202A80008D620 /* fuse_vnops.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 840}}";
-			sepNavSelRange = "{2693, 0}";
-			sepNavVisRect = "{{0, 571}, {702, 269}}";
-		};
-	};
-	548FE03F0B322A540008D620 /* fuse_node.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 2534}}";
-			sepNavSelRange = "{5048, 0}";
-			sepNavVisRect = "{{0, 1203}, {702, 269}}";
-		};
-	};
-	5494A9280ACA12160020068B /* Source Control */ = {
-		isa = PBXSourceControlManager;
-		fallbackIsa = XCSourceControlManager;
-		isSCMEnabled = 0;
-		scmConfiguration = {
-		};
-		scmType = "";
-	};
-	5494A9290ACA12160020068B /* Code sense */ = {
-		isa = PBXCodeSenseManager;
-		indexTemplatePath = "";
-	};
-	5494A9410ACA5BF10020068B /* mount_fusefs */ = {
+	540966160C33B4CB00F5E227 /* mount_fusefs */ = {
 		activeExec = 0;
 		executables = (
-			5494A9430ACA5BF10020068B /* mount_fusefs */,
+			540966F30C33BEC900F5E227 /* mount_fusefs */,
 		);
 	};
-	5494A9430ACA5BF10020068B /* mount_fusefs */ = {
+	540966F30C33BEC900F5E227 /* mount_fusefs */ = {
 		isa = PBXExecutable;
 		activeArgIndex = 2147483647;
 		activeArgIndices = (
@@ -313,29 +209,50 @@
 		sourceDirectories = (
 		);
 	};
-	5494A94B0ACA5C220020068B /* mount_fusefs.c */ = {
+	540966F60C33BEC900F5E227 /* load_fusefs */ = {
+		isa = PBXExecutable;
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		autoAttachOnCrash = 1;
+		configStateDict = {
+		};
+		customDataFormattersEnabled = 1;
+		debuggerPlugin = GDBDebugging;
+		disassemblyDisplayState = 0;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		executableSystemSymbolLevel = 0;
+		executableUserSymbolLevel = 0;
+		libgmallocEnabled = 0;
+		name = load_fusefs;
+		sourceDirectories = (
+		);
+	};
+	5434066A0B79C3AA00471672 /* fuse_knote.c */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 11760}}";
-			sepNavSelRange = "{24293, 0}";
-			sepNavVisRect = "{{0, 10219}, {702, 269}}";
+			sepNavIntBoundsRect = "{{0, 0}, {702, 1792}}";
+			sepNavSelRange = "{1500, 77}";
+			sepNavVisRect = "{{0, 456}, {702, 269}}";
 		};
 	};
-	54B69E740B62B34400C44B25 /* fuse_ioctl.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 784}}";
-			sepNavSelRange = "{1451, 0}";
-			sepNavVisRect = "{{0, 0}, {702, 269}}";
+	5494A9280ACA12160020068B /* Source Control */ = {
+		isa = PBXSourceControlManager;
+		fallbackIsa = XCSourceControlManager;
+		isSCMEnabled = 0;
+		scmConfiguration = {
 		};
+		scmType = "";
+	};
+	5494A9290ACA12160020068B /* Code sense */ = {
+		isa = PBXCodeSenseManager;
+		indexTemplatePath = "";
 	};
 	54C6DD290B5EE606002D9FD9 /* All */ = {
 		activeExec = 0;
-	};
-	54C6DDB20B5EEB44002D9FD9 /* fuse_mount.h */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {702, 1666}}";
-			sepNavSelRange = "{400, 61}";
-			sepNavVisRect = "{{0, 153}, {702, 269}}";
-		};
 	};
 	54C6DDB70B5EEB44002D9FD9 /* fuse.h */ = {
 		uiCtxt = {
@@ -450,47 +367,8 @@
 	54D47B7F0B4F610000A8FE1C /* load_fusefs */ = {
 		activeExec = 0;
 		executables = (
-			54D47B810B4F610000A8FE1C /* load_fusefs */,
+			540966F60C33BEC900F5E227 /* load_fusefs */,
 		);
-	};
-	54D47B810B4F610000A8FE1C /* load_fusefs */ = {
-		isa = PBXExecutable;
-		activeArgIndex = 2147483647;
-		activeArgIndices = (
-		);
-		argumentStrings = (
-		);
-		autoAttachOnCrash = 1;
-		configStateDict = {
-		};
-		customDataFormattersEnabled = 1;
-		debuggerPlugin = GDBDebugging;
-		disassemblyDisplayState = 0;
-		enableDebugStr = 1;
-		environmentEntries = (
-		);
-		executableSystemSymbolLevel = 0;
-		executableUserSymbolLevel = 0;
-		libgmallocEnabled = 0;
-		name = load_fusefs;
-		sourceDirectories = (
-		);
-	};
-	54D47B930B4F614C00A8FE1C /* load */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {904, 627}}";
-			sepNavSelRange = "{0, 0}";
-			sepNavVisRect = "{{0, 0}, {904, 627}}";
-			sepNavWindowFrame = "{{15, 117}, {949, 756}}";
-		};
-	};
-	54D47BB70B4F625000A8FE1C /* load_fusefs.c */ = {
-		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {904, 1050}}";
-			sepNavSelRange = "{0, 0}";
-			sepNavVisRect = "{{0, 0}, {904, 627}}";
-			sepNavWindowFrame = "{{38, 96}, {949, 756}}";
-		};
 	};
 	54F862610B8029A400416A6F /* fuse_kludges.c */ = {
 		uiCtxt = {
