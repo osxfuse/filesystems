@@ -15,15 +15,19 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-07-04 03:31:38.000000000 -0700
-@@ -0,0 +1,7 @@
++++ new/README.MacFUSE	2007-07-04 14:45:41.000000000 -0700
+@@ -0,0 +1,11 @@
 +MacFUSE Project Page:
 +
 +http://code.google.com/p/macfuse/
 +
-+Making a Universal build of sshfs:
++Making a Universal build of sshfs on Mac OS X 10.5.x:
 +
 +CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++
++Making a Universal build of sshfs on Mac OS X 10.4.x:
++
++CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
 +++ new/cache.c	2007-07-04 03:31:38.000000000 -0700
@@ -58,7 +62,7 @@ diff -Naur old/cache.h new/cache.h
 +#endif
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-07-04 03:32:11.000000000 -0700
++++ new/sshfs.c	2007-07-04 14:46:40.000000000 -0700
 @@ -18,7 +18,9 @@
  #include <string.h>
  #include <stdint.h>
@@ -219,7 +223,22 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.remote_uid_detected = 1;
      DEBUG("remote_uid = %i\n", sshfs.remote_uid);
  
-@@ -1800,6 +1881,9 @@
+@@ -1719,6 +1800,14 @@
+     buf_init(&buf, 0);
+     buf_add_path(&buf, path);
+     buf_add_uint32(&buf, SSH_FILEXFER_ATTR_UIDGID);
++#if (__FreeBSD__ >= 10)
++    if (sshfs.remote_uid_detected) {
++        if (uid == sshfs.local_uid)
++            uid = sshfs.remote_uid;
++        if (gid == sshfs.local_gid)
++            gid = sshfs.remote_gid;
++    }
++#endif
+     buf_add_uint32(&buf, uid);
+     buf_add_uint32(&buf, gid);
+     err = sftp_request(SSH_FXP_SETSTAT, &buf, SSH_FXP_STATUS, NULL);
+@@ -1800,6 +1889,9 @@
      sf = g_new0(struct sshfs_file, 1);
      list_init(&sf->write_reqs);
      pthread_cond_init(&sf->write_finished, NULL);
@@ -229,7 +248,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      /* Assume random read after open */
      sf->is_seq = 0;
      sf->refs = 1;
-@@ -1832,11 +1916,21 @@
+@@ -1832,11 +1924,21 @@
      }
  
      if (!err) {
@@ -251,7 +270,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          g_free(sf);
      }
      buf_free(&buf);
-@@ -1891,14 +1985,32 @@
+@@ -1891,14 +1993,32 @@
  
  static void sshfs_file_put(struct sshfs_file *sf)
  {
@@ -284,7 +303,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      return sf;
  }
  
-@@ -2533,7 +2645,12 @@
+@@ -2533,7 +2653,12 @@
          exit(1);
  
      case KEY_VERSION:
@@ -297,7 +316,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  #if FUSE_VERSION >= 25
          fuse_opt_add_arg(outargs, "--version");
          sshfs_fuse_main(outargs);
-@@ -2599,8 +2716,17 @@
+@@ -2599,8 +2724,17 @@
          fuse_opt_insert_arg(args, 1, "-olarge_read");
  }
  
@@ -315,7 +334,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      int res;
      struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
      char *tmp;
-@@ -2608,13 +2734,21 @@
+@@ -2608,13 +2742,21 @@
      char *base_path;
      const char *sftp_server;
  
@@ -337,7 +356,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.truncate_workaround = 0;
      sshfs.buflimit_workaround = 1;
      sshfs.ssh_ver = 2;
-@@ -2624,6 +2758,10 @@
+@@ -2624,6 +2766,10 @@
      ssh_add_arg("-a");
      ssh_add_arg("-oClearAllForwardings=yes");
  
