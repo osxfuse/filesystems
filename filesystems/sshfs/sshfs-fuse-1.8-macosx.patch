@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2007-05-16 04:21:20.000000000 -0700
-+++ new/Makefile.in	2007-07-04 03:31:38.000000000 -0700
++++ new/Makefile.in	2007-08-25 15:13:34.000000000 -0700
 @@ -608,7 +608,11 @@
  @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
  
@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-07-04 14:45:41.000000000 -0700
++++ new/README.MacFUSE	2007-08-25 15:14:38.000000000 -0700
 @@ -0,0 +1,11 @@
 +MacFUSE Project Page:
 +
@@ -23,14 +23,14 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +
 +Making a Universal build of sshfs on Mac OS X 10.5.x:
 +
-+CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc -framework CoreServices" ./configure --prefix=/usr/local --disable-dependency-tracking
 +
 +Making a Universal build of sshfs on Mac OS X 10.4.x:
 +
 +CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
-+++ new/cache.c	2007-07-04 03:31:38.000000000 -0700
++++ new/cache.c	2007-08-25 15:13:34.000000000 -0700
 @@ -499,6 +499,9 @@
      cache.next_oper = oper;
  
@@ -51,7 +51,7 @@ diff -Naur old/cache.c new/cache.c
 +#endif
 diff -Naur old/cache.h new/cache.h
 --- old/cache.h	2006-02-20 03:43:23.000000000 -0800
-+++ new/cache.h	2007-07-04 03:31:38.000000000 -0700
++++ new/cache.h	2007-08-25 15:13:34.000000000 -0700
 @@ -26,3 +26,7 @@
  int cache_parse_options(struct fuse_args *args);
  void cache_add_attr(const char *path, const struct stat *stbuf);
@@ -60,50 +60,204 @@ diff -Naur old/cache.h new/cache.h
 +#if (__FreeBSD__ >= 10)
 +extern int cache_enabled;
 +#endif
+diff -Naur old/semaphore_compat.h new/semaphore_compat.h
+--- old/semaphore_compat.h	1969-12-31 16:00:00.000000000 -0800
++++ new/semaphore_compat.h	2007-08-25 15:30:42.000000000 -0700
+@@ -0,0 +1,163 @@
++/*
++ * Copyright (C) 2006,2007 Google. All Rights Reserved.
++ * Amit Singh <singh@>
++ */
++
++#ifndef _SEMAPHORE_COMPAT_H_
++#define _SEMAPHORE_COMPAT_H_
++
++#include <AvailabilityMacros.h>
++
++#ifdef MAC_OS_X_VERSION_10_5
++
++/* 10.5+ */
++
++/* Half-baked makeshift implementation. */
++
++#include <errno.h>
++#include <sys/types.h>
++#include <pthread.h>
++    
++typedef struct {
++    int32_t         value;
++    int32_t         wakeups;
++    pthread_mutex_t mutex;
++    pthread_cond_t  cond;
++} fuse_sem_t;
++
++typedef fuse_sem_t sem_t;
++        
++#define SEM_VALUE_DEAD ((int32_t)0xdeadbeef)
++#define SEM_VALUE_MAX  ((int32_t)32767)
++
++/* http://www.opengroup.org/onlinepubs/007908799/xsh/sem_init.html */
++static __inline__
++int
++fuse_sem_init(fuse_sem_t *sem, int pshared, int value)
++{
++
++    if (value > SEM_VALUE_MAX) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    if (pshared) {
++        errno = ENOSYS;
++        return -1;
++    }
++
++    if (!sem) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    sem->value = value;
++    sem->wakeups = 0;
++    pthread_cond_init(&sem->cond, NULL);
++    pthread_mutex_init(&sem->mutex, NULL);
++
++    return 0;
++}
++
++/* http://www.opengroup.org/onlinepubs/007908799/xsh/sem_destroy.html */
++static __inline__
++int
++fuse_sem_destroy(fuse_sem_t *sem)
++{
++    int ret;
++
++    if (!sem) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    ret = pthread_mutex_lock(&sem->mutex);
++    if (ret) {
++        errno = ret;
++        return -1;
++    }
++
++    if (sem->value < 0) {
++        pthread_mutex_unlock(&sem->mutex);
++        errno = EBUSY;
++        return -1;
++    }
++
++    pthread_cond_destroy(&sem->cond);
++
++    sem->value = SEM_VALUE_DEAD;
++
++    pthread_mutex_unlock(&sem->mutex);
++    pthread_mutex_destroy(&sem->mutex);
++
++    return 0;
++}
++
++/* http://www.opengroup.org/onlinepubs/007908799/xsh/sem_wait.html */
++static __inline__
++int
++fuse_sem_wait(fuse_sem_t *sem)
++{
++    if (!sem || (sem->value == SEM_VALUE_DEAD)) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    pthread_mutex_lock(&sem->mutex);
++    sem->value--;
++    if (sem->value < 0) {
++        do {
++            /*
++             * XXX: This is not really supposed to fail except for some EINVALs
++             *      that shouldn't apply here.
++             */
++            (void)pthread_cond_wait(&sem->cond, &sem->mutex);
++        } while (sem->wakeups < 1);
++        sem->wakeups--;
++    }
++    pthread_mutex_unlock(&sem->mutex);
++
++    return 0;
++}
++
++/* http://www.opengroup.org/onlinepubs/007908799/xsh/sem_post.html */
++static __inline__
++int
++fuse_sem_post(fuse_sem_t *sem)
++{
++    if (!sem || (sem->value == SEM_VALUE_DEAD)) {
++        errno = EINVAL;
++        return -1;
++    }
++
++    pthread_mutex_lock(&sem->mutex);
++    sem->value++;
++    if (sem->value <= 0) {
++        sem->wakeups++;
++        (void)pthread_cond_signal(&sem->cond);
++    }
++    pthread_mutex_unlock(&sem->mutex);
++
++    return 0;
++}
++
++#define sem_init(s, a, b) fuse_sem_init(s, a, b)
++#define sem_destroy(s)    fuse_sem_destroy(s)
++#define sem_post(s)       fuse_sem_post(s)
++#define sem_wait(s)       fuse_sem_wait(s)
++
++#else
++
++/* 10.4- */
++
++#include <mach/mach.h>
++
++#define sem_init(s, a, b) semaphore_create(mach_task_self(), (s), \
++                                           SYNC_POLICY_FIFO, 0)
++#define sem_destroy(s)    semaphore_destroy(mach_task_self(), (semaphore_t)*(s))
++#define sem_post(s)       semaphore_signal((semaphore_t)*(s))
++#define sem_wait(s)       semaphore_wait((semaphore_t)*(s))
++
++#endif /* MAC_OS_X_VERSION_10.5 */
++
++#endif /* _SEMAPHORE_COMPAT_H_ */
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-07-04 14:46:40.000000000 -0700
-@@ -18,7 +18,9 @@
++++ new/sshfs.c	2007-08-25 15:30:54.000000000 -0700
+@@ -18,7 +18,11 @@
  #include <string.h>
  #include <stdint.h>
  #include <errno.h>
 +#if !(__FreeBSD__ >= 10)
  #include <semaphore.h>
++#else
++#include "semaphore_compat.h"
 +#endif
  #include <pthread.h>
  #include <netdb.h>
  #include <signal.h>
-@@ -30,6 +32,9 @@
+@@ -30,6 +34,10 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
  #include <glib.h>
 +#if (__FreeBSD__ >= 10)
 +#include <libgen.h>
++#include <strings.h>
 +#endif
  
  #include "cache.h"
  
-@@ -100,6 +105,32 @@
+@@ -100,6 +108,16 @@
  
  #define SSHNODELAY_SO "sshnodelay.so"
  
 +#if (__FreeBSD__ >= 10)
-+#undef sem_t
-+
-+#undef sem_init
-+#undef sem_destroy
-+#undef sem_post
-+#undef sem_wait
-+
-+#include <mach/mach.h>
-+
-+typedef semaphore_t sem_t;
-+
-+#define sem_init(s, a, b) \
-+    semaphore_create(mach_task_self(), (s), SYNC_POLICY_FIFO, 0)
-+#define sem_destroy(s) semaphore_destroy(mach_task_self(), (semaphore_t)*(s))
-+#define sem_post(s)    semaphore_signal((semaphore_t)*(s))
-+#define sem_wait(s)    semaphore_wait((semaphore_t)*(s))
 +
 +#ifndef LIBDIR
 +#define LIBDIR "/usr/local/lib"
@@ -116,7 +270,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  struct buffer {
      uint8_t *p;
      size_t len;
-@@ -149,6 +180,9 @@
+@@ -149,6 +167,9 @@
      int connver;
      int modifver;
      int refs;
@@ -126,7 +280,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  };
  
  struct sshfs {
-@@ -184,6 +218,10 @@
+@@ -184,6 +205,10 @@
      int server_version;
      unsigned remote_uid;
      unsigned local_uid;
@@ -137,7 +291,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      int remote_uid_detected;
      unsigned blksize;
      char *progname;
-@@ -585,8 +623,17 @@
+@@ -585,8 +610,17 @@
          }
      }
  
@@ -155,7 +309,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  
      memset(stbuf, 0, sizeof(struct stat));
      stbuf->st_mode = mode;
-@@ -645,11 +692,33 @@
+@@ -645,11 +679,33 @@
  #ifdef SSH_NODELAY_WORKAROUND
  static int do_ssh_nodelay_workaround(void)
  {
@@ -189,7 +343,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      snprintf(sopath, sizeof(sopath), "%s/%s", LIBDIR, SSHNODELAY_SO);
      res = access(sopath, R_OK);
      if (res == -1) {
-@@ -673,14 +742,22 @@
+@@ -673,14 +729,22 @@
              return -1;
          }
      }
@@ -212,7 +366,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      g_free(newpreload);
      return 0;
  }
-@@ -1154,6 +1231,10 @@
+@@ -1154,6 +1218,10 @@
  
      sshfs.remote_uid = stbuf.st_uid;
      sshfs.local_uid = getuid();
@@ -223,7 +377,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.remote_uid_detected = 1;
      DEBUG("remote_uid = %i\n", sshfs.remote_uid);
  
-@@ -1719,6 +1800,14 @@
+@@ -1719,6 +1787,14 @@
      buf_init(&buf, 0);
      buf_add_path(&buf, path);
      buf_add_uint32(&buf, SSH_FILEXFER_ATTR_UIDGID);
@@ -238,7 +392,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      buf_add_uint32(&buf, uid);
      buf_add_uint32(&buf, gid);
      err = sftp_request(SSH_FXP_SETSTAT, &buf, SSH_FXP_STATUS, NULL);
-@@ -1800,6 +1889,9 @@
+@@ -1800,6 +1876,9 @@
      sf = g_new0(struct sshfs_file, 1);
      list_init(&sf->write_reqs);
      pthread_cond_init(&sf->write_finished, NULL);
@@ -248,7 +402,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      /* Assume random read after open */
      sf->is_seq = 0;
      sf->refs = 1;
-@@ -1832,11 +1924,21 @@
+@@ -1832,11 +1911,21 @@
      }
  
      if (!err) {
@@ -270,7 +424,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          g_free(sf);
      }
      buf_free(&buf);
-@@ -1891,14 +1993,32 @@
+@@ -1891,14 +1980,32 @@
  
  static void sshfs_file_put(struct sshfs_file *sf)
  {
@@ -303,7 +457,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      return sf;
  }
  
-@@ -2533,7 +2653,12 @@
+@@ -2533,7 +2640,12 @@
          exit(1);
  
      case KEY_VERSION:
@@ -316,7 +470,7 @@ diff -Naur old/sshfs.c new/sshfs.c
  #if FUSE_VERSION >= 25
          fuse_opt_add_arg(outargs, "--version");
          sshfs_fuse_main(outargs);
-@@ -2599,8 +2724,17 @@
+@@ -2599,8 +2711,17 @@
          fuse_opt_insert_arg(args, 1, "-olarge_read");
  }
  
@@ -334,7 +488,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      int res;
      struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
      char *tmp;
-@@ -2608,13 +2742,21 @@
+@@ -2608,13 +2729,21 @@
      char *base_path;
      const char *sftp_server;
  
@@ -356,7 +510,7 @@ diff -Naur old/sshfs.c new/sshfs.c
      sshfs.truncate_workaround = 0;
      sshfs.buflimit_workaround = 1;
      sshfs.ssh_ver = 2;
-@@ -2624,6 +2766,10 @@
+@@ -2624,6 +2753,10 @@
      ssh_add_arg("-a");
      ssh_add_arg("-oClearAllForwardings=yes");
  
@@ -369,7 +523,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          exit(1);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-07-04 03:31:38.000000000 -0700
++++ new/sshnodelay.c	2007-08-25 15:13:34.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
