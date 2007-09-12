@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2007-05-16 04:21:20.000000000 -0700
-+++ new/Makefile.in	2007-08-25 15:13:34.000000000 -0700
++++ new/Makefile.in	2007-09-12 14:12:18.000000000 -0700
 @@ -608,7 +608,11 @@
  @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
  
@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-08-25 15:14:38.000000000 -0700
++++ new/README.MacFUSE	2007-09-12 14:12:18.000000000 -0700
 @@ -0,0 +1,11 @@
 +MacFUSE Project Page:
 +
@@ -30,7 +30,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
-+++ new/cache.c	2007-08-25 15:13:34.000000000 -0700
++++ new/cache.c	2007-09-12 14:12:18.000000000 -0700
 @@ -499,6 +499,9 @@
      cache.next_oper = oper;
  
@@ -51,7 +51,7 @@ diff -Naur old/cache.c new/cache.c
 +#endif
 diff -Naur old/cache.h new/cache.h
 --- old/cache.h	2006-02-20 03:43:23.000000000 -0800
-+++ new/cache.h	2007-08-25 15:13:34.000000000 -0700
++++ new/cache.h	2007-09-12 14:12:18.000000000 -0700
 @@ -26,3 +26,7 @@
  int cache_parse_options(struct fuse_args *args);
  void cache_add_attr(const char *path, const struct stat *stbuf);
@@ -62,8 +62,8 @@ diff -Naur old/cache.h new/cache.h
 +#endif
 diff -Naur old/semaphore_compat.h new/semaphore_compat.h
 --- old/semaphore_compat.h	1969-12-31 16:00:00.000000000 -0800
-+++ new/semaphore_compat.h	2007-08-25 15:30:42.000000000 -0700
-@@ -0,0 +1,163 @@
++++ new/semaphore_compat.h	2007-09-12 14:12:29.000000000 -0700
+@@ -0,0 +1,165 @@
 +/*
 + * Copyright (C) 2006,2007 Google. All Rights Reserved.
 + * Amit Singh <singh@>
@@ -218,6 +218,8 @@ diff -Naur old/semaphore_compat.h new/semaphore_compat.h
 +
 +#include <mach/mach.h>
 +
++typedef semaphore_t sem_t;
++
 +#define sem_init(s, a, b) semaphore_create(mach_task_self(), (s), \
 +                                           SYNC_POLICY_FIFO, 0)
 +#define sem_destroy(s)    semaphore_destroy(mach_task_self(), (semaphore_t)*(s))
@@ -229,7 +231,7 @@ diff -Naur old/semaphore_compat.h new/semaphore_compat.h
 +#endif /* _SEMAPHORE_COMPAT_H_ */
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-08-25 15:30:54.000000000 -0700
++++ new/sshfs.c	2007-09-12 14:12:18.000000000 -0700
 @@ -18,7 +18,11 @@
  #include <string.h>
  #include <stdint.h>
@@ -523,7 +525,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          exit(1);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-08-25 15:13:34.000000000 -0700
++++ new/sshnodelay.c	2007-09-12 14:12:18.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
