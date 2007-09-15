@@ -45,7 +45,12 @@ case "$current_product" in
 
   *pkg-config-*) 
       echo "Configuring pkg-config for MacFUSE"
-      CFLAGS="-O -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+      if [ "$os_codename" = "Leopard" ]
+      then
+          CFLAGS="-O -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+      else
+          CFLAGS="-O -g -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+      fi
   ;;
 
   *)
