@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2007-05-16 04:21:20.000000000 -0700
-+++ new/Makefile.in	2007-09-12 14:12:18.000000000 -0700
++++ new/Makefile.in	2007-09-15 10:29:20.000000000 -0700
 @@ -608,7 +608,11 @@
  @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
  
@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-09-12 14:12:18.000000000 -0700
++++ new/README.MacFUSE	2007-09-15 10:30:18.000000000 -0700
 @@ -0,0 +1,11 @@
 +MacFUSE Project Page:
 +
@@ -23,14 +23,14 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +
 +Making a Universal build of sshfs on Mac OS X 10.5.x:
 +
-+CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc -framework CoreServices" ./configure --prefix=/usr/local --disable-dependency-tracking
++CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 +
 +Making a Universal build of sshfs on Mac OS X 10.4.x:
 +
-+CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
-+++ new/cache.c	2007-09-12 14:12:18.000000000 -0700
++++ new/cache.c	2007-09-15 10:29:20.000000000 -0700
 @@ -499,6 +499,9 @@
      cache.next_oper = oper;
  
@@ -51,7 +51,7 @@ diff -Naur old/cache.c new/cache.c
 +#endif
 diff -Naur old/cache.h new/cache.h
 --- old/cache.h	2006-02-20 03:43:23.000000000 -0800
-+++ new/cache.h	2007-09-12 14:12:18.000000000 -0700
++++ new/cache.h	2007-09-15 10:29:20.000000000 -0700
 @@ -26,3 +26,7 @@
  int cache_parse_options(struct fuse_args *args);
  void cache_add_attr(const char *path, const struct stat *stbuf);
@@ -60,25 +60,21 @@ diff -Naur old/cache.h new/cache.h
 +#if (__FreeBSD__ >= 10)
 +extern int cache_enabled;
 +#endif
-diff -Naur old/semaphore_compat.h new/semaphore_compat.h
---- old/semaphore_compat.h	1969-12-31 16:00:00.000000000 -0800
-+++ new/semaphore_compat.h	2007-09-12 14:12:29.000000000 -0700
-@@ -0,0 +1,165 @@
+diff -Naur old/darwin_compat.h new/darwin_compat.h
+--- old/darwin_compat.h	1969-12-31 16:00:00.000000000 -0800
++++ new/darwin_compat.h	2007-09-15 10:31:15.000000000 -0700
+@@ -0,0 +1,145 @@
 +/*
 + * Copyright (C) 2006,2007 Google. All Rights Reserved.
 + * Amit Singh <singh@>
 + */
 +
-+#ifndef _SEMAPHORE_COMPAT_H_
-+#define _SEMAPHORE_COMPAT_H_
++#ifndef _DARWIN_COMPAT_H_
++#define _DARWIN_COMPAT_H_
 +
 +#include <AvailabilityMacros.h>
 +
-+#ifdef MAC_OS_X_VERSION_10_5
-+
-+/* 10.5+ */
-+
-+/* Half-baked makeshift implementation. */
++/* Half-baked makeshift implementation (cancelable). */
 +
 +#include <errno.h>
 +#include <sys/types.h>
@@ -212,26 +208,10 @@ diff -Naur old/semaphore_compat.h new/semaphore_compat.h
 +#define sem_post(s)       fuse_sem_post(s)
 +#define sem_wait(s)       fuse_sem_wait(s)
 +
-+#else
-+
-+/* 10.4- */
-+
-+#include <mach/mach.h>
-+
-+typedef semaphore_t sem_t;
-+
-+#define sem_init(s, a, b) semaphore_create(mach_task_self(), (s), \
-+                                           SYNC_POLICY_FIFO, 0)
-+#define sem_destroy(s)    semaphore_destroy(mach_task_self(), (semaphore_t)*(s))
-+#define sem_post(s)       semaphore_signal((semaphore_t)*(s))
-+#define sem_wait(s)       semaphore_wait((semaphore_t)*(s))
-+
-+#endif /* MAC_OS_X_VERSION_10.5 */
-+
-+#endif /* _SEMAPHORE_COMPAT_H_ */
++#endif /* _DARWIN_COMPAT_H_ */
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-09-12 14:12:18.000000000 -0700
++++ new/sshfs.c	2007-09-15 10:31:44.000000000 -0700
 @@ -18,7 +18,11 @@
  #include <string.h>
  #include <stdint.h>
@@ -239,7 +219,7 @@ diff -Naur old/sshfs.c new/sshfs.c
 +#if !(__FreeBSD__ >= 10)
  #include <semaphore.h>
 +#else
-+#include "semaphore_compat.h"
++#include "darwin_compat.h"
 +#endif
  #include <pthread.h>
  #include <netdb.h>
@@ -525,7 +505,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          exit(1);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-09-12 14:12:18.000000000 -0700
++++ new/sshnodelay.c	2007-09-15 10:29:20.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
