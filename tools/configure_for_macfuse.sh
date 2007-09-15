@@ -34,22 +34,32 @@ esac
 case "$current_product" in
 
   *gettext-*)
-      echo "Configuring gettext for MacFUSE"
+      echo "Configuring Universal build of gettext for MacFUSE"
       CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -fno-common" ./configure --prefix=/usr/local --disable-dependency-tracking --with-libiconv-prefix=$sdk_dir/usr
   ;;
 
   *glib-*)
-      echo "Configuring glib for MacFUSE"
+      echo "Configuring Universal build of glib for MacFUSE"
       CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir -I/usr/local/include" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -L/usr/local/lib" ./configure --prefix=/usr/local --disable-dependency-tracking --enable-static
   ;;
 
   *pkg-config-*) 
-      echo "Configuring pkg-config for MacFUSE"
+      echo "Configuring Universal build of pkg-config for MacFUSE"
       if [ "$os_codename" = "Leopard" ]
       then
           CFLAGS="-O -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
       else
           CFLAGS="-O -g -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+      fi
+  ;;
+
+  *sshfs*) 
+      echo "Configuring Universal build of sshfs for MacFUSE"
+      if [ "$os_codename" = "Leopard" ]
+      then
+          CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
+      else
+          CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
       fi
   ;;
 
