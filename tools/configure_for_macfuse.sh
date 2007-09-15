@@ -33,17 +33,17 @@ esac
 
 case "$current_product" in
 
-  *gettext-*)
+  gettext*)
       echo "Configuring Universal build of gettext for MacFUSE"
       CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -fno-common" ./configure --prefix=/usr/local --disable-dependency-tracking --with-libiconv-prefix=$sdk_dir/usr
   ;;
 
-  *glib-*)
+  glib*)
       echo "Configuring Universal build of glib for MacFUSE"
       CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir -I/usr/local/include" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -L/usr/local/lib" ./configure --prefix=/usr/local --disable-dependency-tracking --enable-static
   ;;
 
-  *pkg-config-*) 
+  pkg-config-*) 
       echo "Configuring Universal build of pkg-config for MacFUSE"
       if [ "$os_codename" = "Leopard" ]
       then
