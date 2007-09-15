@@ -58,6 +58,39 @@ diff -Naur old/cache.h new/cache.h
 +#if (__FreeBSD__ >= 10)
 +extern int cache_enabled;
 +#endif
+diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
+--- old/configure_for_macfuse.sh	1969-12-31 16:00:00.000000000 -0800
++++ new/configure_for_macfuse.sh	2007-09-15 12:27:30.000000000 -0700
+@@ -0,0 +1,29 @@
++#! /bin/sh
++
++UNAME=/usr/bin/uname
++
++os_name=`$UNAME -s`
++os_release=`$UNAME -r`
++
++if [ "$os_name" != "Darwin" ]
++then
++    echo "This script can only be run on Darwin"
++    exit 1
++fi
++
++case "$os_release" in
++  8*)
++      echo "Configuring Universal build for Mac OS X \"Tiger\""
++      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++  ;;
++  9*)
++      echo "Configuring Universal build for Mac OS X \"Leopard\""
++      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++  ;;
++  *)
++      echo "Unsupported Mac OS X release $os_release"
++      exit 1
++  ;;
++esac
++
++exit 0
 diff -Naur old/darwin_compat.h new/darwin_compat.h
 --- old/darwin_compat.h	1969-12-31 16:00:00.000000000 -0800
 +++ new/darwin_compat.h	2007-09-15 10:31:15.000000000 -0700
@@ -207,39 +240,6 @@ diff -Naur old/darwin_compat.h new/darwin_compat.h
 +#define sem_wait(s)       fuse_sem_wait(s)
 +
 +#endif /* _DARWIN_COMPAT_H_ */
-diff -Naur old/darwin_configure.sh new/darwin_configure.sh
---- old/darwin_configure.sh	1969-12-31 16:00:00.000000000 -0800
-+++ new/darwin_configure.sh	2007-09-15 12:27:30.000000000 -0700
-@@ -0,0 +1,29 @@
-+#! /bin/sh
-+
-+UNAME=/usr/bin/uname
-+
-+os_name=`$UNAME -s`
-+os_release=`$UNAME -r`
-+
-+if [ "$os_name" != "Darwin" ]
-+then
-+    echo "This script can only be run on Darwin"
-+    exit 1
-+fi
-+
-+case "$os_release" in
-+  8*)
-+      echo "Configuring Universal build for Mac OS X \"Tiger\""
-+      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
-+  ;;
-+  9*)
-+      echo "Configuring Universal build for Mac OS X \"Leopard\""
-+      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
-+  ;;
-+  *)
-+      echo "Unsupported Mac OS X release $os_release"
-+      exit 1
-+  ;;
-+esac
-+
-+exit 0
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
 +++ new/sshfs.c	2007-09-15 10:31:44.000000000 -0700
