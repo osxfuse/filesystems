@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2007-05-16 04:21:20.000000000 -0700
-+++ new/Makefile.in	2007-09-15 10:29:20.000000000 -0700
++++ new/Makefile.in	2007-09-15 14:12:03.000000000 -0700
 @@ -608,7 +608,11 @@
  @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
  
@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-09-15 12:28:40.000000000 -0700
++++ new/README.MacFUSE	2007-09-15 14:12:03.000000000 -0700
 @@ -0,0 +1,9 @@
 +MacFUSE Project Page:
 +
@@ -28,7 +28,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +2. Run make
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
-+++ new/cache.c	2007-09-15 10:29:20.000000000 -0700
++++ new/cache.c	2007-09-15 14:12:03.000000000 -0700
 @@ -499,6 +499,9 @@
      cache.next_oper = oper;
  
@@ -49,7 +49,7 @@ diff -Naur old/cache.c new/cache.c
 +#endif
 diff -Naur old/cache.h new/cache.h
 --- old/cache.h	2006-02-20 03:43:23.000000000 -0800
-+++ new/cache.h	2007-09-15 10:29:20.000000000 -0700
++++ new/cache.h	2007-09-15 14:12:03.000000000 -0700
 @@ -26,3 +26,7 @@
  int cache_parse_options(struct fuse_args *args);
  void cache_add_attr(const char *path, const struct stat *stbuf);
@@ -60,14 +60,19 @@ diff -Naur old/cache.h new/cache.h
 +#endif
 diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 --- old/configure_for_macfuse.sh	1969-12-31 16:00:00.000000000 -0800
-+++ new/configure_for_macfuse.sh	2007-09-15 12:27:30.000000000 -0700
-@@ -0,0 +1,29 @@
++++ new/configure_for_macfuse.sh	2007-09-15 14:12:20.000000000 -0700
+@@ -0,0 +1,72 @@
 +#! /bin/sh
++# Copyright (C) 2006-2007 Amit Singh. All Rights Reserved.
++#
 +
 +UNAME=/usr/bin/uname
 +
 +os_name=`$UNAME -s`
++os_codename="Unknown"
 +os_release=`$UNAME -r`
++current_product=`pwd`
++sdk_dir="/dev/null"
 +
 +if [ "$os_name" != "Darwin" ]
 +then
@@ -77,12 +82,12 @@ diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 +
 +case "$os_release" in
 +  8*)
-+      echo "Configuring Universal build for Mac OS X \"Tiger\""
-+      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      sdk_dir="/Developer/SDKs/MacOSX10.4u.sdk"
++      os_codename="Tiger"
 +  ;;
 +  9*)
-+      echo "Configuring Universal build for Mac OS X \"Leopard\""
-+      CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      sdk_dir="/Developer/SDKs/MacOSX10.5.sdk"
++      os_codename="Leopard"
 +  ;;
 +  *)
 +      echo "Unsupported Mac OS X release $os_release"
@@ -90,10 +95,48 @@ diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 +  ;;
 +esac
 +
-+exit 0
++case "$current_product" in
++
++  *gettext-*)
++      echo "Configuring Universal build of gettext for MacFUSE"
++      CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -fno-common" ./configure --prefix=/usr/local --disable-dependency-tracking --with-libiconv-prefix=$sdk_dir/usr
++  ;;
++
++  *glib-*)
++      echo "Configuring Universal build of glib for MacFUSE"
++      CFLAGS="-O0 -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir -I/usr/local/include" LDFLAGS="-Wl,-syslibroot,$sdk_dir -arch i386 -arch ppc -L/usr/local/lib" ./configure --prefix=/usr/local --disable-dependency-tracking --enable-static
++  ;;
++
++  *pkg-config-*) 
++      echo "Configuring Universal build of pkg-config for MacFUSE"
++      if [ "$os_codename" = "Leopard" ]
++      then
++          CFLAGS="-O -g -D_POSIX_C_SOURCE=200112L -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      else
++          CFLAGS="-O -g -arch i386 -arch ppc -isysroot $sdk_dir" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      fi
++  ;;
++
++  *sshfs*) 
++      echo "Configuring Universal build of sshfs for MacFUSE"
++      if [ "$os_codename" = "Leopard" ]
++      then
++          CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      else
++          CFLAGS="-D__FreeBSD__=10 -DSSH_NODELAY_WORKAROUND -D_POSIX_C_SOURCE=200112L -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk" LDFLAGS="-arch i386 -arch ppc" ./configure --prefix=/usr/local --disable-dependency-tracking
++      fi
++  ;;
++
++  *)
++      echo "Don't know how to configure unrecognized product $current_product"
++      exit 1
++  ;;
++esac
++
++exit $?
 diff -Naur old/darwin_compat.h new/darwin_compat.h
 --- old/darwin_compat.h	1969-12-31 16:00:00.000000000 -0800
-+++ new/darwin_compat.h	2007-09-15 10:31:15.000000000 -0700
++++ new/darwin_compat.h	2007-09-15 14:12:03.000000000 -0700
 @@ -0,0 +1,145 @@
 +/*
 + * Copyright (C) 2006,2007 Google. All Rights Reserved.
@@ -242,7 +285,7 @@ diff -Naur old/darwin_compat.h new/darwin_compat.h
 +#endif /* _DARWIN_COMPAT_H_ */
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-09-15 10:31:44.000000000 -0700
++++ new/sshfs.c	2007-09-15 14:12:03.000000000 -0700
 @@ -18,7 +18,11 @@
  #include <string.h>
  #include <stdint.h>
@@ -536,7 +579,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          exit(1);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-09-15 10:29:20.000000000 -0700
++++ new/sshnodelay.c	2007-09-15 14:12:03.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
