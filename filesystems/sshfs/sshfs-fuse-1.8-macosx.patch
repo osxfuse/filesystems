@@ -1,6 +1,6 @@
 diff -Naur old/Makefile.in new/Makefile.in
 --- old/Makefile.in	2007-05-16 04:21:20.000000000 -0700
-+++ new/Makefile.in	2007-09-15 14:12:03.000000000 -0700
++++ new/Makefile.in	2007-09-16 16:09:44.000000000 -0700
 @@ -608,7 +608,11 @@
  @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
  
@@ -15,7 +15,7 @@ diff -Naur old/Makefile.in new/Makefile.in
  .NOEXPORT:
 diff -Naur old/README.MacFUSE new/README.MacFUSE
 --- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
-+++ new/README.MacFUSE	2007-09-15 14:12:03.000000000 -0700
++++ new/README.MacFUSE	2007-09-16 16:09:44.000000000 -0700
 @@ -0,0 +1,9 @@
 +MacFUSE Project Page:
 +
@@ -28,7 +28,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +2. Run make
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2007-04-18 13:10:46.000000000 -0700
-+++ new/cache.c	2007-09-15 14:12:03.000000000 -0700
++++ new/cache.c	2007-09-16 16:09:44.000000000 -0700
 @@ -499,6 +499,9 @@
      cache.next_oper = oper;
  
@@ -49,7 +49,7 @@ diff -Naur old/cache.c new/cache.c
 +#endif
 diff -Naur old/cache.h new/cache.h
 --- old/cache.h	2006-02-20 03:43:23.000000000 -0800
-+++ new/cache.h	2007-09-15 14:12:03.000000000 -0700
++++ new/cache.h	2007-09-16 16:09:44.000000000 -0700
 @@ -26,3 +26,7 @@
  int cache_parse_options(struct fuse_args *args);
  void cache_add_attr(const char *path, const struct stat *stbuf);
@@ -60,8 +60,8 @@ diff -Naur old/cache.h new/cache.h
 +#endif
 diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 --- old/configure_for_macfuse.sh	1969-12-31 16:00:00.000000000 -0800
-+++ new/configure_for_macfuse.sh	2007-09-15 14:12:20.000000000 -0700
-@@ -0,0 +1,72 @@
++++ new/configure_for_macfuse.sh	2007-09-16 16:17:56.000000000 -0700
+@@ -0,0 +1,73 @@
 +#! /bin/sh
 +# Copyright (C) 2006-2007 Amit Singh. All Rights Reserved.
 +#
@@ -71,8 +71,9 @@ diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 +os_name=`$UNAME -s`
 +os_codename="Unknown"
 +os_release=`$UNAME -r`
-+current_product=`pwd`
 +sdk_dir="/dev/null"
++
++current_product=${1:-`pwd`}
 +
 +if [ "$os_name" != "Darwin" ]
 +then
@@ -136,8 +137,8 @@ diff -Naur old/configure_for_macfuse.sh new/configure_for_macfuse.sh
 +exit $?
 diff -Naur old/darwin_compat.h new/darwin_compat.h
 --- old/darwin_compat.h	1969-12-31 16:00:00.000000000 -0800
-+++ new/darwin_compat.h	2007-09-15 14:12:03.000000000 -0700
-@@ -0,0 +1,145 @@
++++ new/darwin_compat.h	2007-09-16 16:10:17.000000000 -0700
+@@ -0,0 +1,147 @@
 +/*
 + * Copyright (C) 2006,2007 Google. All Rights Reserved.
 + * Amit Singh <singh@>
@@ -145,6 +146,8 @@ diff -Naur old/darwin_compat.h new/darwin_compat.h
 +
 +#ifndef _DARWIN_COMPAT_H_
 +#define _DARWIN_COMPAT_H_
++
++#define MACFUSE_SSHFS_VERSION "1.0.0rc1"
 +
 +#include <AvailabilityMacros.h>
 +
@@ -285,7 +288,7 @@ diff -Naur old/darwin_compat.h new/darwin_compat.h
 +#endif /* _DARWIN_COMPAT_H_ */
 diff -Naur old/sshfs.c new/sshfs.c
 --- old/sshfs.c	2007-05-16 04:20:48.000000000 -0700
-+++ new/sshfs.c	2007-09-15 14:12:03.000000000 -0700
++++ new/sshfs.c	2007-09-16 16:10:55.000000000 -0700
 @@ -18,7 +18,11 @@
  #include <string.h>
  #include <stdint.h>
@@ -518,8 +521,8 @@ diff -Naur old/sshfs.c new/sshfs.c
  
      case KEY_VERSION:
 +#if (__FreeBSD__ >= 10)
-+        fprintf(stderr, "SSHFS version %s (MacFUSE, %d, %s, %s)\n",
-+                PACKAGE_VERSION, 10, __DATE__, __TIME__);
++        fprintf(stderr, "SSHFS version %s (MacFUSE SSHFS %s)\n",
++                PACKAGE_VERSION, MACFUSE_SSHFS_VERSION);
 +#else
          fprintf(stderr, "SSHFS version %s\n", PACKAGE_VERSION);
 +#endif
@@ -579,7 +582,7 @@ diff -Naur old/sshfs.c new/sshfs.c
          exit(1);
 diff -Naur old/sshnodelay.c new/sshnodelay.c
 --- old/sshnodelay.c	2006-02-01 01:43:22.000000000 -0800
-+++ new/sshnodelay.c	2007-09-15 14:12:03.000000000 -0700
++++ new/sshnodelay.c	2007-09-16 16:09:44.000000000 -0700
 @@ -5,6 +5,31 @@
  #include <netinet/in.h>
  #include <netinet/tcp.h>
