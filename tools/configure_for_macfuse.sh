@@ -7,8 +7,9 @@ UNAME=/usr/bin/uname
 os_name=`$UNAME -s`
 os_codename="Unknown"
 os_release=`$UNAME -r`
-current_product=`pwd`
 sdk_dir="/dev/null"
+
+current_product=${1:-`pwd`}
 
 if [ "$os_name" != "Darwin" ]
 then
