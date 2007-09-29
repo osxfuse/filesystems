@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.54"
+#define MACFUSE_PROCFS_VERSION "1.7"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
@@ -1870,7 +1870,7 @@ READ_HANDLER(system__hardware__cpus__cpu__data)
             cpu_load_info.cpu_ticks[CPU_STATE_IDLE] +
             cpu_load_info.cpu_ticks[CPU_STATE_NICE];
     len += snprintf(tmpbuf + len, 4096 - len,
-                    "%ld ticks (user %ld system %ld idle %ld nice %ld)\n",
+                    "%ld ticks (user %u system %u idle %u nice %u)\n",
                     ticks,
                     cpu_load_info.cpu_ticks[CPU_STATE_USER],
                     cpu_load_info.cpu_ticks[CPU_STATE_SYSTEM],
@@ -2068,10 +2068,11 @@ READ_HANDLER(system__hardware__xsensor)
     }
 
     if (strcmp(whichfile, "mouse") == 0) {
-        Point mouselocation;
-        GetMouse(&mouselocation);
-        len = snprintf(tmpbuf, 4096, "%d %d\n",
-                       mouselocation.h, mouselocation.v);
+        HIPoint mouselocation = { 0.0, 0.0 };
+        (void)HIGetMousePosition(kHICoordSpaceScreenPixel,
+                                 NULL, &mouselocation);
+        len = snprintf(tmpbuf, 4096, "%.0f %.0f\n",
+                       mouselocation.x, mouselocation.y);
         goto gotdata;
     }
 
@@ -2976,45 +2977,45 @@ READ_HANDLER(proc__task__threads__thread__states__float)
 #if defined(__i386__)
     const char *whichfile = argv[2];
 
-    i386_float_state_t state = { 0 };
-    unsigned int count = i386_FLOAT_STATE_COUNT;
-    kr = thread_get_state(the_thread, i386_FLOAT_STATE, (thread_state_t)&state,
+    x86_float_state_t state = { 0 };
+    unsigned int count = x86_FLOAT_STATE_COUNT;
+    kr = thread_get_state(the_thread, x86_FLOAT_STATE, (thread_state_t)&state,
                           &count);
     if (kr != KERN_SUCCESS) {
         FINI_THREAD_LIST();
         return -EIO;
     }
 
-#define HANDLE_I386_FLOAT_STATE_ITEM(item, fmt)        \
-    if (strcmp(whichfile, #item) == 0) {               \
-        len = snprintf(tmpbuf, 4096, fmt, state.item); \
-        goto gotdata;                                  \
+#define HANDLE_x86_FLOAT_STATE_ITEM(item, fmt)                      \
+    if (strcmp(whichfile, #item) == 0) {                            \
+        len = snprintf(tmpbuf, 4096, fmt, state.ufs.fs32.__##item); \
+        goto gotdata;                                               \
     }
 
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_cs, "%hx\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_dp, "%x\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_ds, "%hx\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_fop, "%hx\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_ftw, "%hhx\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_ip, "%x\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_mxcsr, "%x\n");
-    HANDLE_I386_FLOAT_STATE_ITEM(fpu_mxcsrmask, "%x\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_cs, "%hx\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_dp, "%x\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_ds, "%hx\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_fop, "%hx\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_ftw, "%hhx\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_ip, "%x\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_mxcsr, "%x\n");
+    HANDLE_x86_FLOAT_STATE_ITEM(fpu_mxcsrmask, "%x\n");
 
-#define HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(bit)           \
-    if (state.fpu_fcw.bit) {                                    \
+#define HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(bit)            \
+    if (state.ufs.fs32.__fpu_fcw.__##bit) {                     \
         len += snprintf(tmpbuf + len, 4096 - len, "%s ", #bit); \
     }
 
     if (strcmp(whichfile, "fpu_fcw") == 0) { /* control */
         len = 0;
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(invalid);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(denorm);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(zdiv);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(ovrfl);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(undfl);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(precis);
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(pc);
-        switch (state.fpu_fcw.pc) {    
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(invalid);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(denorm);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(zdiv);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(ovrfl);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(undfl);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(precis);
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(pc);
+        switch (state.ufs.fs32.__fpu_fcw.__pc) {    
         case 0:
             len += snprintf(tmpbuf + len, 4096 - len, "(24B) ");
             break;
@@ -3025,8 +3026,8 @@ READ_HANDLER(proc__task__threads__thread__states__float)
             len += snprintf(tmpbuf + len, 4096 - len, "(64B) ");
             break;
         }
-        HANDLE_I386_FLOAT_STATE_ITEM_CONTROL_BIT(rc);
-        switch (state.fpu_fcw.rc) {
+        HANDLE_x86_FLOAT_STATE_ITEM_CONTROL_BIT(rc);
+        switch (state.ufs.fs32.__fpu_fcw.__rc) {
         case 0:
             len += snprintf(tmpbuf + len, 4096 - len, "(round near) ");
             break;
@@ -3044,28 +3045,28 @@ READ_HANDLER(proc__task__threads__thread__states__float)
         goto gotdata;
     }
 
-#define HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(bit)            \
-    if (state.fpu_fsw.bit) {                                    \
+#define HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(bit)             \
+    if (state.ufs.fs32.__fpu_fsw.__##bit) {                     \
         len += snprintf(tmpbuf + len, 4096 - len, "%s ", #bit); \
     }
 
     if (strcmp(whichfile, "fpu_fsw") == 0) { /* status */
         len = 0;
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(invalid);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(denorm);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(zdiv);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(ovrfl);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(undfl);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(precis);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(stkflt);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(errsumm);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(c0);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(c1);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(c2);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(c3);
-        HANDLE_I386_FLOAT_STATE_ITEM_STATUS_BIT(busy);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(invalid);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(denorm);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(zdiv);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(ovrfl);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(undfl);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(precis);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(stkflt);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(errsumm);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c0);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c1);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c2);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c3);
+        HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(busy);
         len += snprintf(tmpbuf + len, 4096 - len, "tos=%hhx\n",
-                        state.fpu_fsw.tos);
+                        state.ufs.fs32.__fpu_fsw.__tos);
         goto gotdata;
     }
 
@@ -3103,37 +3104,37 @@ READ_HANDLER(proc__task__threads__thread__states__thread)
 
     const char *whichfile = argv[2];
 
-    i386_thread_state_t state = { 0 };
-    unsigned int count = i386_THREAD_STATE_COUNT;
-    kr = thread_get_state(the_thread, i386_THREAD_STATE, (thread_state_t)&state,
+    x86_thread_state_t state = { 0 };
+    unsigned int count = x86_THREAD_STATE_COUNT;
+    kr = thread_get_state(the_thread, x86_THREAD_STATE, (thread_state_t)&state,
                           &count);
     if (kr != KERN_SUCCESS) {
         FINI_THREAD_LIST();
         return -EIO;
     }
 
-#define HANDLE_I386_THREAD_STATE_ITEM(item)               \
-    if (strcmp(whichfile, #item) == 0) {                  \
-        len = snprintf(tmpbuf, 4096, "%x\n", state.item); \
-        goto gotdata;                                     \
+#define HANDLE_x86_THREAD_STATE_ITEM(item)                             \
+    if (strcmp(whichfile, #item) == 0) {                               \
+        len = snprintf(tmpbuf, 4096, "%x\n", state.uts.ts32.__##item); \
+        goto gotdata;                                                  \
     }
 
-    HANDLE_I386_THREAD_STATE_ITEM(eax);
-    HANDLE_I386_THREAD_STATE_ITEM(ebx);
-    HANDLE_I386_THREAD_STATE_ITEM(ecx);
-    HANDLE_I386_THREAD_STATE_ITEM(edx);
-    HANDLE_I386_THREAD_STATE_ITEM(edi);
-    HANDLE_I386_THREAD_STATE_ITEM(esi);
-    HANDLE_I386_THREAD_STATE_ITEM(ebp);
-    HANDLE_I386_THREAD_STATE_ITEM(esp);
-    HANDLE_I386_THREAD_STATE_ITEM(ss);
-    HANDLE_I386_THREAD_STATE_ITEM(eflags);
-    HANDLE_I386_THREAD_STATE_ITEM(eip);
-    HANDLE_I386_THREAD_STATE_ITEM(cs);
-    HANDLE_I386_THREAD_STATE_ITEM(ds);
-    HANDLE_I386_THREAD_STATE_ITEM(es);
-    HANDLE_I386_THREAD_STATE_ITEM(fs);
-    HANDLE_I386_THREAD_STATE_ITEM(gs);
+    HANDLE_x86_THREAD_STATE_ITEM(eax);
+    HANDLE_x86_THREAD_STATE_ITEM(ebx);
+    HANDLE_x86_THREAD_STATE_ITEM(ecx);
+    HANDLE_x86_THREAD_STATE_ITEM(edx);
+    HANDLE_x86_THREAD_STATE_ITEM(edi);
+    HANDLE_x86_THREAD_STATE_ITEM(esi);
+    HANDLE_x86_THREAD_STATE_ITEM(ebp);
+    HANDLE_x86_THREAD_STATE_ITEM(esp);
+    HANDLE_x86_THREAD_STATE_ITEM(ss);
+    HANDLE_x86_THREAD_STATE_ITEM(eflags);
+    HANDLE_x86_THREAD_STATE_ITEM(eip);
+    HANDLE_x86_THREAD_STATE_ITEM(cs);
+    HANDLE_x86_THREAD_STATE_ITEM(ds);
+    HANDLE_x86_THREAD_STATE_ITEM(es);
+    HANDLE_x86_THREAD_STATE_ITEM(fs);
+    HANDLE_x86_THREAD_STATE_ITEM(gs);
 
 #else
     len = -1;
@@ -4755,5 +4756,6 @@ main(int argc, char *argv[])
     argv[i] = extra_opts;
 
     procfs_oper_populate(&procfs_oper);
+
     return fuse_main(argc, argv, &procfs_oper, NULL);
 }

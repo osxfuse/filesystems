@@ -31,7 +31,7 @@ CreateScreenGLContext(CGDirectDisplayID targetDisplay)
 {
     CGOpenGLDisplayMask displayMask;
     CGLPixelFormatObj   pixelFormatObj;
-    long                numPixelFormats;
+    GLint               numPixelFormats;
 
     displayMask = CGDisplayIDToOpenGLDisplayMask(targetDisplay);
 
