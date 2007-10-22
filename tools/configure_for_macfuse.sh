@@ -10,6 +10,7 @@ os_release=`$UNAME -r`
 sdk_dir="/dev/null"
 
 current_product=${1:-`pwd`}
+current_product=`basename $current_product`
 
 if [ "$os_name" != "Darwin" ]
 then
