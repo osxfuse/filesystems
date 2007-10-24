@@ -4734,7 +4734,7 @@ procfs_oper_populate(struct fuse_operations *oper)
 }
 
 static char *def_opts = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
-static char *def_opts_ui = "-oallow_other,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char *def_opts_ui = "-oallow_other,local,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
 
 int
 main(int argc, char *argv[])
