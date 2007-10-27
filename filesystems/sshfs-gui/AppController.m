@@ -16,6 +16,7 @@
 #import "DiskImageUtilities.h"
 
 #import <Cocoa/Cocoa.h>
+#import "GoogleShared_SystemVersion.h"
 
 #include <stdlib.h>
 #include <sys/param.h>
@@ -77,6 +78,9 @@
                                                           ofType:@""];
   NSString *sshfsPath = [[NSBundle mainBundle] pathForResource:@"sshfs-static"
                                                         ofType:@""];
+  if ([GoogleShared_SystemVersion isLeopard]) {
+      sshfsPath = [sshfsPath stringByAppendingString:@"-10.5"];
+  }
   NSDictionary *sshfsEnv = [NSDictionary dictionaryWithObjectsAndKeys:
     @"NONE", @"DISPLAY", // I know "NONE" is bogus; I just need something
     askPassPath, @"SSH_ASKPASS",

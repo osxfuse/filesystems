@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		54B5A1AC0CD2BC7B00158571 /* GoogleShared_SystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 54B5A1AB0CD2BC7B00158571 /* GoogleShared_SystemVersion.m */; };
+		54B5A1C50CD2BF3B00158571 /* sshfs-static-10.5 in Resources */ = {isa = PBXBuildFile; fileRef = 54B5A1C40CD2BF3B00158571 /* sshfs-static-10.5 */; };
 		8205AF7A0B653F3700A99579 /* sshfs-static in Resources */ = {isa = PBXBuildFile; fileRef = 8205AF790B653F3700A99579 /* sshfs-static */; };
 		823578210B44701F00FE77BB /* ssh.icns in Resources */ = {isa = PBXBuildFile; fileRef = 823578200B44701F00FE77BB /* ssh.icns */; };
 		8235784C0B44782400FE77BB /* askpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 8235784B0B44782400FE77BB /* askpass.c */; };
@@ -41,6 +43,9 @@
 		29B97316FDCFA39411CA2CEA /* sshfsMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = sshfsMain.m; sourceTree = "<group>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* sshfs.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sshfs.pch; sourceTree = "<group>"; };
+		54B5A1AA0CD2BC7B00158571 /* GoogleShared_SystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GoogleShared_SystemVersion.h; sourceTree = "<group>"; };
+		54B5A1AB0CD2BC7B00158571 /* GoogleShared_SystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GoogleShared_SystemVersion.m; sourceTree = "<group>"; };
+		54B5A1C40CD2BF3B00158571 /* sshfs-static-10.5 */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "sshfs-static-10.5"; path = "Resources/sshfs-static-10.5"; sourceTree = "<group>"; };
 		8205AF790B653F3700A99579 /* sshfs-static */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "sshfs-static"; path = "Resources/sshfs-static"; sourceTree = "<group>"; };
 		823578200B44701F00FE77BB /* ssh.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = ssh.icns; path = Resources/ssh.icns; sourceTree = "<group>"; };
 		823578420B4477D800FE77BB /* askpass */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = askpass; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,6 +115,7 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				54B5A1C40CD2BF3B00158571 /* sshfs-static-10.5 */,
 				D4A6C9A709479AD300354625 /* Info.plist */,
 				D4A6C9B709479B9200354625 /* InfoPlist.strings */,
 				8249C9140B547465007CFB64 /* Localizable.strings */,
@@ -146,6 +152,8 @@
 		D4A6C9B309479B5A00354625 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				54B5A1AA0CD2BC7B00158571 /* GoogleShared_SystemVersion.h */,
+				54B5A1AB0CD2BC7B00158571 /* GoogleShared_SystemVersion.m */,
 				32CA4F630368D1EE00C91783 /* sshfs.pch */,
 				29B97316FDCFA39411CA2CEA /* sshfsMain.m */,
 				82EDA4D00B44628E00542FAD /* AppController.h */,
@@ -200,9 +208,11 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "sshfs" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* sshfs */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8D1107260486CEB800E47090 /* sshfs */,
 				823578410B4477D800FE77BB /* askpass */,
@@ -222,6 +232,7 @@
 				8249C9150B547465007CFB64 /* Localizable.strings in Resources */,
 				8205AF7A0B653F3700A99579 /* sshfs-static in Resources */,
 				82743E570BD7CE2D006FB711 /* sshnodelay.so in Resources */,
+				54B5A1C50CD2BF3B00158571 /* sshfs-static-10.5 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -243,6 +254,7 @@
 				8D11072D0486CEB800E47090 /* sshfsMain.m in Sources */,
 				82EDA4D20B44628E00542FAD /* AppController.m in Sources */,
 				82CB0CAA0BD5585E00EDD0B9 /* DiskImageUtilities.m in Sources */,
+				54B5A1AC0CD2BC7B00158571 /* GoogleShared_SystemVersion.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
