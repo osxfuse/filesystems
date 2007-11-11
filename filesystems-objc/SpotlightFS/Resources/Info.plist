@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>SpotlightFS 0.1.0</string>
+	<string>SpotlightFS 0.1.1</string>
 	<key>CFBundleIconFile</key>
 	<string>SpotlightFSApp</string>
 	<key>CFBundleIdentifier</key>
@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.1.0</string>
+	<string>0.1.1</string>
 	<key>FUSEFileSystemClass</key>
 	<string>SpotlightFS</string>
 	<key>LSUIElement</key>
