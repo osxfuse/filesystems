@@ -53,7 +53,8 @@ extern NSString* const FUSEManagedDirectoryResource;
  // TODO: Support the single-shot create with data if we can.
  //- (BOOL)createFileAtPath:(NSString *)path contents:(NSData *)contents 
  //              attributes:(NSDictionary *)attributes;
-- (BOOL)createFileAtPath:(NSString *)path attributes:(NSDictionary *)attributes;
+- (BOOL)createFileAtPath:(NSString *)path attributes:(NSDictionary *)attributes
+               outHandle:(id *)outHandle;
 - (BOOL)movePath:(NSString *)source toPath:(NSString *)destination handler:(id)handler;
 - (BOOL)removeFileAtPath:(NSString *)path handler:(id)handler;
 
@@ -62,8 +63,14 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 - (NSString *)mountName;
 - (NSString *)mountPoint;
+- (BOOL)isForeground;        // Defaults to YES  (Probably best to use default)
+- (BOOL)isThreadSafe;        // Defaults to NO
 
-- (BOOL)shouldMountInFinder; // Defaults to NO
+// Returns an array of fuse options to set.  The set of available options can
+// be found at:  http://code.google.com/p/macfuse/wiki/OPTIONS
+// For example, to turn on debug output add @"debug" to the returned NSArray.
+- (NSArray *)fuseOptions;  // Default: empty array
+
 - (BOOL)shouldStartFuse;
 
 - (void)fuseWillMount;
@@ -71,7 +78,6 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 - (void)fuseWillUnmount;
 - (void)fuseDidUnmount;
-
 
 #pragma mark Special Files
 
@@ -131,7 +137,7 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 #pragma mark Advanced File Operations
 
-- (id)openFileAtPath:(NSString *)path mode:(int)mode;
+- (BOOL)openFileAtPath:(NSString *)path mode:(int)mode outHandle:(id *)outHandle;
 - (int)readFileAtPath:(NSString *)path handle:(id)handle
                buffer:(char *)buffer size:(size_t)size offset:(off_t)offset;
 
@@ -150,6 +156,7 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 #pragma mark Advanced Icons
 
++ (NSData *)iconDataForImage:(NSImage *)image;
 - (NSData *)iconDataForPath:(NSString *)path;
 - (GTResourceFork *)customIconResourceForkForPath:(NSString *)path;
 
