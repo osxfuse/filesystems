@@ -161,22 +161,32 @@ static FUSEFileSystem *manager;
 #pragma mark Extended Attributes
 
 - (NSData *)valueOfExtendedAttribute:(NSString *)name forPath:(NSString *)path {
+#if 0  // TODO: Consider support for custom icons via extended attributes.
   if ([name isEqualToString:kResourceForkXattr])
-    return [self resourceForkContentsForPath:path];  
-  return [name dataUsingEncoding:NSUTF8StringEncoding];
+    return [self resourceForkContentsForPath:path];
+#endif
+  [NSException raise:@"FUSEFileSystemNotSupport"
+              format:@"Implement valueOfExtendedAttibute to support xattr."];
+  return nil;
 }
 
 - (BOOL)setExtendedAttribute:(NSString *)name 
                      forPath:(NSString *)path 
                        value:(NSData *)value
                        flags:(int) flags {
+  [NSException raise:@"FUSEFileSystemNotSupport"
+              format:@"Implement setExtendedAttribute to support xattr."];
   return NO;
 }
 
 - (NSArray *)extendedAttributesForPath:path {
+#if 0  // TODO: Consider support for custom icons via extended attributes.
   if ([self pathHasResourceFork:path]) {
     return [NSArray arrayWithObject:kResourceForkXattr];
   }
+#endif
+  [NSException raise:@"FUSEFileSystemNotSupport"
+              format:@"Implement extendedAttributesForPath to support xattr."];
   return nil;
 }
 
@@ -983,6 +993,7 @@ static int fusefm_getxattr(const char *path, const char *name, char *value,
     }
   }
   @catch (NSException * e) {
+    res = -ENOTSUP;
   }
   [pool release];
   return res;
@@ -1001,6 +1012,7 @@ static int fusefm_setxattr(const char *path, const char *name, const char *value
     }
   }
   @catch (NSException * e) {
+    res = -ENOTSUP;
   }
   [pool release];
   return res;
@@ -1010,35 +1022,31 @@ static int fusefm_setxattr(const char *path, const char *name, const char *value
 static int fusefm_listxattr(const char *path, char *list, size_t size)
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
- 
-  int res = -ENOENT;
-  
+  int res = -ENOTSUP;
   @try {
     NSArray *attributeNames = [manager extendedAttributesForPath: [NSString stringWithUTF8String:path]];
-    char zero = 0;
-    NSMutableData *data = [NSMutableData dataWithCapacity:size];  
-    for (int i = 0, count = [attributeNames count]; i < count; i++) {
-      [data appendData:[[attributeNames objectAtIndex:i] dataUsingEncoding:NSUTF8StringEncoding]];
-      [data appendBytes:&zero length:1];
-    }
-    res = [data length];  // default to returning size of buffer.
-    if (list) {
-      if (size > [data length]) {
-        size = [data length];
+    if ( attributeNames != nil ) {
+      char zero = 0;
+      NSMutableData *data = [NSMutableData dataWithCapacity:size];  
+      for (int i = 0, count = [attributeNames count]; i < count; i++) {
+        [data appendData:[[attributeNames objectAtIndex:i] dataUsingEncoding:NSUTF8StringEncoding]];
+        [data appendBytes:&zero length:1];
       }
-      [data getBytes:list length:size];
+      res = [data length];  // default to returning size of buffer.
+      if (list) {
+        if (size > [data length]) {
+          size = [data length];
+        }
+        [data getBytes:list length:size];
+      }
     }
   }
   @catch (NSException * e) {
+    res = -ENOTSUP;
   }
 
   [pool release];
   return res;
-  //  int res = listxattr(path, list, size, 0);
-  //
-  //  if (res == -1)
-  //    return  -errno;
-  //  return res;
 }
 
 static int fusefm_rename(const char* path, const char* toPath) {
