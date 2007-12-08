@@ -16,6 +16,6 @@ Usage
   $ sudo chown root:admin /proc
   $ sudo ./procfs /proc -f
 
-  For the /proc/byname/ directory to "work" (and not crash procfs), you must
-  either run procfs foregrounded (through the -f option), or use the
-  procfs.plist file to run procfs through launchd.
+  For certain things to work (and not crash procfs), you must either run
+  procfs foregrounded (through the -f option), or use the procfs.plist
+  file to run procfs through launchd.
