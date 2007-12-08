@@ -1,7 +1,21 @@
-procfs will no longer compile as is on Mac OS X 10.4.x. It now requires 10.5.
-If you really want to, it should be not too hard to get it to work (minus some
-functionality) on the older version of the operating system.
+System Requirements
+===================
 
-For the /proc/byname/ directory to "work" (and not crash procfs), you must
-either run procfs foregrounded (through the -f option), or use the procfs.plist
-file to run procfs through launchd.
+  * Mac OS X 10.5+ (10.4 is no longer supported)
+
+  * pcre (specifically, the C++ wrapper for pcre)
+
+    ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
+
+Usage
+=====
+
+  You can mount procfs as:
+
+  $ sudo mkdir /proc
+  $ sudo chown root:admin /proc
+  $ sudo ./procfs /proc -f
+
+  For the /proc/byname/ directory to "work" (and not crash procfs), you must
+  either run procfs foregrounded (through the -f option), or use the
+  procfs.plist file to run procfs through launchd.

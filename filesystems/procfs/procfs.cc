@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "1.7"
+#define MACFUSE_PROCFS_VERSION "2.0"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
@@ -41,6 +41,7 @@
 
 #include "procfs_displays.h"
 #include "procfs_proc_info.h"
+#include "procfs_windows.h"
 #include "sequencegrab/procfs_sequencegrab.h"
 
 #if MACFUSE_PROCFS_ENABLE_TPM
@@ -73,7 +74,7 @@ static CFMutableDataRef camera_tiff = (CFMutableDataRef)0;
 /* display */
 static pthread_mutex_t  display_lock;
 static int              display_busy = 0;
-static CFMutableDataRef display_tiff = (CFMutableDataRef)0;
+static CFMutableDataRef display_png = (CFMutableDataRef)0;
 
 static pcrecpp::RE *valid_process_pattern = new pcrecpp::RE("/(\\d+)");
 
@@ -436,12 +437,14 @@ procfs_readlink_##handler(procfs_dispatcher_entry_t  e,      \
 PROTO_OPEN_HANDLER(default_file);
 PROTO_OPEN_HANDLER(eisdir);
 PROTO_OPEN_HANDLER(proc__windows__identify);
+PROTO_OPEN_HANDLER(proc__windows__screenshots__window);
 PROTO_OPEN_HANDLER(system__hardware__camera__screenshot);
 PROTO_OPEN_HANDLER(system__hardware__displays__display__screenshot);
 
 PROTO_RELEASE_HANDLER(default_file);
 PROTO_RELEASE_HANDLER(eisdir);
 PROTO_RELEASE_HANDLER(proc__windows__identify);
+PROTO_RELEASE_HANDLER(proc__windows__screenshots__window);
 PROTO_RELEASE_HANDLER(system__hardware__camera__screenshot);
 PROTO_RELEASE_HANDLER(system__hardware__displays__display__screenshot);
 
@@ -465,6 +468,7 @@ PROTO_GETATTR_HANDLER(system__hardware__tpm__pcrs__pcr);
 #endif /* MACFUSE_PROCFS_ENABLE_TPM */
 PROTO_GETATTR_HANDLER(proc__task__ports__port);
 PROTO_GETATTR_HANDLER(proc__task__threads__thread);
+PROTO_GETATTR_HANDLER(proc__windows__screenshots__window);
 
 PROTO_READ_HANDLER(einval);
 PROTO_READ_HANDLER(eisdir);
@@ -491,6 +495,7 @@ PROTO_READ_HANDLER(proc__task__tokens);
 PROTO_READ_HANDLER(proc__task__vmmap);
 PROTO_READ_HANDLER(proc__task__vmmap_r);
 PROTO_READ_HANDLER(proc__windows__generic);
+PROTO_READ_HANDLER(proc__windows__screenshots__window);
 PROTO_READ_HANDLER(proc__xcred);
 PROTO_READ_HANDLER(system__firmware__variables);
 PROTO_READ_HANDLER(system__hardware__camera__screenshot);
@@ -511,6 +516,7 @@ PROTO_READDIR_HANDLER(enotdir);
 PROTO_READDIR_HANDLER(byname);
 PROTO_READDIR_HANDLER(proc__task__ports);
 PROTO_READDIR_HANDLER(proc__task__threads);
+PROTO_READDIR_HANDLER(proc__windows__screenshots);
 PROTO_READDIR_HANDLER(root);
 PROTO_READDIR_HANDLER(system__hardware__cpus);
 PROTO_READDIR_HANDLER(system__hardware__cpus__cpu);
@@ -596,7 +602,7 @@ procfs_file_table[] = {
     )
 
     DECL_FILE(
-        "/system/hardware/displays/(\\d+)/screenshot.tiff",
+        "/system/hardware/displays/(\\d+)/screenshot.png",
         1,
         system__hardware__displays__display__screenshot,
         system__hardware__displays__display__screenshot,
@@ -834,6 +840,15 @@ procfs_file_table[] = {
     )
 
     DECL_FILE(
+        "/(\\d+)/windows/screenshots/([a-f\\d]+).png",
+        2,
+        proc__windows__screenshots__window, 
+        proc__windows__screenshots__window, 
+        proc__windows__screenshots__window,
+        proc__windows__screenshots__window
+    )
+
+    DECL_FILE(
         "/(\\d+)/(ucred|pcred)/(groups|rgid|ruid|svgid|svuid|uid)",
         3,
         default_file,
@@ -853,7 +868,7 @@ procfs_directory_table[] = {
         default_directory,
         root,
         { NULL },
-        { ".VolumeIcon.icns", "byname", "system", NULL }
+        { "byname", "system", NULL }
     )
 
     DECL_DIRECTORY(
@@ -941,7 +956,7 @@ procfs_directory_table[] = {
         default_directory,
         system__hardware__displays__display,
         system__hardware__displays__display,
-        { "info", "screenshot.tiff", NULL },
+        { "info", "screenshot.png", NULL },
         { NULL },
     )
 
@@ -1164,8 +1179,20 @@ procfs_directory_table[] = {
     DECL_DIRECTORY_COMPACT(
         "/\\d+/windows",
         { "all", "onscreen", "identify", NULL },
-        { NULL }
+        { "screenshots", NULL }
     )
+
+    DECL_DIRECTORY(
+        "/(\\d+)/windows/screenshots",
+        1,
+        default_directory,
+        default_directory,
+        default_directory,
+        proc__windows__screenshots,
+        { NULL },
+        { NULL },
+    )
+
 };
 
 // BEGIN: OPEN/OPENDIR
@@ -1189,7 +1216,7 @@ OPEN_HANDLER(eisdir)
 
 OPEN_HANDLER(proc__windows__identify)
 {
-    if (fi->fh != 0) { /* locking */
+    if (fi->fh != 0) { /* XXX: need locking */
         return 0;
     } else {
         fi->fh = 1;
@@ -1200,12 +1227,74 @@ OPEN_HANDLER(proc__windows__identify)
     }
     int npid = vfork();
     if (npid == 0) {
-        execl(whandler, whandler, "-r", "1", "-p", argv[0], NULL);
+        execl(whandler, whandler, argv[0], NULL);
         return 0;
     }
 
 bail:
     return 0;
+}
+
+OPEN_HANDLER(proc__windows__screenshots__window)
+{
+    if (fi->fh != 0) { /* XXX: need locking */
+        return 0;
+    }
+
+    pid_t pid = strtol(argv[0], NULL, 10);
+    CGWindowID target = strtol(argv[1], NULL, 16);
+    ProcessSerialNumber psn;
+
+    OSStatus status = GetProcessForPID(pid, &psn);
+    if (status != noErr) {
+        return -ENOENT;
+    }
+
+    CGSConnectionID conn;
+    CGError err = CGSGetConnectionIDForPSN(0, &psn, &conn);
+    if (err != kCGErrorSuccess) {
+        return -ENOENT;
+    }
+
+#define MAX_WINDOWS 256
+    CGSWindowID windowIDs[MAX_WINDOWS];
+    int windowCount = 0;
+    int i = 0;
+
+    err = CGSGetWindowList(_CGSDefaultConnection(), conn, MAX_WINDOWS,
+                           windowIDs, &windowCount);
+
+    for (i = 0; i < windowCount; i++) {
+        if (windowIDs[i] == target) {
+            goto doread;
+        }
+    }
+
+    return -ENOENT;
+
+doread:
+
+    CFMutableDataRef window_png = (CFMutableDataRef)0;
+    int ret = PROCFS_GetPNGForWindowAtIndex(target, &window_png);
+
+    if (ret == -1) {
+        return -EIO;
+    }
+
+    struct ProcfsWindowData *pwd =
+        (struct ProcfsWindowData *)malloc(sizeof(struct ProcfsWindowData));
+    if (!pwd) {
+        CFRelease(window_png);
+    }
+
+    pwd->window_png = window_png;
+    pwd->max_len = PROCFS_GetPNGSizeForWindowAtIndex(target);
+    pwd->len = (size_t)CFDataGetLength(window_png);
+
+    fi->fh = (uint64_t)pwd;
+
+    return 0;
+
 }
 
 OPEN_HANDLER(system__hardware__camera__screenshot)
@@ -1242,16 +1331,16 @@ OPEN_HANDLER(system__hardware__displays__display__screenshot)
         return -ENOENT;
     }
 
-    if (display_tiff) {
-        CFRelease(display_tiff);
-        display_tiff = (CFMutableDataRef)0;
+    if (display_png) {
+        CFRelease(display_png);
+        display_png = (CFMutableDataRef)0;
     }
 
-    int ret = PROCFS_GetTIFFForDisplayAtIndex(index, &display_tiff);
+    int ret = PROCFS_GetPNGForDisplayAtIndex(index, &display_png);
     if (ret) {
-        if (display_tiff) {
-            CFRelease(display_tiff);
-            display_tiff = (CFMutableDataRef)0;
+        if (display_png) {
+            CFRelease(display_png);
+            display_png = (CFMutableDataRef)0;
         }
         return -EIO;
     }
@@ -1298,6 +1387,18 @@ RELEASE_HANDLER(proc__windows__identify)
     return 0;
 }
 
+RELEASE_HANDLER(proc__windows__screenshots__window)
+{ 
+    if (fi->fh) {
+        struct ProcfsWindowData *pwd = (struct ProcfsWindowData *)(fi->fh);
+        CFRelease((CFMutableDataRef)(pwd->window_png));
+        free((void *)pwd);
+        fi->fh = 0;
+    }
+
+    return 0;
+}
+
 RELEASE_HANDLER(system__hardware__camera__screenshot)
 {
     pthread_mutex_lock(&camera_lock);
@@ -1311,9 +1412,9 @@ RELEASE_HANDLER(system__hardware__displays__display__screenshot)
 {
     pthread_mutex_lock(&display_lock);
     display_busy = 0;
-    if (display_tiff) {
-        CFRelease(display_tiff);
-        display_tiff = (CFMutableDataRef)0;
+    if (display_png) {
+        CFRelease(display_png);
+        display_png = (CFMutableDataRef)0;
     }
     pthread_mutex_unlock(&display_lock);
 
@@ -1493,7 +1594,7 @@ GETATTR_HANDLER(system__hardware__displays__display__screenshot)
     stbuf->st_mode = S_IFREG | 0444;
     stbuf->st_nlink = 1;
     stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
-    stbuf->st_size = PROCFS_GetTIFFSizeForDisplayAtIndex(index);
+    stbuf->st_size = PROCFS_GetPNGSizeForDisplayAtIndex(index);
 
     return 0;
 }
@@ -1625,6 +1726,46 @@ GETATTR_HANDLER(proc__task__threads__thread)
     stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
     
     return 0;
+}
+
+GETATTR_HANDLER(proc__windows__screenshots__window)
+{
+    pid_t pid = strtol(argv[0], NULL, 10);
+    CGWindowID target = strtol(argv[1], NULL, 16);
+    ProcessSerialNumber psn;
+
+    OSStatus status = GetProcessForPID(pid, &psn);
+    if (status != noErr) {
+        return 0; /* technically not an error in this case */
+    }
+
+    CGSConnectionID conn;
+    CGError err = CGSGetConnectionIDForPSN(0, &psn, &conn);
+    if (err != kCGErrorSuccess) {
+        return 0; /* just be nice */
+    }
+
+#define MAX_WINDOWS 256
+    CGSWindowID windowIDs[MAX_WINDOWS];
+    int windowCount = 0;
+    int i = 0;
+
+    err = CGSGetWindowList(_CGSDefaultConnection(), conn, MAX_WINDOWS,
+                           windowIDs, &windowCount);
+
+    for (i = 0; i < windowCount; i++) {
+        if (windowIDs[i] == target) {
+            time_t current_time = time(NULL);
+
+            stbuf->st_mode = S_IFREG | 0444;
+            stbuf->st_nlink = 1;
+            stbuf->st_atime = stbuf->st_ctime = stbuf->st_mtime = current_time;
+            stbuf->st_size = PROCFS_GetPNGSizeForWindowAtIndex(windowIDs[i]);
+            return 0;
+        }
+    }
+
+    return -ENOENT;
 }
 
 // END: GETATTR
@@ -1961,30 +2102,30 @@ READ_HANDLER(system__hardware__displays__display__screenshot)
 
     }
     pthread_mutex_lock(&display_lock);
-    if (!display_tiff) {
+    if (!display_png) {
         pthread_mutex_unlock(&display_lock);
         return -EIO;
     }
-    CFRetain(display_tiff);
+    CFRetain(display_png);
     pthread_mutex_unlock(&display_lock);
 
-    size_t max_len = PROCFS_GetTIFFSizeForDisplayAtIndex(index);
-    size_t len = (size_t)CFDataGetLength(display_tiff);
+    size_t max_len = PROCFS_GetPNGSizeForDisplayAtIndex(index);
+    size_t len = (size_t)CFDataGetLength(display_png);
 
     if (len > max_len) {
         pthread_mutex_lock(&display_lock);
-        CFRelease(display_tiff);
+        CFRelease(display_png);
         pthread_mutex_unlock(&display_lock);
         return -EIO;
     }
 
-    CFDataSetLength(display_tiff, max_len);
+    CFDataSetLength(display_png, max_len);
     len = max_len;
-    const UInt8 *tmpbuf = CFDataGetBytePtr(display_tiff);
+    const UInt8 *tmpbuf = CFDataGetBytePtr(display_png);
 
     if (len < 0) {
         pthread_mutex_lock(&display_lock);
-        CFRelease(display_tiff);
+        CFRelease(display_png);
         pthread_mutex_unlock(&display_lock);
         return -EIO;
     }
@@ -1997,7 +2138,7 @@ READ_HANDLER(system__hardware__displays__display__screenshot)
         size = 0;
 
     pthread_mutex_lock(&display_lock);
-    CFRelease(display_tiff);
+    CFRelease(display_png);
     pthread_mutex_unlock(&display_lock);
 
     return size;
@@ -3500,31 +3641,6 @@ gotdata:
     READ_PROC_TASK_EPILOGUE();
 }
 
-typedef mach_port_t   CGSConnectionID;
-typedef mach_port_t   CGSWindowID;
-
-extern "C" {
-
-extern CGSConnectionID _CGSDefaultConnection(void);
-extern CGError CGSGetWindowLevel(CGSConnectionID connectionID,
-                                 CGSWindowID windowID, CGWindowLevel *level);
-extern CGError CGSGetConnectionIDForPSN(CGSConnectionID connectionID,
-                                        ProcessSerialNumber *psn,
-                                        CGSConnectionID *out);
-extern CGError CGSGetOnScreenWindowList(CGSConnectionID connectionID,
-                                        CGSConnectionID targetConnectionID,
-                                        int maxCount,
-                                        CGSWindowID *windowList,
-                                        int *outCount);
-extern CGError CGSGetWindowList(CGSConnectionID connectionID,
-                                CGSConnectionID targetConnectionID,
-                                int maxCount,
-                                CGSWindowID *windowList,
-                                int *outCount);
-extern CGError CGSGetScreenRectForWindow(CGSConnectionID connectionID,
-                                         CGSWindowID windowID, CGRect *outRect);
-}
-
 READ_HANDLER(proc__windows__generic)
 {
     pid_t pid = atoi(argv[0]);
@@ -3589,6 +3705,41 @@ READ_HANDLER(proc__windows__generic)
     }
 
 gotdata:
+
+    if (offset < len) {
+        if (offset + size > len)
+            size = len - offset;
+        memcpy(buf, tmpbuf + offset, size);
+    } else
+        size = 0;
+
+    return size;
+}
+
+READ_HANDLER(proc__windows__screenshots__window) 
+{
+    if (fi->fh == 0) {
+        return 0;
+    }
+
+    struct ProcfsWindowData *pwd = (struct ProcfsWindowData *)fi->fh;
+
+    CFMutableDataRef window_png = pwd->window_png;
+    size_t max_len = pwd->max_len;
+    size_t len = pwd->len;
+
+    if (len > max_len) {
+        return -EIO;
+    }
+
+    CFDataSetLength(window_png, max_len);
+    len = max_len;
+
+    const UInt8 *tmpbuf = CFDataGetBytePtr(window_png);
+        
+    if (len < 0) {
+        return -EIO; 
+    }
 
     if (offset < len) {
         if (offset + size > len)
@@ -3709,11 +3860,11 @@ procfs_populate_directory(const char           **content_files,
     const char **name;
 
     memset(&dir_stat, 0, sizeof(dir_stat));
-    dir_stat.st_mode = S_IFDIR | 555;
+    dir_stat.st_mode = S_IFDIR | 0555;
     dir_stat.st_size = 0;
 
     memset(&file_stat, 0, sizeof(file_stat));
-    dir_stat.st_mode = S_IFREG | 444;
+    dir_stat.st_mode = S_IFREG | 0444;
     dir_stat.st_size = 0;
 
     if (filler(buf, ".", NULL, 0)) {
@@ -4007,7 +4158,7 @@ READDIR_HANDLER(proc__task__ports)
     }
 
     memset(&dir_stat, 0, sizeof(dir_stat));
-    dir_stat.st_mode = S_IFDIR | 755;
+    dir_stat.st_mode = S_IFDIR | 0755;
     dir_stat.st_size = 0;
 
     INIT_PORT_LIST(the_task);
@@ -4042,7 +4193,7 @@ READDIR_HANDLER(proc__task__threads)
     }
 
     memset(&dir_stat, 0, sizeof(dir_stat));
-    dir_stat.st_mode = S_IFDIR | 755;
+    dir_stat.st_mode = S_IFDIR | 0755;
     dir_stat.st_size = 0;
 
     INIT_THREAD_LIST(the_task);
@@ -4057,6 +4208,57 @@ READDIR_HANDLER(proc__task__threads)
 
     if (the_task != MACH_PORT_NULL) {
         mach_port_deallocate(mach_task_self(), the_task);
+    }
+
+    return 0;
+}
+
+READDIR_HANDLER(proc__windows__screenshots)
+{
+    int i;
+    pid_t pid = strtol(argv[0], NULL, 10);
+    struct stat dir_stat;
+    char the_name[MAXNAMLEN + 1];
+
+    ProcessSerialNumber psn;
+
+    OSStatus status = GetProcessForPID(pid, &psn);
+    if (status != noErr) {
+        return 0; /* technically not an error in this case */
+    }
+
+    memset(&dir_stat, 0, sizeof(dir_stat));
+    dir_stat.st_mode = S_IFDIR | 0755;
+    dir_stat.st_size = 0;
+
+    CGSConnectionID conn;
+    CGError err = CGSGetConnectionIDForPSN(0, &psn, &conn);
+    if (err != kCGErrorSuccess) {
+        return 0; /* just be nice */
+    }
+
+#define MAX_WINDOWS 256
+    CGSWindowID windowIDs[MAX_WINDOWS];
+    int windowCount = 0;
+
+    err = CGSGetOnScreenWindowList(_CGSDefaultConnection(), conn,
+                                   MAX_WINDOWS, windowIDs, &windowCount);
+
+    if (err != kCGErrorSuccess) {
+        return -EIO;
+    }
+
+    if (windowCount == 0) {
+        return 0;
+    }
+
+    for (i = 0; i < windowCount; i++) {
+        snprintf(the_name, MAXNAMLEN, "%x.png", windowIDs[i]);
+        dir_stat.st_mode = S_IFREG | 0444;
+        dir_stat.st_size = PROCFS_GetPNGSizeForWindowAtIndex(windowIDs[i]);
+        if (filler(buf, the_name, &dir_stat, 0)) {
+            break;
+        }
     }
 
     return 0;

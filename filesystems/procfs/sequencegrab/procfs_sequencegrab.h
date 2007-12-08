@@ -3,7 +3,7 @@
 
 #include <CoreFoundation/CoreFoundation.h>
 
-#define CAMERA_TRIGGER_THRESHOLD 10
+#define CAMERA_TRIGGER_THRESHOLD 4
 #define CAMERA_ACTIVE_DURATION   1
 
 int   PROCFS_GetTIFFFromCamera(CFMutableDataRef *data);

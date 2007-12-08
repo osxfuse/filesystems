@@ -22,7 +22,7 @@ static void ReleaseScreenGLContext(CGLContextObj context);
 static void CaptureScreenRectToBuffer(CGRect srcRect, vImage_Buffer *buffer);
 static void *CreateFullScreenXRGB32(CGDirectDisplayID targetDisplay,
                                     int *width, int *height, int *rowBytes);
-static CFMutableDataRef CreateTIFFDataFromXRGB32Raster(void *raster,
+static CFMutableDataRef CreatePNGDataFromXRGB32Raster(void *raster,
                                                        int width, int height,
                                                        int bytesPerRow);
 
@@ -135,7 +135,7 @@ out:
 }
 
 static CFMutableDataRef
-CreateTIFFDataFromXRGB32Raster(void *raster, int width, int height, 
+CreatePNGDataFromXRGB32Raster(void *raster, int width, int height, 
                                int bytesPerRow)
 {
     CGColorSpaceRef colorSpace;
@@ -157,7 +157,7 @@ CreateTIFFDataFromXRGB32Raster(void *raster, int width, int height,
   
     CFMutableDataRef data = CFDataCreateMutable(kCFAllocatorDefault, 0);
     CGImageDestinationRef dest = 
-        CGImageDestinationCreateWithData((CFMutableDataRef)data, kUTTypeTIFF,
+        CGImageDestinationCreateWithData((CFMutableDataRef)data, kUTTypePNG,
                                          1, nil);
   
     if (dest) {
@@ -255,7 +255,7 @@ PROCFS_GetInfoForDisplayAtIndex(unsigned int index, char *buf, size_t *size)
 }
 
 off_t
-PROCFS_GetTIFFSizeForDisplayAtIndex(unsigned int index)
+PROCFS_GetPNGSizeForDisplayAtIndex(unsigned int index)
 {
     CGDirectDisplayID targetDisplay =
         PROCFS_GetDisplayIDForDisplayAtIndex(index);
@@ -272,7 +272,7 @@ PROCFS_GetTIFFSizeForDisplayAtIndex(unsigned int index)
 }
 
 int
-PROCFS_GetTIFFForDisplayAtIndex(unsigned int index, CFMutableDataRef *data)
+PROCFS_GetPNGForDisplayAtIndex(unsigned int index, CFMutableDataRef *data)
 {
     CGDirectDisplayID targetDisplay =
         PROCFS_GetDisplayIDForDisplayAtIndex(index);
@@ -291,7 +291,7 @@ PROCFS_GetTIFFForDisplayAtIndex(unsigned int index, CFMutableDataRef *data)
         return -1;
     }
 
-    *data = CreateTIFFDataFromXRGB32Raster(raster, width, height, rowBytes);
+    *data = CreatePNGDataFromXRGB32Raster(raster, width, height, rowBytes);
 
     free(raster);
 
