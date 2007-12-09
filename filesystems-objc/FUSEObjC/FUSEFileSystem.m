@@ -158,38 +158,46 @@ static FUSEFileSystem *manager;
   return manager;
 }
 
-#pragma mark Extended Attributes
+#pragma mark Configuration
 
-- (NSData *)valueOfExtendedAttribute:(NSString *)name forPath:(NSString *)path {
-#if 0  // TODO: Consider support for custom icons via extended attributes.
-  if ([name isEqualToString:kResourceForkXattr])
-    return [self resourceForkContentsForPath:path];
-#endif
-  [NSException raise:@"FUSEFileSystemNotSupport"
-              format:@"Implement valueOfExtendedAttibute to support xattr."];
-  return nil;
+- (NSString *)mountName {
+  NSString *mountName = [[[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountName"] retain];
+  if (!mountName) mountName = NSStringFromClass([self class]);
+  return mountName;
 }
 
-- (BOOL)setExtendedAttribute:(NSString *)name 
-                     forPath:(NSString *)path 
-                       value:(NSData *)value
-                       flags:(int) flags {
-  [NSException raise:@"FUSEFileSystemNotSupport"
-              format:@"Implement setExtendedAttribute to support xattr."];
+- (NSString *)mountPoint {
+  if (!mountPoint_) {
+    mountPoint_ =  [[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountPath"];
+    // mountPoint_ = [mountPoint_ firstUnusedFilePath];
+    [mountPoint_ retain];
+  }
+  return [[mountPoint_ copy] autorelease];
+}
+
+- (BOOL)isForeground {
+  return YES;
+}
+
+- (BOOL)isThreadSafe {
   return NO;
 }
 
-- (NSArray *)extendedAttributesForPath:path {
-#if 0  // TODO: Consider support for custom icons via extended attributes.
-  if ([self pathHasResourceFork:path]) {
-    return [NSArray arrayWithObject:kResourceForkXattr];
-  }
-#endif
-  [NSException raise:@"FUSEFileSystemNotSupport"
-              format:@"Implement extendedAttributesForPath to support xattr."];
-  return nil;
+- (NSArray *)fuseOptions {
+  return [NSArray array];
 }
 
+#pragma mark Lifecycle
+
+- (BOOL)shouldStartFuse {
+  return YES;
+}
+
+- (void)fuseWillMount {}
+- (void)fuseDidMount {}
+
+- (void)fuseWillUnmount{}
+- (void)fuseDidUnmount{}
 
 #pragma mark Resource Forks and HFS headers
 
@@ -289,8 +297,6 @@ static FUSEFileSystem *manager;
   return data;
 }
 
-
-
 #pragma mark Icons
 
 + (NSData *)iconDataForImage:(NSImage *)image {
@@ -331,17 +337,14 @@ static FUSEFileSystem *manager;
            ofType:'icns'];
     return fork;
   }
-  
   return nil;
 }
 
-#pragma mark Attributes
+#pragma mark Advanced File Operations
 
-- (NSDictionary *)fileSystemAttributesAtPath:(NSString *)path {
-  return nil;
-}
-
-- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf forPath:(NSString *)path {
+- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf 
+                  forPath:(NSString *)path 
+                    error:(NSError **)error {
   NSMutableDictionary* attributes = [NSMutableDictionary dictionary];
   NSNumber* defaultSize = [NSNumber numberWithLongLong:(2LL * 1024 * 1024 * 1024)];
   [attributes setObject:defaultSize forKey:NSFileSystemSize];
@@ -350,12 +353,14 @@ static FUSEFileSystem *manager;
   [attributes setObject:defaultSize forKey:NSFileSystemFreeNodes];
   // TODO: NSFileSystemNumber? Or does fuse do that for us?
   
-  // A subclass an override any of the above defaults by implementing the
-  // fileSystemAttributesAtPath: selector and returning a custom dictionary.
-  NSDictionary *customAttribs = [self fileSystemAttributesAtPath:path];
-  if (customAttribs) {
-    [attributes addEntriesFromDictionary:customAttribs];
+  // A subclass can override any of the above defaults by implementing the
+  // attributesOfFileSystemForPath selector and returning a custom dictionary.
+  NSDictionary *customAttribs = [self attributesOfFileSystemForPath:path 
+                                                              error:error];
+  if (customAttribs == nil) {
+    return NO;
   }
+  [attributes addEntriesFromDictionary:customAttribs];
   
   // Maximum length of filenames
   // TODO: Create our own key so that a fileSystem can override this.
@@ -387,15 +392,6 @@ static FUSEFileSystem *manager;
   stbuf->f_ffree = stbuf->f_favail = (fsfilcnt_t)[freeNodes longLongValue];
   
   return YES;
-}
-
-- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory{
-  *isDirectory = [path isEqualToString:@"/"];
-  return YES; 
-}
-
-- (NSDictionary *)fileAttributesAtPath:(NSString *)path{
-  return nil;
 }
 
 // Determines whether the given path is a for a resource managed by 
@@ -457,12 +453,14 @@ static FUSEFileSystem *manager;
   return NO;
 }
 
-- (BOOL)fillStatBuffer:(struct stat *)stbuf forPath:(NSString *)path{
+- (BOOL)fillStatBuffer:(struct stat *)stbuf 
+               forPath:(NSString *)path 
+                 error:(NSError **)error {
   // TODO: support passthrough paths for all reads/writes/stats
-    NSString *realPath = [self passthroughPathForPath:path];
-    if (realPath) {
-      return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
-    }
+  NSString *realPath = [self passthroughPathForPath:path];
+  if (realPath) {
+    return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
+  }
 
   NSString* dataPath = path;  // Default to the given path.
   BOOL isManagedResource = 
@@ -487,10 +485,11 @@ static FUSEFileSystem *manager;
   
   // A subclass an override any of the above defaults by implementing the
   // fileAttributesAtPath: selector and returning a custom dictionary.
-  NSDictionary *customAttribs = [self fileAttributesAtPath:dataPath];
-  if (customAttribs) {
-    [attributes addEntriesFromDictionary:customAttribs];
+  NSDictionary *customAttribs = [self attributesOfItemAtPath:dataPath error:error];
+  if (customAttribs == nil) {
+    return NO;
   }
+  [attributes addEntriesFromDictionary:customAttribs];
   if (isManagedResource) {
     // If this is a request for a "special" file, then we'll need to force manual
     // calculation of the size by converting to the proper resource format.
@@ -571,17 +570,8 @@ static FUSEFileSystem *manager;
   return YES;  
 }
 
-#pragma mark Open/Close
 
-- (BOOL)openFileAtPath:(NSString *)path mode:(int)mode outHandle:(id *)outHandle {
-  *outHandle = [manager managedContentsForPath:path];
-  return (*outHandle != nil);
-}
-
-- (void)releaseFileAtPath:(NSString *)path handle:(id)handle {
-}
-
-#pragma mark Reading
+#pragma mark Internal Reading?
 
 - (UInt16)finderFlagsForPath:(NSString *)path {
   if ([self iconDataForPath:path]) {
@@ -629,30 +619,17 @@ static FUSEFileSystem *manager;
                            flags:flags];
 }
 
-- (NSData *)contentsAtPath:(NSString *)path {
-  return nil; 
-}
-
-- (NSString *)pathContentOfSymbolicLinkAtPath:(NSString *)path{
-  return nil; 
-}
-
-- (NSArray *)directoryContentsAtPath:(NSString *)path {
-  NSLog(@"directoryContentsAtPath must be implemented by a subclass");
-  return nil;
-
-}
-
 // Directory contents with invisible resources added
-- (NSArray *)fullDirectoryContentsAtPath:(NSString *)path {
+- (NSArray *)fullDirectoryContentsAtPath:(NSString *)path error:(NSError **)error {
+  NSArray *contents = [self contentsOfDirectoryAtPath:path error:error];
+  if (contents == nil) {
+    return nil;
+  }
+  
   NSMutableArray *fullContents = [NSMutableArray array];
   [fullContents addObject:@"."];
   [fullContents addObject:@".."];
-  
-  
-  NSArray *contents = [self directoryContentsAtPath:path];
-  if (contents)
-    [fullContents addObjectsFromArray:contents];
+  [fullContents addObjectsFromArray:contents];
   
   if ([self usesResourceForks]) {
     for (int i = 0, count = [contents count]; i < count; i++) {
@@ -674,55 +651,165 @@ static FUSEFileSystem *manager;
   return fullContents;
 }
 
-- (int)readFileAtPath:(NSString *)path handle:(id)handle
-               buffer:(char *)buffer size:(size_t)size offset:(off_t)offset {
+#pragma mark Moving an Item
+
+- (BOOL)moveItemAtPath:(NSString *)source 
+                toPath:(NSString *)destination
+                 error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
+  return NO;
+}
+
+#pragma mark Removing an Item
+
+- (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
+  return NO;
+}
+
+#pragma mark Creating an Item
+
+- (BOOL)createDirectoryAtPath:(NSString *)path 
+                   attributes:(NSDictionary *)attributes
+                        error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
+  return NO;
+}
+
+- (BOOL)createFileAtPath:(NSString *)path 
+              attributes:(NSDictionary *)attributes
+               outHandle:(id *)outHandle
+                   error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
+  return NO;
+}
+
+
+#pragma mark Linking an Item
+
+// TODO: fusefm version.
+- (BOOL)linkItemAtPath:(NSString *)path
+                toPath:(NSString *)otherPath
+                 error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOTSUP];  // TODO: not in man page.
+  return NO;
+}
+
+#pragma mark Symbolic Links
+
+// TODO: The fusefm_ equivalent is not yet implemented.
+- (BOOL)createSymbolicLinkAtPath:(NSString *)path 
+             withDestinationPath:(NSString *)otherPath
+                           error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOTSUP];  // TODO: not in man page.
+  return NO; 
+}
+
+- (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
+                                        error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOENT];
+  return NO;   
+}
+
+#pragma mark File Contents
+
+- (NSData *)contentsAtPath:(NSString *)path {
+  return nil; 
+}
+
+- (BOOL)openFileAtPath:(NSString *)path 
+                  mode:(int)mode
+             outHandle:(id *)outHandle 
+                 error:(NSError **)error {
+  *outHandle = [manager managedContentsForPath:path];
+  if (*outHandle == nil) {
+    *error = [FUSEFileSystem errorWithCode:ENOENT];
+    return NO;
+  }
+  return YES;
+}
+
+- (void)releaseFileAtPath:(NSString *)path handle:(id)handle {
+    // No implementation.
+}
+
+- (int)readFileAtPath:(NSString *)path 
+               handle:(id)handle
+               buffer:(char *)buffer 
+                 size:(size_t)size 
+               offset:(off_t)offset
+                error:(NSError **)error {
   NSData* data = handle;
-  
   return [data getBytes:buffer size:size offset:offset];
 }
 
+- (int)writeFileAtPath:(NSString *)path 
+                handle:(id)handle 
+                buffer:(const char *)buffer
+                  size:(size_t)size 
+                offset:(off_t)offset
+                 error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
+  return -1; 
+}
 
-
-#pragma mark Writing
-
-- (BOOL)createDirectoryAtPath:(NSString *)path attributes:(NSDictionary *)attributes {
+- (BOOL)truncateFileAtPath:(NSString *)path 
+                    offset:(off_t)offset 
+                     error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:EACCES];
   return NO;
 }
 
-#if 0  // TODO: Figure out a way to do this nicely :-)
-- (BOOL)createFileAtPath:(NSString *)path contents:(NSData *)contents 
-              attributes:(NSDictionary *)attributes {
+#pragma mark Directory Contents
+
+- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory{
+  *isDirectory = [path isEqualToString:@"/"];
+  return YES; 
+}
+
+- (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOENT];
+  return nil;
+}
+
+#pragma mark Getting and Setting Attributes
+
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+                                   error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOENT];  
+  return nil;
+}
+
+- (NSDictionary *)attributesOfFileSystemForPath:(NSString *)path
+                                          error:(NSError **)error {
+  return [NSDictionary dictionary];
+}
+
+- (BOOL)setAttributes:(NSDictionary *)attributes 
+         ofItemAtPath:(NSString *)path
+                error:(NSError **)error {
   return NO;
 }
-#endif
 
-- (BOOL)createSymbolicLinkAtPath:(NSString *)path pathContent:(NSString *)otherPath {
-  return NO; 
-}
+#pragma mark Extended Attributes
 
-- (BOOL)linkPath:(NSString *)source toPath:(NSString *)destination handler:(id)handler{
-  return NO; 
-}
-
-- (BOOL)createFileAtPath:(NSString *)path attributes:(NSDictionary *)attributes
-               outHandle:(id *)outHandle {
+- (NSData *)valueOfExtendedAttribute:(NSString *)name forPath:(NSString *)path
+                               error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOTSUP];
   return NO;
 }
 
-- (int)writeFileAtPath:(NSString *)path handle:(id)handle 
-                buffer:(const char *)buffer size:(size_t)size offset:(off_t)offset {
-  return -EACCES;
-}
-
-- (BOOL)truncateFileAtPath:(NSString *)path offset:(off_t)offset {
+- (BOOL)setExtendedAttribute:(NSString *)name 
+                     forPath:(NSString *)path 
+                       value:(NSData *)value
+                       flags:(int) flags
+                       error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOTSUP];
   return NO;
 }
 
-- (BOOL)movePath:(NSString *)source toPath:(NSString *)destination handler:(id)handler {
-  return NO;
-}
-
-- (BOOL)removeFileAtPath:(NSString *)path handler:(id)handler { 
+- (NSArray *)extendedAttributesForPath:path error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENOTSUP];
   return NO;
 }
 
@@ -740,79 +827,21 @@ static FUSEFileSystem *manager;
 
 }
 
-#pragma mark Lifecycle
-
-
-
-- (void)fuseInit {    
-  isMounted_ = YES;
-  [self fuseDidMount];
-}
-
-- (void)fuseDestroy {
-  isMounted_ = NO;
-    [self fuseDidUnmount];
-  [[NSApplication sharedApplication] terminate:manager]; 
-}
-
-- (BOOL)shouldStartFuse {
-  return YES;
-}
-- (void)applicationDidFinishLaunching:(NSNotification *)notification {
-  if (![self shouldStartFuse]) return;
-  [NSThread detachNewThreadSelector:@selector(startFuse) toTarget:self withObject:nil];
-}
-
-#if 0  // TODO: We should probably switch to just "open /".  
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
-  NSLog(@"calling [self showInFinder]");
-  if (isMounted_) {
-    [self showInFinder];
-  }
-  return NO;
-}
-#endif
-
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
-  [self stopFuse];
-  return NSTerminateNow;
-}
-
-- (NSString *)mountName {
-  NSString *mountName = [[[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountName"] retain];
-  if (!mountName) mountName = NSStringFromClass([self class]);
-  return mountName;
-}
-
-- (NSString *)mountPoint {
-  if (!mountPoint_) {
-    mountPoint_ =  [[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountPath"];
-    // mountPoint_ = [mountPoint_ firstUnusedFilePath];
-    [mountPoint_ retain];
-  }
-  return [[mountPoint_ copy] autorelease];
-}
-
-- (void)fuseWillMount {}
-- (void)fuseDidMount {}
-
-- (void)fuseWillUnmount{}
-- (void)fuseDidUnmount{}
-
-
-
-
-
-#pragma mark -
-
-
+#pragma mark FUSE Operations
 
 static int fusefm_statfs(const char* path, struct statvfs* stbuf) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  int res = 0;
+  int res = -ENOENT;
   memset(stbuf, 0, sizeof(struct statvfs));
-  if (![manager fillStatvfsBuffer:stbuf forPath:[NSString stringWithUTF8String:path]]) {
-    res = -ENOENT;
+  NSError* error = nil;
+  if ([manager fillStatvfsBuffer:stbuf 
+                         forPath:[NSString stringWithUTF8String:path]
+                           error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
   }
   [pool release];
   return res;
@@ -820,10 +849,18 @@ static int fusefm_statfs(const char* path, struct statvfs* stbuf) {
 
 static int fusefm_getattr(const char *path, struct stat *stbuf) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  int res = 0;
+  int res = -ENOENT;
   memset(stbuf, 0, sizeof(struct stat));
-  if (![manager fillStatBuffer:stbuf forPath:[NSString stringWithUTF8String:path]])
-    res = -ENOENT;
+  NSError* error = nil;
+  if ([manager fillStatBuffer:stbuf 
+                      forPath:[NSString stringWithUTF8String:path]
+                        error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
   [pool release];
   return res;
 }
@@ -850,14 +887,19 @@ static int fusefm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int res = -ENOENT;
   
-  NSArray *contents = [manager fullDirectoryContentsAtPath:[NSString stringWithUTF8String:path]];
+  NSError* error = nil;
+  NSArray *contents = [manager fullDirectoryContentsAtPath:[NSString stringWithUTF8String:path] 
+                                                     error:&error];
   if (contents) {
     res = 0;
     for (int i = 0, count = [contents count]; i < count; i++) {
       filler(buf, [[contents objectAtIndex:i] UTF8String], NULL, 0);
     }
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
   }
-  
   [pool release];
   return res;
 }
@@ -866,13 +908,19 @@ static int fusefm_create(const char* path, mode_t mode, struct fuse_file_info* f
   int res = -EACCES;
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
   @try {
+    NSError* error = nil;
     id object = nil;
     if ([manager createFileAtPath:[NSString stringWithUTF8String:path]
                        attributes:nil
-                        outHandle:&object]) {
+                        outHandle:&object
+                            error:&error]) {
       res = 0;
       if (object != nil) {
         fi->fh = (uint64_t)(int)[object retain];
+      }
+    } else {
+      if (error != nil) {
+        res = -[error code];
       }
     }
   }
@@ -887,12 +935,18 @@ static int fusefm_open(const char *path, struct fuse_file_info *fi) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   @try {
     id object = nil;
+    NSError* error = nil;
     if ([manager openFileAtPath:[NSString stringWithUTF8String:path]
                            mode:fi->flags
-                      outHandle:&object]) {
+                      outHandle:&object
+                          error:&error]) {
       res = 0;
       if (object != nil) {
         fi->fh = (uint64_t)(int)[object retain];
+      }
+    } else {
+      if (error != nil) {
+        res = -[error code];
       }
     }
   }
@@ -918,9 +972,15 @@ static int fusefm_truncate(const char* path, off_t offset) {
   int res = -EACCES;
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
+  NSError* error = nil;
   if ([manager truncateFileAtPath:[NSString stringWithUTF8String:path]
-                           offset:offset]) {
+                           offset:offset
+                            error:&error]) {
     res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
   }
   
   [pool release];
@@ -932,21 +992,62 @@ static int fusefm_ftruncate(const char* path, off_t offset, struct fuse_file_inf
 }
 
 static int fusefm_chown(const char* path, uid_t uid, gid_t gid) {
-  return 0;  // Always succeed for now.
+  int res = 0;  // Return success by default.
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+  [attribs setObject:[NSNumber numberWithLong:uid] forKey:NSFileOwnerAccountID];
+  [attribs setObject:[NSNumber numberWithLong:gid] forKey:NSFileGroupOwnerAccountID];
+  NSError* error = nil;
+  if ([manager setAttributes:attribs 
+                ofItemAtPath:[NSString stringWithUTF8String:path]
+                       error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
+  [pool release];
+
+  return res;
 }
+
 static int fusefm_chmod(const char* path, mode_t mode) {
-  return 0;  // Always succeed for now.
+  int res = 0;  // Return success by default.
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+  [attribs setObject:[NSNumber numberWithLong:mode] forKey:NSFilePosixPermissions];
+  NSError* error = nil;
+  if ([manager setAttributes:attribs 
+                ofItemAtPath:[NSString stringWithUTF8String:path]
+                       error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
+  [pool release];
+  
+  return res;
 }
 
 static int fusefm_write(const char* path, const char* buf, size_t size, 
                         off_t offset, struct fuse_file_info* fi) {
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
+  NSError* error = nil;
   int length = [manager writeFileAtPath:[NSString stringWithUTF8String:path]
                                  handle:(id)(int)fi->fh
                                  buffer:buf
                                    size:size
-                                 offset:offset];
+                                 offset:offset
+                                  error:&error];
+  if ( error != nil) {
+    length = -[error code];
+  }
 
   [pool release];
   return length;
@@ -956,20 +1057,37 @@ static int fusefm_read(const char *path, char *buf, size_t size, off_t offset,
                        struct fuse_file_info *fi) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
+  NSError* error = nil;
   int length = [manager readFileAtPath:[NSString stringWithUTF8String:path]
                                 handle:(id)(int)fi->fh
                                 buffer:buf
                                   size:size
-                                offset:offset];
+                                offset:offset
+                                 error:&error];
+  if ( error != nil) {
+    length = -[error code];
+  }
+  
   [pool release];
   return length;
 }
 
 static int fusefm_readlink(const char *path, char *buf, size_t size)
 {
+  int res = -ENOENT;
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  NSString *pathContent = [manager pathContentOfSymbolicLinkAtPath:[NSString stringWithUTF8String:path]];
-  [pathContent getFileSystemRepresentation:buf maxLength:size];
+  NSString* linkPath = [NSString stringWithUTF8String:path];
+  NSError* error = nil;
+  NSString *pathContent = [manager destinationOfSymbolicLinkAtPath:linkPath
+                                                             error:&error];
+  if (pathContent != nil) {
+    res = 0;
+    [pathContent getFileSystemRepresentation:buf maxLength:size];
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
   [pool release];
   return 0;
 }
@@ -979,8 +1097,10 @@ static int fusefm_getxattr(const char *path, const char *name, char *value,
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int res = -ENOATTR;
   @try {
+    NSError* error = nil;
     NSData *data = [manager valueOfExtendedAttribute:[NSString stringWithUTF8String:name]
-                                             forPath:[NSString stringWithUTF8String:path]];
+                                             forPath:[NSString stringWithUTF8String:path]
+                                               error:&error];
     if (data != nil) {
       res = [data length];  // default to returning size of buffer.
       if (value) {
@@ -990,6 +1110,8 @@ static int fusefm_getxattr(const char *path, const char *name, char *value,
         [data getBytes:value length:size];
         res = size;  // bytes read
       }
+    } else if (error != nil) {
+      res = -[error code];
     }
   }
   @catch (NSException * e) {
@@ -1004,11 +1126,17 @@ static int fusefm_setxattr(const char *path, const char *name, const char *value
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int res = -EPERM;
   @try {
+    NSError* error = nil;
     if ([manager setExtendedAttribute:[NSString stringWithUTF8String:name]
                               forPath:[NSString stringWithUTF8String:path]
                                 value:[NSData dataWithBytes:value length:size]
-                                flags:flags]) {
+                                flags:flags
+                                error:&error]) {
       res = 0;
+    } else {
+      if ( error != nil ) {
+        res = -[error code];
+      }
     }
   }
   @catch (NSException * e) {
@@ -1024,7 +1152,10 @@ static int fusefm_listxattr(const char *path, char *list, size_t size)
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int res = -ENOTSUP;
   @try {
-    NSArray *attributeNames = [manager extendedAttributesForPath: [NSString stringWithUTF8String:path]];
+    NSError* error = nil;
+    NSArray *attributeNames =
+      [manager extendedAttributesForPath:[NSString stringWithUTF8String:path]
+                                   error:&error];
     if ( attributeNames != nil ) {
       char zero = 0;
       NSMutableData *data = [NSMutableData dataWithCapacity:size];  
@@ -1039,6 +1170,8 @@ static int fusefm_listxattr(const char *path, char *list, size_t size)
         }
         [data getBytes:list length:size];
       }
+    } else if (error != nil) {
+      res = -[error code];
     }
   }
   @catch (NSException * e) {
@@ -1052,11 +1185,16 @@ static int fusefm_listxattr(const char *path, char *list, size_t size)
 static int fusefm_rename(const char* path, const char* toPath) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = -EACCES;
-  
+
   NSString* source = [NSString stringWithUTF8String:path];
   NSString* destination = [NSString stringWithUTF8String:toPath];
-  if ([manager movePath:source toPath:destination handler:nil]) {
+  NSError* error = nil;
+  if ([manager moveItemAtPath:source toPath:destination error:&error]) {
     ret = 0;  // Success!
+  } else {
+    if (error != nil) {
+      ret = -[error code];
+    }
   }
   [pool release];
   return ret;  
@@ -1066,10 +1204,16 @@ static int fusefm_mkdir(const char* path, mode_t mode) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = -EACCES;
 
+  NSError* error = nil;
   // TODO: Create proper attributes dictionary from mode_t.
   if ([manager createDirectoryAtPath:[NSString stringWithUTF8String:path] 
-                          attributes:nil]) {
+                          attributes:nil
+                               error:(NSError **)error]) {
     ret = 0;  // Success!
+  } else {
+    if (error != nil) {
+      ret = -[error code];
+    }
   }
   [pool release];
   return ret;
@@ -1078,10 +1222,14 @@ static int fusefm_mkdir(const char* path, mode_t mode) {
 static int fusefm_unlink(const char* path) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = -EACCES;
-  
-  if ([manager removeFileAtPath:[NSString stringWithUTF8String:path] 
-                        handler:nil]) {
+  NSError* error = nil;
+  if ([manager removeItemAtPath:[NSString stringWithUTF8String:path] 
+                          error:&error]) {
     ret = 0;  // Success!
+  } else {
+    if (error != nil) {
+      ret = -[error code];
+    }
   }
   [pool release];
   return ret;
@@ -1091,9 +1239,14 @@ static int fusefm_rmdir(const char* path) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = -EACCES;
   
-  if ([manager removeFileAtPath:[NSString stringWithUTF8String:path] 
-                        handler:nil]) {
+  NSError* error = nil;
+  if ([manager removeItemAtPath:[NSString stringWithUTF8String:path] 
+                          error:&error]) {
     ret = 0;  // Success!
+  } else {
+    if (error != nil) {
+      ret = -[error code];
+    }
   }
   [pool release];
   return ret;
@@ -1122,10 +1275,27 @@ static void fusefm_destroy(void *private_data) {
 }
 
 int fusefm_utimens(const char* path, const struct timespec tv[2]) {
+  int res = 0;  // Return success by default.
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-  // TODO: Body :-)
-  [pool release];  
-  return 0;
+  
+  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+  NSDate* modification = 
+    [NSDate dateWithTimeIntervalSince1970:tv[1].tv_sec];
+
+  [attribs setObject:modification forKey:NSFileModificationDate];
+  NSError* error = nil;
+  if ([manager setAttributes:attribs 
+                ofItemAtPath:[NSString stringWithUTF8String:path]
+                       error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
+  [pool release];
+  
+  return res;
 }
 
 static struct fuse_operations fusefm_oper = {
@@ -1134,7 +1304,6 @@ static struct fuse_operations fusefm_oper = {
   .statfs = fusefm_statfs,
   .getattr	= fusefm_getattr,
   .fgetattr = fusefm_fgetattr,
-  // .setattr	= fusefm_setattr,
   .readdir	= fusefm_readdir,
   .open	= fusefm_open,
   .release	= fusefm_release,
@@ -1156,23 +1325,38 @@ static struct fuse_operations fusefm_oper = {
   .utimens = fusefm_utimens,
 };
 
-int fusefm_setattr(const char *path, const char *a,
-                   const char *b, size_t c, 
-                   int d) {
-  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-  // TODO: Body :-)
-  [pool release];  
-  return 0;
+// TODO: Better name for below mark
+#pragma mark Internal Lifecycle?
+
+- (void)fuseInit {    
+  isMounted_ = YES;
+  [self fuseDidMount];
 }
 
-- (BOOL)isForeground {
-  return YES;
+- (void)fuseDestroy {
+  isMounted_ = NO;
+  [self fuseDidUnmount];
+  [[NSApplication sharedApplication] terminate:manager]; 
 }
-- (BOOL)isThreadSafe {
+
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+  if (![self shouldStartFuse]) return;
+  [NSThread detachNewThreadSelector:@selector(startFuse) toTarget:self withObject:nil];
+}
+
+#if 0  // TODO: We should probably switch to just "open /".  
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
+  NSLog(@"calling [self showInFinder]");
+  if (isMounted_) {
+    [self showInFinder];
+  }
   return NO;
 }
-- (NSArray *)fuseOptions {
-  return [NSArray array];
+#endif
+
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+  [self stopFuse];
+  return NSTerminateNow;
 }
 
 - (void)startFuse {
@@ -1245,6 +1429,12 @@ int fusefm_setattr(const char *path, const char *a,
   // Unmount
   NSTask *unmountTask = [NSTask launchedTaskWithLaunchPath:@"/sbin/umount" arguments:[NSArray arrayWithObjects: @"-v", [self mountPoint], nil]];
   [unmountTask waitUntilExit];
+}
+
+#pragma mark Utility Methods
+
++ (NSError *)errorWithCode:(int)code {
+  return [NSError errorWithDomain:NSPOSIXErrorDomain code:code userInfo:nil];
 }
 
 @end

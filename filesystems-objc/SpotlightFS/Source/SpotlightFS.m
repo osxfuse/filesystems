@@ -263,9 +263,11 @@ static NSString *DecodePath(NSString *path) {
 #pragma mark == Overridden FUSEFileSystem Methods
 
 
-- (NSArray *)directoryContentsAtPath:(NSString *)path {
-  if (!path)
+- (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
+  if (!path) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return nil;
+  }
   
   NSString *lastComponent = [path lastPathComponent];
   
@@ -273,7 +275,7 @@ static NSString *DecodePath(NSString *path) {
     return [self topLevelDirectories];
   }
   
-  // Special case the /SmarterSearces folder to have it appear empty
+  // Special case the /SmarterSearches folder to have it appear empty
   if ([lastComponent isEqualToString:kSmarterFolder])
     return nil;
   
@@ -294,9 +296,12 @@ static NSString *DecodePath(NSString *path) {
 }
 
 - (BOOL)createDirectoryAtPath:(NSString *)path
-                   attributes:(NSDictionary *)attributes {
-  if (!path)
+                   attributes:(NSDictionary *)attributes
+                        error:(NSError **)error {
+  if (!path) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return NO;
+  }
   
   // We only allow directories to be created at the very top level
   NSString *dirname = [path stringByDeletingLastPathComponent];
@@ -363,9 +368,11 @@ static NSString *DecodePath(NSString *path) {
 // By default, directories are not writeable, with the notable exceptions below:
 // - Slash is writable
 // - User created directories in slash are writable
-- (NSDictionary *)fileAttributesAtPath:(NSString *)path {
-  if (!path)
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
+  if (!path) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return nil;
+  }
   
   NSMutableDictionary *attr = nil;
   int mode = 0500;
@@ -397,25 +404,32 @@ static NSString *DecodePath(NSString *path) {
     [attr setObject:NSFileTypeSymbolicLink forKey:NSFileType];
     
   } 
-  
+  if (!attr) {
+    *error = [FUSEFileSystem errorWithCode:ENOENT];
+  }
   return attr;
 }
 
-- (NSString *)pathContentOfSymbolicLinkAtPath:(NSString *)path {
-  if (!path)
+- (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
+  if (!path) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return nil;
+  }
   
   NSString *lastComponent = [path lastPathComponent];
   
   if ([lastComponent hasPrefix:@":"])
     return DecodePath(lastComponent);
-
-  return @"/dev/null";
+  
+  *error = [FUSEFileSystem errorWithCode:ENOENT];
+  return nil;
 }
 
-- (BOOL)movePath:(NSString *)source toPath:(NSString *)destination handler:(id)handler {
-  if (!source || !destination)
+- (BOOL)movePath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
+  if (!source || !destination) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return NO;
+  }
   
   NSArray *moveableDirs = [self userCreatedFolders];
   NSString *sourceBasename = [source lastPathComponent];
@@ -439,9 +453,11 @@ static NSString *DecodePath(NSString *path) {
   return YES;
 }
 
-- (BOOL)removeFileAtPath:(NSString *)path handler:(id)handler {
-  if (!path)
+- (BOOL)removeFileAtPath:(NSString *)path error:(NSError **)error {
+  if (!path) {
+    *error = [FUSEFileSystem errorWithCode:EINVAL];
     return NO;
+  }
   
   NSArray *components = [path pathComponents];
   int ncomp = [components count];
@@ -459,10 +475,6 @@ static NSString *DecodePath(NSString *path) {
   if (ncomp == 2)
     [self removeUserCreatedFolder:firstDir];
   
-  return YES;
-}
-
-- (BOOL)shouldMountInFinder {
   return YES;
 }
 

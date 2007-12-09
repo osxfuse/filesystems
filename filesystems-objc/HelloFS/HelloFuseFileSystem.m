@@ -14,7 +14,7 @@ static NSString *helloPath = @"/hello.txt";
 
 @implementation HelloFuseFileSystem
 
-- (NSArray *)directoryContentsAtPath:(NSString *)path{
+- (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   return [NSArray arrayWithObject:[helloPath lastPathComponent]];
 }
 

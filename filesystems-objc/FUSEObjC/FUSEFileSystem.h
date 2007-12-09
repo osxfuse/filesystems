@@ -23,43 +23,19 @@ extern NSString* const FUSEManagedDirectoryResource;
 }
 + (FUSEFileSystem *)sharedManager;
 
+#pragma mark Required Methods
+
+// In order to create the most minimal read-only filesystem possible then you
+// need to override only the following four methods (declared below):
 //
-// Required methods
-//
-
-- (NSArray *)directoryContentsAtPath:(NSString *)path; // Array of NSStrings
-- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory;
-- (NSDictionary *)fileAttributesAtPath:(NSString *)path;
-- (NSData *)contentsAtPath:(NSString *)path;
-
-//
-// Optional methods
-//
-
-#pragma mark Resource Forks
-
-- (BOOL)usesResourceForks; // Enable resource forks (icons, weblocs, more)
-
-// Custom icons for provided files
-- (NSString *)iconFileForPath:(NSString *)path; // path to icns file
-- (NSImage *)iconForPath:(NSString *)path;
-// you must be running in NSApplication (not command line tool) to use NSImage
-
-
-#pragma mark Writing
-
-- (BOOL)createDirectoryAtPath:(NSString *)path attributes:(NSDictionary *)attributes;
-
- // TODO: Support the single-shot create with data if we can.
- //- (BOOL)createFileAtPath:(NSString *)path contents:(NSData *)contents 
- //              attributes:(NSDictionary *)attributes;
-- (BOOL)createFileAtPath:(NSString *)path attributes:(NSDictionary *)attributes
-               outHandle:(id *)outHandle;
-- (BOOL)movePath:(NSString *)source toPath:(NSString *)destination handler:(id)handler;
-- (BOOL)removeFileAtPath:(NSString *)path handler:(id)handler;
-
-
-#pragma mark Lifecycle
+// - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory;
+// - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path 
+//                                  error:(NSError **)error;
+// - (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+//    error:(NSError **)error;
+// - (NSData *)contentsAtPath:(NSString *)path;
+ 
+#pragma mark Configuration
 
 - (NSString *)mountName;
 - (NSString *)mountPoint;
@@ -71,6 +47,8 @@ extern NSString* const FUSEManagedDirectoryResource;
 // For example, to turn on debug output add @"debug" to the returned NSArray.
 - (NSArray *)fuseOptions;  // Default: empty array
 
+#pragma mark Lifecycle
+
 - (BOOL)shouldStartFuse;
 
 - (void)fuseWillMount;
@@ -78,6 +56,15 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 - (void)fuseWillUnmount;
 - (void)fuseDidUnmount;
+
+#pragma mark Resource Forks
+
+- (BOOL)usesResourceForks; // Enable resource forks (icons, weblocs, more)
+
+// Custom icons for provided files
+- (NSString *)iconFileForPath:(NSString *)path; // path to icns file
+- (NSImage *)iconForPath:(NSString *)path;
+// you must be running in NSApplication (not command line tool) to use NSImage
 
 #pragma mark Special Files
 
@@ -87,19 +74,107 @@ extern NSString* const FUSEManagedDirectoryResource;
 // Convenience methods used to provide resource fork for .webloc files
 - (NSURL *)URLContentOfWeblocAtPath:(NSString *)path;
 
-- (NSDictionary *)fileSystemAttributesAtPath:(NSString *)path;
+#pragma mark Moving an Item
 
-// Contents for a symbolic link (must have specified NSFileType as NSFileTypeSymbolicLink)
-- (NSString *)pathContentOfSymbolicLinkAtPath:(NSString *)path;
-- (BOOL)createSymbolicLinkAtPath:(NSString *)path pathContent:(NSString *)otherPath;
-- (BOOL)linkPath:(NSString *)source toPath:(NSString *)destination handler:(id)handler;
+- (BOOL)moveItemAtPath:(NSString *)source 
+                toPath:(NSString *)destination
+                 error:(NSError **)error;
 
+#pragma mark Removing an Item
 
+- (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error;
+
+#pragma mark Creating an Item
+
+- (BOOL)createDirectoryAtPath:(NSString *)path 
+                   attributes:(NSDictionary *)attributes
+                        error:(NSError **)error;
+
+- (BOOL)createFileAtPath:(NSString *)path 
+              attributes:(NSDictionary *)attributes
+               outHandle:(id *)outHandle
+                   error:(NSError **)error;
+
+#pragma mark Linking an Item
+
+- (BOOL)linkItemAtPath:(NSString *)path
+                toPath:(NSString *)otherPath
+                 error:(NSError **)error;
+
+#pragma mark Symbolic Links
+
+- (BOOL)createSymbolicLinkAtPath:(NSString *)path 
+             withDestinationPath:(NSString *)otherPath
+                           error:(NSError **)error;
+- (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
+                                        error:(NSError **)error;
+
+#pragma mark File Contents
+
+// If contentsAtPath is implemented then you can skip open/release/read.
+- (NSData *)contentsAtPath:(NSString *)path;
+
+- (BOOL)openFileAtPath:(NSString *)path 
+                  mode:(int)mode
+             outHandle:(id *)outHandle
+                 error:(NSError **)error;
+
+- (void)releaseFileAtPath:(NSString *)path handle:(id)handle;
+
+- (int)readFileAtPath:(NSString *)path 
+               handle:(id)handle
+               buffer:(char *)buffer 
+                 size:(size_t)size 
+               offset:(off_t)offset
+                error:(NSError **)error;
+
+- (int)writeFileAtPath:(NSString *)path 
+                handle:(id)handle 
+                buffer:(const char *)buffer
+                  size:(size_t)size 
+                offset:(off_t)offset
+                 error:(NSError **)error;
+
+- (BOOL)truncateFileAtPath:(NSString *)path 
+                    offset:(off_t)offset 
+                     error:(NSError **)error;
+
+#pragma mark Directory Contents
+
+- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory;
+
+- (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error;
+
+#pragma mark Getting and Setting Attributes
+
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+                                   error:(NSError **)error;
+
+- (NSDictionary *)attributesOfFileSystemForPath:(NSString *)path
+                                          error:(NSError **)error;
+
+- (BOOL)setAttributes:(NSDictionary *)attributes 
+         ofItemAtPath:(NSString *)path
+                error:(NSError **)error;
+
+#pragma mark Extended Attributes
+
+- (NSArray *)extendedAttributesForPath:path 
+                                 error:(NSError **)error;
+
+- (NSData *)valueOfExtendedAttribute:(NSString *)name 
+                             forPath:(NSString *)path
+                               error:(NSError **)error;
+
+- (BOOL)setExtendedAttribute:(NSString *)name
+                     forPath:(NSString *)path
+                       value:(NSData *)value
+                       flags:(int)flags
+                       error:(NSError **)error;
 
 //
 // Advanced functions
 //
-
 
 #pragma mark Advanced Resource Forks and HFS headers
 
@@ -137,28 +212,30 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 #pragma mark Advanced File Operations
 
-- (BOOL)openFileAtPath:(NSString *)path mode:(int)mode outHandle:(id *)outHandle;
-- (int)readFileAtPath:(NSString *)path handle:(id)handle
-               buffer:(char *)buffer size:(size_t)size offset:(off_t)offset;
-
-- (int)writeFileAtPath:(NSString *)path handle:(id)handle buffer:(const char *)buffer
-                  size:(size_t)size offset:(off_t)offset;
-- (void)releaseFileAtPath:(NSString *)path handle:(id)handle;
-
-- (BOOL)fillStatBuffer:(struct stat *)stbuf forPath:(NSString *)path;
-- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf forPath:(NSString *)path;
-
-- (BOOL)truncateFileAtPath:(NSString *)path offset:(off_t)offset;
-
-- (NSArray *)extendedAttributesForPath:path; // List of attribute names
-- (NSData *)valueOfExtendedAttribute:(NSString *)name forPath:(NSString *)path;
-
+- (BOOL)fillStatBuffer:(struct stat *)stbuf 
+               forPath:(NSString *)path
+                 error:(NSError **)error;
+- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf 
+                  forPath:(NSString *)path
+                    error:(NSError **)error;
 
 #pragma mark Advanced Icons
 
 + (NSData *)iconDataForImage:(NSImage *)image;
 - (NSData *)iconDataForPath:(NSString *)path;
 - (GTResourceFork *)customIconResourceForkForPath:(NSString *)path;
+
+#pragma mark Internal Lifecycle
+
+- (void)fuseInit;
+- (void)fuseDestroy;
+- (void)applicationDidFinishLaunching:(NSNotification *)notification;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+
+#pragma mark Utility Methods
+
+// Creates an autoreleased NSError in the NSPOSIXErrorDomain
++ (NSError *)errorWithCode:(int)code;
 
 @end
 
