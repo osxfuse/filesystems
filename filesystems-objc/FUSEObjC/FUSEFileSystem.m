@@ -740,6 +740,10 @@ static FUSEFileSystem *manager;
                offset:(off_t)offset
                 error:(NSError **)error {
   NSData* data = handle;
+  if ( data == nil ) {
+    *error = [FUSEFileSystem errorWithCode:EACCES];
+    return -1;
+  }
   return [data getBytes:buffer size:size offset:offset];
 }
 
@@ -910,8 +914,10 @@ static int fusefm_create(const char* path, mode_t mode, struct fuse_file_info* f
   @try {
     NSError* error = nil;
     id object = nil;
+    NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+    [attribs setObject:[NSNumber numberWithLong:mode] forKey:NSFilePosixPermissions];
     if ([manager createFileAtPath:[NSString stringWithUTF8String:path]
-                       attributes:nil
+                       attributes:attribs
                         outHandle:&object
                             error:&error]) {
       res = 0;
@@ -931,7 +937,8 @@ static int fusefm_create(const char* path, mode_t mode, struct fuse_file_info* f
 }
 
 static int fusefm_open(const char *path, struct fuse_file_info *fi) {
-  int res = -ENOENT;
+  int res = -ENOENT;  // TODO: Default to 0 (success) since a file-system does
+                      // not necessarily need to implement open.
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   @try {
     id object = nil;
@@ -969,7 +976,7 @@ static int fusefm_release(const char *path, struct fuse_file_info *fi) {
 }
 
 static int fusefm_truncate(const char* path, off_t offset) {
-  int res = -EACCES;
+  int res = -ENOTSUP;
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
   NSError* error = nil;
@@ -1019,6 +1026,30 @@ static int fusefm_chmod(const char* path, mode_t mode) {
   
   NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
   [attribs setObject:[NSNumber numberWithLong:mode] forKey:NSFilePosixPermissions];
+  NSError* error = nil;
+  if ([manager setAttributes:attribs 
+                ofItemAtPath:[NSString stringWithUTF8String:path]
+                       error:&error]) {
+    res = 0;
+  } else {
+    if (error != nil) {
+      res = -[error code];
+    }
+  }
+  [pool release];
+  
+  return res;
+}
+
+int fusefm_utimens(const char* path, const struct timespec tv[2]) {
+  int res = 0;  // Return success by default.
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  
+  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+  NSDate* modification = 
+  [NSDate dateWithTimeIntervalSince1970:tv[1].tv_sec];
+  
+  [attribs setObject:modification forKey:NSFileModificationDate];
   NSError* error = nil;
   if ([manager setAttributes:attribs 
                 ofItemAtPath:[NSString stringWithUTF8String:path]
@@ -1145,7 +1176,6 @@ static int fusefm_setxattr(const char *path, const char *name, const char *value
   [pool release];
   return res;
 }
-
 
 static int fusefm_listxattr(const char *path, char *list, size_t size)
 {
@@ -1274,29 +1304,6 @@ static void fusefm_destroy(void *private_data) {
   [pool release];
 }
 
-int fusefm_utimens(const char* path, const struct timespec tv[2]) {
-  int res = 0;  // Return success by default.
-  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-  
-  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
-  NSDate* modification = 
-    [NSDate dateWithTimeIntervalSince1970:tv[1].tv_sec];
-
-  [attribs setObject:modification forKey:NSFileModificationDate];
-  NSError* error = nil;
-  if ([manager setAttributes:attribs 
-                ofItemAtPath:[NSString stringWithUTF8String:path]
-                       error:&error]) {
-    res = 0;
-  } else {
-    if (error != nil) {
-      res = -[error code];
-    }
-  }
-  [pool release];
-  
-  return res;
-}
 
 static struct fuse_operations fusefm_oper = {
   .init = fusefm_init,
