@@ -406,6 +406,9 @@ static FUSEFileSystem *manager;
 - (BOOL)isManagedResourceAtPath:(NSString *)path
                            type:(NSString **)type
                       dataPath:(NSString **)dataPath {
+  if (![self usesResourceForks]) {
+    return NO;
+  }
   NSString* parentDir = [path stringByDeletingLastPathComponent];
   NSString* name = [path lastPathComponent];
   if ([name isEqualToString:VOLUMEICON]) {
@@ -468,7 +471,7 @@ static FUSEFileSystem *manager;
   NSString* dataPath = path;  // Default to the given path.
   BOOL isManagedResource = 
     [self isManagedResourceAtPath:path type:nil dataPath:&dataPath];
-  
+
   BOOL isDirectory = NO;
   BOOL exists = [self fileExistsAtPath:dataPath isDirectory:&isDirectory];
   if (!exists) return NO;
@@ -485,9 +488,9 @@ static FUSEFileSystem *manager;
                  forKey:NSFileReferenceCount];    // 1 means "don't know"
   [attributes setObject:(isDirectory ? NSFileTypeDirectory : NSFileTypeRegular)
                  forKey:NSFileType];
-  
+
   // A subclass an override any of the above defaults by implementing the
-  // fileAttributesAtPath: selector and returning a custom dictionary.
+  // attributesOfItemAtPath: selector and returning a custom dictionary.
   *error = nil;
   NSDictionary *customAttribs = [self attributesOfItemAtPath:dataPath error:error];
   if (!customAttribs) {
@@ -497,6 +500,7 @@ static FUSEFileSystem *manager;
     return NO;
   }
   [attributes addEntriesFromDictionary:customAttribs];
+  
   if (isManagedResource) {
     // If this is a request for a "special" file, then we'll need to force manual
     // calculation of the size by converting to the proper resource format.
@@ -716,7 +720,7 @@ static FUSEFileSystem *manager;
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
                                         error:(NSError **)error {
   *error = [FUSEFileSystem errorWithCode:ENOENT];
-  return nil;   
+  return nil;
 }
 
 #pragma mark File Contents
@@ -1073,6 +1077,11 @@ int fusefm_utimens(const char* path, const struct timespec tv[2]) {
   return res;
 }
 
+static int fusefm_fsync(const char* path, int isdatasync,
+                        struct fuse_file_info* fi) {
+  return 0;
+}
+
 static int fusefm_write(const char* path, const char* buf, size_t size, 
                         off_t offset, struct fuse_file_info* fi) {
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
@@ -1301,7 +1310,6 @@ static void *fusefm_init(struct fuse_conn_info *conn) {
   return manager;
 }
 
-
 static void fusefm_destroy(void *private_data) {
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
   [manager fuseDestroy];
@@ -1311,7 +1319,6 @@ static void fusefm_destroy(void *private_data) {
 
   [pool release];
 }
-
 
 static struct fuse_operations fusefm_oper = {
   .init = fusefm_init,
@@ -1338,6 +1345,7 @@ static struct fuse_operations fusefm_oper = {
   .chown = fusefm_chown,
   .chmod = fusefm_chmod,
   .utimens = fusefm_utimens,
+  .fsync = fusefm_fsync,
 };
 
 // TODO: Better name for below mark
