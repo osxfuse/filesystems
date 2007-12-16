@@ -310,9 +310,9 @@ static FUSEFileSystem *manager;
 
 - (NSData *)iconDataForPath:(NSString *)path {  
   NSString *iconPath = [self iconFileForPath:path];
-  if (iconPath)
+  if (iconPath) {
     return [NSData dataWithContentsOfFile:iconPath];
-  
+  }
   return [FUSEFileSystem iconDataForImage:[self iconForPath:path]];
 }
 
@@ -324,8 +324,7 @@ static FUSEFileSystem *manager;
 }
 
 - (NSImage *)iconForPath:(NSString *)path {
-//  return [[[NSImage alloc] initByReferencingURL:[NSURL URLWithString:@"http://images.apple.com/macosx/leopard/images/parentalcontrolsiconsidebar20060807.png"]] autorelease];
-  return nil;//[NSImage imageNamed:@"NSApplicationIcon"];  
+  return nil;
 }
 
 - (GTResourceFork *)customIconResourceForkForPath:(NSString *)path {
@@ -355,9 +354,13 @@ static FUSEFileSystem *manager;
   
   // A subclass can override any of the above defaults by implementing the
   // attributesOfFileSystemForPath selector and returning a custom dictionary.
+  *error = nil;
   NSDictionary *customAttribs = [self attributesOfFileSystemForPath:path 
                                                               error:error];
-  if (customAttribs == nil) {
+  if (!customAttribs) {
+    if (!(*error)) {
+      *error = [FUSEFileSystem errorWithCode:ENODEV];
+    }
     return NO;
   }
   [attributes addEntriesFromDictionary:customAttribs];
@@ -485,8 +488,12 @@ static FUSEFileSystem *manager;
   
   // A subclass an override any of the above defaults by implementing the
   // fileAttributesAtPath: selector and returning a custom dictionary.
+  *error = nil;
   NSDictionary *customAttribs = [self attributesOfItemAtPath:dataPath error:error];
-  if (customAttribs == nil) {
+  if (!customAttribs) {
+    if (!(*error)) {
+      *error = [FUSEFileSystem errorWithCode:ENODEV];
+    }
     return NO;
   }
   [attributes addEntriesFromDictionary:customAttribs];
@@ -507,6 +514,7 @@ static FUSEFileSystem *manager;
   } else if ([fileType isEqualToString:NSFileTypeSymbolicLink]) {
     stbuf->st_mode |= S_IFLNK;
   } else {
+    *error = [FUSEFileSystem errorWithCode:EFTYPE];
     NSLog(@"Illegal file type: '%@' at path '%@'", fileType, path);
     return NO;
   }
@@ -708,7 +716,7 @@ static FUSEFileSystem *manager;
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
                                         error:(NSError **)error {
   *error = [FUSEFileSystem errorWithCode:ENOENT];
-  return NO;   
+  return nil;   
 }
 
 #pragma mark File Contents
@@ -780,8 +788,7 @@ static FUSEFileSystem *manager;
 
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
                                    error:(NSError **)error {
-  *error = [FUSEFileSystem errorWithCode:ENOENT];  
-  return nil;
+  return [NSDictionary dictionary];
 }
 
 - (NSDictionary *)attributesOfFileSystemForPath:(NSString *)path
@@ -792,6 +799,7 @@ static FUSEFileSystem *manager;
 - (BOOL)setAttributes:(NSDictionary *)attributes 
          ofItemAtPath:(NSString *)path
                 error:(NSError **)error {
+  *error = [FUSEFileSystem errorWithCode:ENODEV];
   return NO;
 }
 
@@ -800,7 +808,7 @@ static FUSEFileSystem *manager;
 - (NSData *)valueOfExtendedAttribute:(NSString *)name forPath:(NSString *)path
                                error:(NSError **)error {
   *error = [FUSEFileSystem errorWithCode:ENOTSUP];
-  return NO;
+  return nil;
 }
 
 - (BOOL)setExtendedAttribute:(NSString *)name 
@@ -814,7 +822,7 @@ static FUSEFileSystem *manager;
 
 - (NSArray *)extendedAttributesForPath:path error:(NSError **)error {
   *error = [FUSEFileSystem errorWithCode:ENOTSUP];
-  return NO;
+  return nil;
 }
 
 #pragma mark Passthrough
