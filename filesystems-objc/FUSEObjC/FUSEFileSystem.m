@@ -32,8 +32,9 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 
 #define kResourceForkXattr @"com.apple.ResourceFork"
 
-@interface IconFamily (RawData)
+#pragma mark Utility Categories
 
+@interface IconFamily (RawData)
 @end
 
 @implementation IconFamily (RawData)
@@ -41,38 +42,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
   return [NSData dataWithBytes:*hIconFamily length:GetHandleSize((Handle)hIconFamily)];
 }
 @end
-
-
-@interface NSString (UTF8Copy)
-- (char *)copyUTF8String;
-@end
-@implementation NSString (UTF8Copy)
-- (char *)copyUTF8String {
-  const char *original = [self UTF8String];
-  size_t len = strlen(original)+1;
-  char *copy = malloc(len);
-  strlcpy(copy, original, len);
-  return copy;
-}
-@end
-
-@interface NSString (UniquePath)
--(NSString *)firstUnusedFilePath;
-@end
-
-@implementation NSString (UniquePath)
--(NSString *)firstUnusedFilePath{
-	NSString *basePath=[self stringByDeletingPathExtension];
-	NSString *extension=[self pathExtension];
-	NSString *alternatePath=self;
-	int i;
-	for (i=1;[[NSFileManager defaultManager] fileExistsAtPath:alternatePath]; i++)
-		alternatePath=[NSString stringWithFormat:@"%@ %d.%@",basePath,i,extension];
-	return alternatePath;
-}
-
-@end
-
 
 @interface NSData (BufferOffset) 
 - (int)getBytes:(char *)buf size:(size_t)size offset:(off_t)offset;
@@ -96,24 +65,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 @end
 
 #pragma mark -
-
-@interface FUSEFileSystem (FUSEFileSystemPrivate)
-- (NSArray *)fullDirectoryContentsAtPath:(NSString *)path;
-- (void)startFuse;
-- (void)stopFuse;
-@end
-
-@interface FUSEFileSystem (FuseFunctions)
-
-//- (void)fuseInit;
-//- (void)fuseDestroy;
-//- (BOOL)shouldStartFuse;
-//- (NSString *)mountName;
-//- (NSString *)mountPoint;
-
-@end
-
-
 
 @implementation FUSEFileSystem
 + (void)initialize {
@@ -158,7 +109,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 - (NSString *)mountPoint {
   if (!mountPoint_) {
     mountPoint_ =  [[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountPath"];
-    // mountPoint_ = [mountPoint_ firstUnusedFilePath];
     [mountPoint_ retain];
   }
   return [[mountPoint_ copy] autorelease];
@@ -1411,7 +1361,6 @@ static struct fuse_operations fusefm_oper = {
   [volumeHeader writeToFile:[self resourcePathForPath:mountPath]
                  atomically:NO];
   
-  
   NSMutableArray *arguments = [NSMutableArray arrayWithObjects:
     [[NSBundle mainBundle] executablePath],
     [NSString stringWithFormat:@"-ovolname=%@",[self mountName]],
@@ -1432,15 +1381,12 @@ static struct fuse_operations fusefm_oper = {
   [arguments addObject:mountPath];
 
   // Start Fuse Main
-  const char *argv[[arguments count]];
-  
+  int argc = [arguments count];
+  const char *argv[argc];
   for (int i = 0, count = [arguments count]; i < count; i++) {
-    argv[i] = [[arguments objectAtIndex:i] copyUTF8String];
+    NSString* argument = [arguments objectAtIndex:i];
+    argv[i] = strdup([argument UTF8String]);  // We'll just leak this for now.
   }
-  
-  argv[0] = strcpy(malloc(strlen(argv[0]+1)), argv[0]);
-  
-  int argc = sizeof(argv) / sizeof(argv[0]);
   [self fuseWillMount];
   [pool release];
   fuse_main(argc, (char **)argv, &fusefm_oper, self); 
