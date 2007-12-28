@@ -97,10 +97,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 
 #pragma mark -
 
-
-static FUSEFileSystem *manager;
-
-
 @interface FUSEFileSystem (FUSEFileSystemPrivate)
 - (NSArray *)fullDirectoryContentsAtPath:(NSString *)path;
 - (void)startFuse;
@@ -127,11 +123,6 @@ static FUSEFileSystem *manager;
 }
 
 - (id)init {
-  if (manager) {
-    [self release];
-    return manager;  
-  }
-  
   // FUSEFileSystem automatically converts into the desired subclass
   if ([self isMemberOfClass:[FUSEFileSystem class]]) {
     [self release];
@@ -147,15 +138,13 @@ static FUSEFileSystem *manager;
       return nil;
     }
   }
-  manager = self;
-  return manager;
+  return self;
 }
 
-+ (FUSEFileSystem *)sharedManager {
-  if (!manager) {
-    manager = [[self alloc] init];
-  }
-  return manager;
++ (FUSEFileSystem *)currentFS {
+  struct fuse_context* context = fuse_get_context();
+  assert(context);
+  return (FUSEFileSystem *)context->private_data;
 }
 
 #pragma mark Configuration
@@ -733,7 +722,7 @@ static FUSEFileSystem *manager;
                   mode:(int)mode
              outHandle:(id *)outHandle 
                  error:(NSError **)error {
-  *outHandle = [manager managedContentsForPath:path];
+  *outHandle = [[FUSEFileSystem currentFS] managedContentsForPath:path];
   if (*outHandle == nil) {
     *error = [FUSEFileSystem errorWithCode:ENOENT];
     return NO;
@@ -850,9 +839,10 @@ static int fusefm_statfs(const char* path, struct statvfs* stbuf) {
   int res = -ENOENT;
   memset(stbuf, 0, sizeof(struct statvfs));
   NSError* error = nil;
-  if ([manager fillStatvfsBuffer:stbuf 
-                         forPath:[NSString stringWithUTF8String:path]
-                           error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs fillStatvfsBuffer:stbuf 
+                    forPath:[NSString stringWithUTF8String:path]
+                      error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -868,9 +858,10 @@ static int fusefm_getattr(const char *path, struct stat *stbuf) {
   int res = -ENOENT;
   memset(stbuf, 0, sizeof(struct stat));
   NSError* error = nil;
-  if ([manager fillStatBuffer:stbuf 
-                      forPath:[NSString stringWithUTF8String:path]
-                        error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs fillStatBuffer:stbuf 
+                 forPath:[NSString stringWithUTF8String:path]
+                   error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -884,28 +875,17 @@ static int fusefm_getattr(const char *path, struct stat *stbuf) {
 static int fusefm_fgetattr(const char *path, struct stat *stbuf, struct fuse_file_info *fi) {
   // TODO: This is a quick hack to get fstat up and running.
   return fusefm_getattr(path, stbuf);
-#if 0  
-  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  int res = fusefm_getattr(path, stbuf);
-  NSData *wrapper = (id)(int)fi->fh;
-  
-  if (wrapper) {
-    stbuf->st_size = [wrapper length];
-  }
-    
-  [pool release];
-  return res;
-#endif
 }
 
 static int fusefm_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
                           off_t offset, struct fuse_file_info *fi) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int res = -ENOENT;
-  
+
   NSError* error = nil;
-  NSArray *contents = [manager fullDirectoryContentsAtPath:[NSString stringWithUTF8String:path] 
-                                                     error:&error];
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  NSArray *contents = [fs fullDirectoryContentsAtPath:[NSString stringWithUTF8String:path] 
+                                                error:&error];
   if (contents) {
     res = 0;
     for (int i = 0, count = [contents count]; i < count; i++) {
@@ -928,10 +908,11 @@ static int fusefm_create(const char* path, mode_t mode, struct fuse_file_info* f
     id object = nil;
     NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
     [attribs setObject:[NSNumber numberWithLong:mode] forKey:NSFilePosixPermissions];
-    if ([manager createFileAtPath:[NSString stringWithUTF8String:path]
-                       attributes:attribs
-                        outHandle:&object
-                            error:&error]) {
+    FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+    if ([fs createFileAtPath:[NSString stringWithUTF8String:path]
+                  attributes:attribs
+                   outHandle:&object
+                       error:&error]) {
       res = 0;
       if (object != nil) {
         fi->fh = (uint64_t)(int)[object retain];
@@ -955,10 +936,11 @@ static int fusefm_open(const char *path, struct fuse_file_info *fi) {
   @try {
     id object = nil;
     NSError* error = nil;
-    if ([manager openFileAtPath:[NSString stringWithUTF8String:path]
-                           mode:fi->flags
-                      outHandle:&object
-                          error:&error]) {
+    FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+    if ([fs openFileAtPath:[NSString stringWithUTF8String:path]
+                      mode:fi->flags
+                 outHandle:&object
+                     error:&error]) {
       res = 0;
       if (object != nil) {
         fi->fh = (uint64_t)(int)[object retain];
@@ -979,7 +961,8 @@ static int fusefm_open(const char *path, struct fuse_file_info *fi) {
 static int fusefm_release(const char *path, struct fuse_file_info *fi) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   id object = (id)(int)fi->fh;
-  [manager releaseFileAtPath:[NSString stringWithUTF8String:path] handle:object];
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  [fs releaseFileAtPath:[NSString stringWithUTF8String:path] handle:object];
   if (object) {
     [object release]; 
   }
@@ -992,9 +975,10 @@ static int fusefm_truncate(const char* path, off_t offset) {
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
   NSError* error = nil;
-  if ([manager truncateFileAtPath:[NSString stringWithUTF8String:path]
-                           offset:offset
-                            error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs truncateFileAtPath:[NSString stringWithUTF8String:path]
+                      offset:offset
+                       error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -1018,9 +1002,10 @@ static int fusefm_chown(const char* path, uid_t uid, gid_t gid) {
   [attribs setObject:[NSNumber numberWithLong:uid] forKey:NSFileOwnerAccountID];
   [attribs setObject:[NSNumber numberWithLong:gid] forKey:NSFileGroupOwnerAccountID];
   NSError* error = nil;
-  if ([manager setAttributes:attribs 
-                ofItemAtPath:[NSString stringWithUTF8String:path]
-                       error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs setAttributes:attribs 
+           ofItemAtPath:[NSString stringWithUTF8String:path]
+                  error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -1039,9 +1024,10 @@ static int fusefm_chmod(const char* path, mode_t mode) {
   NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
   [attribs setObject:[NSNumber numberWithLong:mode] forKey:NSFilePosixPermissions];
   NSError* error = nil;
-  if ([manager setAttributes:attribs 
-                ofItemAtPath:[NSString stringWithUTF8String:path]
-                       error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs setAttributes:attribs 
+           ofItemAtPath:[NSString stringWithUTF8String:path]
+                  error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -1063,9 +1049,10 @@ int fusefm_utimens(const char* path, const struct timespec tv[2]) {
   
   [attribs setObject:modification forKey:NSFileModificationDate];
   NSError* error = nil;
-  if ([manager setAttributes:attribs 
-                ofItemAtPath:[NSString stringWithUTF8String:path]
-                       error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs setAttributes:attribs 
+           ofItemAtPath:[NSString stringWithUTF8String:path]
+                  error:&error]) {
     res = 0;
   } else {
     if (error != nil) {
@@ -1087,12 +1074,13 @@ static int fusefm_write(const char* path, const char* buf, size_t size,
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
   NSError* error = nil;
-  int length = [manager writeFileAtPath:[NSString stringWithUTF8String:path]
-                                 handle:(id)(int)fi->fh
-                                 buffer:buf
-                                   size:size
-                                 offset:offset
-                                  error:&error];
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  int length = [fs writeFileAtPath:[NSString stringWithUTF8String:path]
+                            handle:(id)(int)fi->fh
+                            buffer:buf
+                              size:size
+                            offset:offset
+                             error:&error];
   if ( error != nil) {
     length = -[error code];
   }
@@ -1106,12 +1094,13 @@ static int fusefm_read(const char *path, char *buf, size_t size, off_t offset,
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
   NSError* error = nil;
-  int length = [manager readFileAtPath:[NSString stringWithUTF8String:path]
-                                handle:(id)(int)fi->fh
-                                buffer:buf
-                                  size:size
-                                offset:offset
-                                 error:&error];
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  int length = [fs readFileAtPath:[NSString stringWithUTF8String:path]
+                           handle:(id)(int)fi->fh
+                           buffer:buf
+                             size:size
+                           offset:offset
+                              error:&error];
   if ( error != nil) {
     length = -[error code];
   }
@@ -1126,8 +1115,9 @@ static int fusefm_readlink(const char *path, char *buf, size_t size)
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   NSString* linkPath = [NSString stringWithUTF8String:path];
   NSError* error = nil;
-  NSString *pathContent = [manager destinationOfSymbolicLinkAtPath:linkPath
-                                                             error:&error];
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  NSString *pathContent = [fs destinationOfSymbolicLinkAtPath:linkPath
+                                                        error:&error];
   if (pathContent != nil) {
     res = 0;
     [pathContent getFileSystemRepresentation:buf maxLength:size];
@@ -1146,9 +1136,10 @@ static int fusefm_getxattr(const char *path, const char *name, char *value,
   int res = -ENOATTR;
   @try {
     NSError* error = nil;
-    NSData *data = [manager valueOfExtendedAttribute:[NSString stringWithUTF8String:name]
-                                             forPath:[NSString stringWithUTF8String:path]
-                                               error:&error];
+    FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+    NSData *data = [fs valueOfExtendedAttribute:[NSString stringWithUTF8String:name]
+                                        forPath:[NSString stringWithUTF8String:path]
+                                          error:&error];
     if (data != nil) {
       res = [data length];  // default to returning size of buffer.
       if (value) {
@@ -1175,11 +1166,12 @@ static int fusefm_setxattr(const char *path, const char *name, const char *value
   int res = -EPERM;
   @try {
     NSError* error = nil;
-    if ([manager setExtendedAttribute:[NSString stringWithUTF8String:name]
-                              forPath:[NSString stringWithUTF8String:path]
-                                value:[NSData dataWithBytes:value length:size]
-                                flags:flags
-                                error:&error]) {
+    FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+    if ([fs setExtendedAttribute:[NSString stringWithUTF8String:name]
+                         forPath:[NSString stringWithUTF8String:path]
+                           value:[NSData dataWithBytes:value length:size]
+                           flags:flags
+                           error:&error]) {
       res = 0;
     } else {
       if ( error != nil ) {
@@ -1200,9 +1192,10 @@ static int fusefm_listxattr(const char *path, char *list, size_t size)
   int res = -ENOTSUP;
   @try {
     NSError* error = nil;
+    FUSEFileSystem* fs = [FUSEFileSystem currentFS];
     NSArray *attributeNames =
-      [manager extendedAttributesForPath:[NSString stringWithUTF8String:path]
-                                   error:&error];
+      [fs extendedAttributesForPath:[NSString stringWithUTF8String:path]
+                              error:&error];
     if ( attributeNames != nil ) {
       char zero = 0;
       NSMutableData *data = [NSMutableData dataWithCapacity:size];  
@@ -1236,7 +1229,8 @@ static int fusefm_rename(const char* path, const char* toPath) {
   NSString* source = [NSString stringWithUTF8String:path];
   NSString* destination = [NSString stringWithUTF8String:toPath];
   NSError* error = nil;
-  if ([manager moveItemAtPath:source toPath:destination error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs moveItemAtPath:source toPath:destination error:&error]) {
     ret = 0;  // Success!
   } else {
     if (error != nil) {
@@ -1253,9 +1247,10 @@ static int fusefm_mkdir(const char* path, mode_t mode) {
 
   NSError* error = nil;
   // TODO: Create proper attributes dictionary from mode_t.
-  if ([manager createDirectoryAtPath:[NSString stringWithUTF8String:path] 
-                          attributes:nil
-                               error:(NSError **)error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs createDirectoryAtPath:[NSString stringWithUTF8String:path] 
+                     attributes:nil
+                          error:(NSError **)error]) {
     ret = 0;  // Success!
   } else {
     if (error != nil) {
@@ -1270,8 +1265,9 @@ static int fusefm_unlink(const char* path) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   int ret = -EACCES;
   NSError* error = nil;
-  if ([manager removeItemAtPath:[NSString stringWithUTF8String:path] 
-                          error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs removeItemAtPath:[NSString stringWithUTF8String:path] 
+                     error:&error]) {
     ret = 0;  // Success!
   } else {
     if (error != nil) {
@@ -1287,8 +1283,9 @@ static int fusefm_rmdir(const char* path) {
   int ret = -EACCES;
   
   NSError* error = nil;
-  if ([manager removeItemAtPath:[NSString stringWithUTF8String:path] 
-                          error:&error]) {
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  if ([fs removeItemAtPath:[NSString stringWithUTF8String:path] 
+                     error:&error]) {
     ret = 0;  // Success!
   } else {
     if (error != nil) {
@@ -1301,21 +1298,21 @@ static int fusefm_rmdir(const char* path) {
 
 static void *fusefm_init(struct fuse_conn_info *conn) {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-  
-  // We'll hold onto manager for the mount lifetime.
-  [manager retain];
-  [manager fuseInit];
+
+  FUSEFileSystem* fs = [FUSEFileSystem currentFS];
+  [fs retain];
+  [fs fuseInit];
 
   [pool release];
-  return manager;
+  return fs;
 }
 
 static void fusefm_destroy(void *private_data) {
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-  [manager fuseDestroy];
-  
-  // Release the manager
-  [(id)private_data release];
+
+  FUSEFileSystem* fs = (FUSEFileSystem *)private_data;
+  [fs fuseDestroy];
+  [fs release];
 
   [pool release];
 }
@@ -1359,7 +1356,7 @@ static struct fuse_operations fusefm_oper = {
 - (void)fuseDestroy {
   isMounted_ = NO;
   [self fuseDidUnmount];
-  [[NSApplication sharedApplication] terminate:manager]; 
+  [[NSApplication sharedApplication] terminate:[FUSEFileSystem currentFS]]; 
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
@@ -1383,8 +1380,15 @@ static struct fuse_operations fusefm_oper = {
 }
 
 - (void)startFuse {
-  assert([NSThread isMultiThreaded]);
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+  // Trigger initialization of NSFileManager. This is rather lame, but if we
+  // don't call directoryContents before we mount our FUSE filesystem and 
+  // the filesystem uses NSFileManager we may deadlock. It seems that the
+  // NSFileManager class will do lazy init and will query all mounted
+  // filesystems. This leads to deadlock when we re-enter our mounted fuse fs. 
+  // Once initialized it seems to work fine.
+  [[NSFileManager defaultManager] directoryContentsAtPath:@"/Volumes"];
   
   NSString *mountPath = [self mountPoint];
   
@@ -1426,7 +1430,7 @@ static struct fuse_operations fusefm_oper = {
     }
   }
   [arguments addObject:mountPath];
-  
+
   // Start Fuse Main
   const char *argv[[arguments count]];
   
@@ -1443,7 +1447,6 @@ static struct fuse_operations fusefm_oper = {
 }
 
 - (void)stopFuse {
-  
   // Remove volume header file
   NSFileManager *fileManager = [NSFileManager defaultManager];
   [fileManager removeFileAtPath:[self resourcePathForPath:[self mountPoint]]

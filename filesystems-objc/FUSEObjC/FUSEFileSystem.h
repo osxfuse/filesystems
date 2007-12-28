@@ -21,7 +21,6 @@ extern NSString* const FUSEManagedDirectoryResource;
   NSString *mountPoint_;
   BOOL isMounted_;  // Should Finder see that this filesystem has been mounted? 
 }
-+ (FUSEFileSystem *)sharedManager;
 
 #pragma mark Required Methods
 
@@ -231,6 +230,8 @@ extern NSString* const FUSEManagedDirectoryResource;
 - (void)fuseDestroy;
 - (void)applicationDidFinishLaunching:(NSNotification *)notification;
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+- (void)startFuse;
+- (void)stopFuse;
 
 #pragma mark Utility Methods
 
