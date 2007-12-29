@@ -6,20 +6,12 @@
 //  Copyright 2006 Google. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-@class FUSEFileWrapper;
-@class GTResourceFork;
-
-extern NSString* const FUSEManagedVolumeIcon;
-extern NSString* const FUSEManagedDirectoryIconFile;
-extern NSString* const FUSEManagedDirectoryIconResource;
-extern NSString* const FUSEManagedFileResource;
-extern NSString* const FUSEManagedDirectoryResource;
+#import <Foundation/Foundation.h>
 
 @interface FUSEFileSystem : NSObject {
-  NSDictionary *files_;
-  NSString *mountPoint_;
+  NSString* mountPath_;
   BOOL isMounted_;  // Should Finder see that this filesystem has been mounted? 
+  id delegate_;
 }
 
 #pragma mark Required Methods
@@ -48,6 +40,20 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 #pragma mark Lifecycle
 
+// --- TODO: Don't use these yet ---
+- (void)mountAtPath:(NSString *)mountPath 
+        withOptions:(NSArray *)options
+       isThreadSafe:(BOOL)isThreadSafe;
+
+- (void)mountAtPath:(NSString *)mountPath 
+        withOptions:(NSArray *)options
+       isThreadSafe:(BOOL)isThreadSafe
+   shouldForeground:(BOOL)shouldForeground     // Recommend: YES
+    detachNewThread:(BOOL)detachNewThread;     // Recommend: YES
+
+- (void)umount;
+// ---  End construction ---
+
 - (BOOL)shouldStartFuse;
 
 - (void)fuseWillMount;
@@ -61,14 +67,10 @@ extern NSString* const FUSEManagedDirectoryResource;
 - (BOOL)usesResourceForks; // Enable resource forks (icons, weblocs, more)
 
 // Custom icons for provided files
+- (NSData *)iconDataForPath:(NSString *)path;  // The .icns data.
 - (NSString *)iconFileForPath:(NSString *)path; // path to icns file
-- (NSImage *)iconForPath:(NSString *)path;
-// you must be running in NSApplication (not command line tool) to use NSImage
 
 #pragma mark Special Files
-
-// Path of a real file to pass all function calls to
-- (NSString *)passthroughPathForPath:(NSString *)path;
 
 // Convenience methods used to provide resource fork for .webloc files
 - (NSURL *)URLContentOfWeblocAtPath:(NSString *)path;
@@ -179,59 +181,10 @@ extern NSString* const FUSEManagedDirectoryResource;
 
 - (BOOL)pathHasResourceFork:(NSString *)path;
 
-// Determines whether the given path is a for a resource managed by 
-// FUSEFileSystem, such as a custom icon for a file. The optional
-// "type" param is set to the type of the managed resource. The optional
-// "dataPath" param is set to the file that represents this resource. For
-// example, for a custom icon resource fork, this would be the corresponding 
-// data fork. For a custom directory icon, this would be the directory itself.
-- (BOOL)isManagedResourceAtPath:(NSString *)path type:(NSString **)type
-                       dataPath:(NSString **)dataPath;
-
-- (NSData *)managedContentsForPath:(NSString *)path;
-
-// ._ location for a given path
-- (NSString *)resourcePathForPath:(NSString *)path;
 - (UInt16)finderFlagsForPath:(NSString *)path;
-
-- (GTResourceFork *)resourceForkForPath:(NSString *)path;
 
 // Raw data of resource fork
 - (NSData *)resourceForkContentsForPath:(NSString *)path;
-
-// HFS header (first 82 bytes of the ._ file)
-- (NSData *)resourceHeaderForPath:(NSString *)path 
-                         withResourceSize:(UInt32)size 
-                                    flags:(UInt16)flags;
-
-// Combined HFS header and Resource Fork
-- (NSData *)resourceHeaderAndForkForPath:(NSString *)path
-                                 includeResource:(BOOL)includeResource
-                                           flags:(UInt16)flags;
-
-#pragma mark Advanced File Operations
-
-- (BOOL)fillStatBuffer:(struct stat *)stbuf 
-               forPath:(NSString *)path
-                 error:(NSError **)error;
-- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf 
-                  forPath:(NSString *)path
-                    error:(NSError **)error;
-
-#pragma mark Advanced Icons
-
-+ (NSData *)iconDataForImage:(NSImage *)image;
-- (NSData *)iconDataForPath:(NSString *)path;
-- (GTResourceFork *)customIconResourceForkForPath:(NSString *)path;
-
-#pragma mark Internal Lifecycle
-
-- (void)fuseInit;
-- (void)fuseDestroy;
-- (void)applicationDidFinishLaunching:(NSNotification *)notification;
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
-- (void)startFuse;
-- (void)stopFuse;
 
 #pragma mark Utility Methods
 

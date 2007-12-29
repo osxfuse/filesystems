@@ -13,14 +13,14 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#import "GTResourceFork.h"
-#import "IconFamily.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/mount.h>
+
+#import "GTResourceFork.h"
+#import <Foundation/Foundation.h>
 
 NSString* const FUSEManagedVolumeIcon = @"FUSEManagedVolumeIcon";
 NSString* const FUSEManagedDirectoryIconFile = @"FUSEManagedDirectoryIconFile";
@@ -33,15 +33,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 #define kResourceForkXattr @"com.apple.ResourceFork"
 
 #pragma mark Utility Categories
-
-@interface IconFamily (RawData)
-@end
-
-@implementation IconFamily (RawData)
-- (NSData *)iconData {
-  return [NSData dataWithBytes:*hIconFamily length:GetHandleSize((Handle)hIconFamily)];
-}
-@end
 
 @interface NSData (BufferOffset) 
 - (int)getBytes:(char *)buf size:(size_t)size offset:(off_t)offset;
@@ -65,6 +56,52 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 @end
 
 #pragma mark -
+
+@interface FUSEFileSystem (FUSEFileSystemPrivate)
+- (NSArray *)fullDirectoryContentsAtPath:(NSString *)path;
+- (GTResourceFork *)customIconResourceForkForPath:(NSString *)path;
+- (GTResourceFork *)resourceForkForPath:(NSString *)path;
+- (void)mount:(NSDictionary *)args;
+
+// Determines whether the given path is a for a resource managed by 
+// FUSEFileSystem, such as a custom icon for a file. The optional
+// "type" param is set to the type of the managed resource. The optional
+// "dataPath" param is set to the file that represents this resource. For
+// example, for a custom icon resource fork, this would be the corresponding 
+// data fork. For a custom directory icon, this would be the directory itself.
+- (BOOL)isManagedResourceAtPath:(NSString *)path type:(NSString **)type
+                       dataPath:(NSString **)dataPath;
+
+- (NSData *)managedContentsForPath:(NSString *)path;
+
+// ._ location for a given path
+- (NSString *)resourcePathForPath:(NSString *)path;
+
+// HFS header (first 82 bytes of the ._ file)
+- (NSData *)resourceHeaderForPath:(NSString *)path 
+                 withResourceSize:(UInt32)size 
+                            flags:(UInt16)flags;
+
+// Combined HFS header and Resource Fork
+- (NSData *)resourceHeaderAndForkForPath:(NSString *)path
+                         includeResource:(BOOL)includeResource
+                                   flags:(UInt16)flags;
+
+- (BOOL)fillStatBuffer:(struct stat *)stbuf 
+               forPath:(NSString *)path
+                 error:(NSError **)error;
+- (BOOL)fillStatvfsBuffer:(struct statvfs *)stbuf 
+                  forPath:(NSString *)path
+                    error:(NSError **)error;
+
+- (void)fuseInit;
+- (void)fuseDestroy;
+- (void)applicationDidFinishLaunching:(NSNotification *)notification;
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender;
+- (void)startFuse;
+- (void)stopFuse;
+
+@end
 
 @implementation FUSEFileSystem
 + (void)initialize {
@@ -107,11 +144,11 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 }
 
 - (NSString *)mountPoint {
-  if (!mountPoint_) {
-    mountPoint_ =  [[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountPath"];
-    [mountPoint_ retain];
+  if (!mountPath_) {
+    mountPath_ =  [[NSUserDefaults standardUserDefaults] stringForKey:@"FUSEMountPath"];
+    [mountPath_ retain];
   }
-  return [[mountPoint_ copy] autorelease];
+  return [[mountPath_ copy] autorelease];
 }
 
 - (BOOL)isForeground {
@@ -148,7 +185,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
   return nil;
 }
 
-
 - (NSString *)resourcePathForPath:(NSString *)path {
   NSString *name = [path lastPathComponent];
   path = [path stringByDeletingLastPathComponent];
@@ -156,7 +192,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
   path = [path stringByAppendingPathComponent:name];
   return path;
 }
-
 
 - (NSData *)resourceHeaderForPath:(NSString *)path 
                          withResourceSize:(UInt32)size 
@@ -182,7 +217,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
   memcpy(header + 0x32, &info, sizeof(FileInfo));
   return [NSData dataWithBytes:&header length:82];
 }
-
 
 - (NSData *)resourceForkContentsForPath:(NSString *)path {
   NSData *data = nil;
@@ -238,21 +272,12 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 
 #pragma mark Icons
 
-+ (NSData *)iconDataForImage:(NSImage *)image {
-  NSData* data = nil;
-  if (image != nil) {
-    IconFamily *family = [IconFamily iconFamilyWithThumbnailsOfImage:image];
-    data = [family iconData];
-  }
-  return data;
-}
-
 - (NSData *)iconDataForPath:(NSString *)path {  
   NSString *iconPath = [self iconFileForPath:path];
   if (iconPath) {
     return [NSData dataWithContentsOfFile:iconPath];
   }
-  return [FUSEFileSystem iconDataForImage:[self iconForPath:path]];
+  return nil;
 }
 
 - (NSString *)iconFileForPath:(NSString *)path {
@@ -260,10 +285,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
       return [[NSBundle mainBundle] pathForResource:@"Fuse" ofType:@"icns"];
     } 
     return nil;
-}
-
-- (NSImage *)iconForPath:(NSString *)path {
-  return nil;
 }
 
 - (GTResourceFork *)customIconResourceForkForPath:(NSString *)path {
@@ -401,12 +422,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 - (BOOL)fillStatBuffer:(struct stat *)stbuf 
                forPath:(NSString *)path 
                  error:(NSError **)error {
-  // TODO: support passthrough paths for all reads/writes/stats
-  NSString *realPath = [self passthroughPathForPath:path];
-  if (realPath) {
-    return (lstat([realPath fileSystemRepresentation], stbuf) == 0);
-  }
-
   NSString* dataPath = path;  // Default to the given path.
   BOOL isManagedResource = 
     [self isManagedResourceAtPath:path type:nil dataPath:&dataPath];
@@ -532,12 +547,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 }
 
 - (NSData *)managedContentsForPath:(NSString *)path {
-  
-  NSString *realPath = [self passthroughPathForPath:path];
-  if (realPath) {
-    return ([[NSFileManager defaultManager] contentsAtPath:realPath]);
-  }
-
   NSString* dataPath = path;  // Default to the given path.
   NSString* type = nil;
   BOOL isManagedResource = 
@@ -766,20 +775,6 @@ NSString* const FUSEManagedDirectoryResource = @"FUSEManagedDirectoryResource";
 - (NSArray *)extendedAttributesForPath:path error:(NSError **)error {
   *error = [FUSEFileSystem errorWithCode:ENOTSUP];
   return nil;
-}
-
-#pragma mark Passthrough
-// TODO: support passthrough paths for all reads/writes/stats
-- (NSString *)passthroughPathForPath:(NSString *)path {
-  return nil;
-}
-
-#pragma mark Finder
-
-- (void)showInFinder {
-  [[NSWorkspace sharedWorkspace] selectFile:[self mountPoint]
-                   inFileViewerRootedAtPath:[[self mountPoint] stringByDeletingLastPathComponent]];
-
 }
 
 #pragma mark FUSE Operations
@@ -1306,32 +1301,58 @@ static struct fuse_operations fusefm_oper = {
 - (void)fuseDestroy {
   isMounted_ = NO;
   [self fuseDidUnmount];
-  [[NSApplication sharedApplication] terminate:[FUSEFileSystem currentFS]]; 
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
   if (![self shouldStartFuse]) return;
-  [NSThread detachNewThreadSelector:@selector(startFuse) toTarget:self withObject:nil];
+  [self startFuse];
 }
-
-#if 0  // TODO: We should probably switch to just "open /".  
-- (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)flag {
-  NSLog(@"calling [self showInFinder]");
-  if (isMounted_) {
-    [self showInFinder];
-  }
-  return NO;
-}
-#endif
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
   [self stopFuse];
   return NSTerminateNow;
 }
 
-- (void)startFuse {
+- (void)mountAtPath:(NSString *)mountPath 
+        withOptions:(NSArray *)options
+       isThreadSafe:(BOOL)isThreadSafe {
+  [self mountAtPath:mountPath
+        withOptions:options
+       isThreadSafe:isThreadSafe
+   shouldForeground:YES
+    detachNewThread:YES];   
+}
+
+- (void)mountAtPath:(NSString *)mountPath 
+        withOptions:(NSArray *)options
+       isThreadSafe:(BOOL)isThreadSafe 
+   shouldForeground:(BOOL)shouldForeground
+    detachNewThread:(BOOL)detachNewThread {
+  NSDictionary* args = 
+    [[NSDictionary alloc] initWithObjectsAndKeys:
+     mountPath, @"mountPath",
+     options, @"options",
+     [NSNumber numberWithBool:isThreadSafe], @"isThreadSafe", 
+     [NSNumber numberWithBool:shouldForeground], @"shouldForeground", 
+     nil, nil];
+  if (detachNewThread) {
+    [NSThread detachNewThreadSelector:@selector(mount:) 
+                             toTarget:self 
+                           withObject:args];
+  } else {
+    [self mount:args];
+  }
+}
+
+- (void)mount:(NSDictionary *)args {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
+  [mountPath_ autorelease];
+  mountPath_ = [[args objectForKey:@"mountPath"] retain];
+  NSArray* options = [args objectForKey:@"options"];
+  BOOL isThreadSafe = [[args objectForKey:@"isThreadSafe"] boolValue];
+  BOOL shouldForeground = [[args objectForKey:@"shouldForeground"] boolValue];
+  
   // Trigger initialization of NSFileManager. This is rather lame, but if we
   // don't call directoryContents before we mount our FUSE filesystem and 
   // the filesystem uses NSFileManager we may deadlock. It seems that the
@@ -1339,47 +1360,27 @@ static struct fuse_operations fusefm_oper = {
   // filesystems. This leads to deadlock when we re-enter our mounted fuse fs. 
   // Once initialized it seems to work fine.
   [[NSFileManager defaultManager] directoryContentsAtPath:@"/Volumes"];
-  
-  NSString *mountPath = [self mountPoint];
-  
-  if (![mountPath length]){
-    NSLog(@"No mount point specified");
-    [pool release];
-    return;
-  } else {
-    NSLog(@"mounting on: %@", mountPath);
-  }
-  
-  // Create mount path
+
+  // Create mount path if necessary.
   NSFileManager *fileManager = [NSFileManager defaultManager];
-  [fileManager createDirectoryAtPath:mountPath attributes:nil];
-  
-  // Create mount header
-  NSData *volumeHeader = [self resourceHeaderAndForkForPath:@"/"
-                                            includeResource:NO
-                                                      flags:kHasCustomIcon];
-  [volumeHeader writeToFile:[self resourcePathForPath:mountPath]
-                 atomically:NO];
-  
-  NSMutableArray *arguments = [NSMutableArray arrayWithObjects:
-    [[NSBundle mainBundle] executablePath],
-    [NSString stringWithFormat:@"-ovolname=%@",[self mountName]],
-    nil];
-  if ([self isForeground]) {
-    [arguments addObject:@"-f"];  // Forground rather than daemonize.
-  }
-  if (![self isThreadSafe]) {
+  [fileManager createDirectoryAtPath:mountPath_ attributes:nil];
+
+  NSMutableArray* arguments = 
+    [NSMutableArray arrayWithObject:[[NSBundle mainBundle] executablePath]];
+  if (isThreadSafe) {
     [arguments addObject:@"-s"];  // Force single-threaded mode.
   }
-  NSArray* options = [self fuseOptions];
+  if (shouldForeground) {
+    [arguments addObject:@"-f"];  // Forground rather than daemonize.
+  }
   for (int i = 0; i < [options count]; ++i) {
     NSString* option = [options objectAtIndex:i];
     if ([option length] > 0) {
       [arguments addObject:[NSString stringWithFormat:@"-o%@",option]];
     }
   }
-  [arguments addObject:mountPath];
-
+  [arguments addObject:mountPath_];
+  
   // Start Fuse Main
   int argc = [arguments count];
   const char *argv[argc];
@@ -1389,18 +1390,37 @@ static struct fuse_operations fusefm_oper = {
   }
   [self fuseWillMount];
   [pool release];
-  fuse_main(argc, (char **)argv, &fusefm_oper, self); 
+  fuse_main(argc, (char **)argv, &fusefm_oper, self);
+}
+
+- (void)umount {
+  [self fuseWillUnmount];
+  NSArray* args = [NSArray arrayWithObjects:@"-v", [self mountPoint], nil];
+  NSTask *unmountTask = [NSTask launchedTaskWithLaunchPath:@"/sbin/umount" 
+                                                 arguments:args];
+  [unmountTask waitUntilExit];
+}
+
+- (void)startFuse {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  
+  NSString *mountPath = [self mountPoint];
+  if (![mountPath length]){
+    NSLog(@"No mount point specified");
+    [pool release];
+    return;
+  } else {
+    NSLog(@"mounting on: %@", mountPath);
+  }
+  [self mountAtPath:mountPath 
+        withOptions:[self fuseOptions]
+       isThreadSafe:[self isThreadSafe]
+   shouldForeground:[self isForeground]
+    detachNewThread:YES];
 }
 
 - (void)stopFuse {
-  // Remove volume header file
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-  [fileManager removeFileAtPath:[self resourcePathForPath:[self mountPoint]]
-                        handler:nil];
-  [self fuseWillUnmount];
-  // Unmount
-  NSTask *unmountTask = [NSTask launchedTaskWithLaunchPath:@"/sbin/umount" arguments:[NSArray arrayWithObjects: @"-v", [self mountPoint], nil]];
-  [unmountTask waitUntilExit];
+  [self umount];
 }
 
 #pragma mark Utility Methods
