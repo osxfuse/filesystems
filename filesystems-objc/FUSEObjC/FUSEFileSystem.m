@@ -20,7 +20,6 @@
 #include <sys/mount.h>
 
 #import "GTResourceFork.h"
-#import <Foundation/Foundation.h>
 
 NSString* const FUSEManagedVolumeIcon = @"FUSEManagedVolumeIcon";
 NSString* const FUSEManagedDirectoryIconFile = @"FUSEManagedDirectoryIconFile";
@@ -1301,6 +1300,7 @@ static struct fuse_operations fusefm_oper = {
 - (void)fuseDestroy {
   isMounted_ = NO;
   [self fuseDidUnmount];
+  [[NSApplication sharedApplication] terminate:[FUSEFileSystem currentFS]];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {

@@ -6,7 +6,7 @@
 //  Copyright 2006 Google. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 @interface FUSEFileSystem : NSObject {
   NSString* mountPath_;
