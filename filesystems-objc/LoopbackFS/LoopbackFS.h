@@ -17,11 +17,8 @@
 
 @interface LoopbackFS : NSObject  {
   NSString* rootPath_;   // The local file-system path to mount.
-  id delegate_;  // We pass on UserFileSystem lifecycle calls to the delegate.
 }
 - (id)initWithRootPath:(NSString *)rootPath;
 - (void)dealloc;
-
-- (void)setDelegate:(id)delegate;
 
 @end

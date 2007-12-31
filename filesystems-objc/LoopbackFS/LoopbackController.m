@@ -12,6 +12,22 @@
 
 @implementation LoopbackController
 
+- (void)didMount:(NSNotification *)notification {
+  NSLog(@"Got didMount notification.");
+
+  NSDictionary* userInfo = [notification userInfo];
+  NSString* mountPath = [userInfo objectForKey:@"mountPath"];
+  NSString* parentPath = [mountPath stringByDeletingLastPathComponent];
+  [[NSWorkspace sharedWorkspace] selectFile:mountPath
+                   inFileViewerRootedAtPath:parentPath];
+}
+
+- (void)didUnmount:(NSNotification*)notification {
+  NSLog(@"Got didUnmount notification.");
+  
+  [[NSApplication sharedApplication] terminate:nil];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
   NSOpenPanel* panel = [NSOpenPanel openPanel];
   [panel setCanChooseFiles:NO];
@@ -27,9 +43,14 @@
   }
   NSString* rootPath = [paths objectAtIndex:0];
 
+  NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self selector:@selector(didMount:)
+                 name:kUserFileSystemDidMount object:nil];
+  [center addObserver:self selector:@selector(didUnmount:)
+                 name:kUserFileSystemDidUnmount object:nil];
+  
   NSString* mountPath = @"/Volumes/loop";
   loop_ = [[LoopbackFS alloc] initWithRootPath:rootPath];
-  [loop_ setDelegate:self];
 
   fs_ = [[UserFileSystem alloc] initWithDelegate:loop_ isThreadSafe:NO];
   
@@ -44,15 +65,12 @@
        withOptions:options];
 }
 
-- (void)didUmount {
-  [[NSApplication sharedApplication] terminate:nil];
-
-}
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
-  [fs_ umount];
+  [fs_ unmount];
   [fs_ release];
   [loop_ release];
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   return NSTerminateNow;
 }
 

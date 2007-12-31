@@ -38,33 +38,6 @@
   [super dealloc];
 }
 
-- (void)setDelegate:(id)delegate {
-  delegate_ = delegate;
-}
-
-#pragma mark Delegate
-
-- (void)willMount { 
-  if ([delegate_ respondsToSelector:@selector(willMount)]) {
-    [delegate_ willMount]; 
-  }
-}
-- (void)didMount {
-  if ([delegate_ respondsToSelector:@selector(didMount)]) {
-    [delegate_ didMount]; 
-  }
-}
-- (void)willUmount { 
-  if ([delegate_ respondsToSelector:@selector(willUmount)]) {
-    [delegate_ willUmount]; 
-  }
-}
-- (void)didUmount { 
-  if ([delegate_ respondsToSelector:@selector(didUmount)]) {
-    [delegate_ didUmount]; 
-  }
-}
-
 #pragma mark Moving an Item
 
 - (BOOL)moveItemAtPath:(NSString *)source 
