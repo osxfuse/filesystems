@@ -228,13 +228,6 @@
 
 #pragma mark Directory Contents
 
-- (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory {
-  LOG_OP(@"[0x%x] file exists?: %@", [NSThread currentThread], path);
-
-  NSString* p = [rootPath_ stringByAppendingString:path];
-  return [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:isDirectory];
-}
-
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   LOG_OP(@"[0x%x] directory contents: %@", [NSThread currentThread], path);
 
@@ -275,7 +268,7 @@
 
 #pragma mark Extended Attributes
 
-- (NSArray *)extendedAttributesForPath:(NSString *)path error:(NSError **)error {
+- (NSArray *)extendedAttributesOfItemAtPath:(NSString *)path error:(NSError **)error {
   LOG_OP(@"[0x%x] extended Attributes: %@", [NSThread currentThread], path);
   
   NSString* p = [rootPath_ stringByAppendingString:path];
@@ -302,7 +295,7 @@
 }
 
 - (NSData *)valueOfExtendedAttribute:(NSString *)name 
-                             forPath:(NSString *)path
+                        ofItemAtPath:(NSString *)path
                                error:(NSError **)error {
   LOG_OP(@"[0x%x] value of extended attribute: %@ forPath:%@", 
          [NSThread currentThread], name, path);
@@ -329,7 +322,7 @@
 }
 
 - (BOOL)setExtendedAttribute:(NSString *)name 
-                     forPath:(NSString *)path 
+                ofItemAtPath:(NSString *)path 
                        value:(NSData *)value
                        flags:(int)flags
                        error:(NSError **)error {
