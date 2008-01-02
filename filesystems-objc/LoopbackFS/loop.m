@@ -28,7 +28,8 @@ int main(int argc, char* argv[]) {
     printf("  -rootPath: Local directory path to mount, ex: /tmp\n");
     printf("  -mountPath: Mount point to use. [Default='%s']\n",
            DEFAULT_MOUNT_PATH);
-    printf("Ex: %s -rootPath /tmp -mountPath %s\n\n", DEFAULT_MOUNT_PATH);
+    printf("Ex: %s -rootPath /tmp -mountPath %s\n\n", argv[0], 
+           DEFAULT_MOUNT_PATH);
     return 0;
   }
 
