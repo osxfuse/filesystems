@@ -305,7 +305,6 @@
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
                          0, 0);
   if ( size < 0 ) {
-    NSLog(@"Error coming from hfs?");
     *error = [UserFileSystem errorWithCode:errno];
     return nil;
   }
@@ -314,7 +313,6 @@
                   [data mutableBytes], [data length],
                   0, 0);
   if ( size < 0 ) {
-    NSLog(@"Error coming from hfs2?");
     *error = [UserFileSystem errorWithCode:errno];
     return nil;
   }  
