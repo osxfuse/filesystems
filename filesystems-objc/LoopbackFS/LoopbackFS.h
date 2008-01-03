@@ -21,7 +21,7 @@
 //
 // This is a simple but complete example filesystem that mounts a local 
 // directory. You can modify this to see how the Finder reacts to returning
-// specific error codes or not implementing a particular UserFileSystem
+// specific error codes or not implementing a particular GMUserFileSystem
 // operation.
 //
 // For example, you can mount "/tmp" in /Volumes/loop. Note: It is 

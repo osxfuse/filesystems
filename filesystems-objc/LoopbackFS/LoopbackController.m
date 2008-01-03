@@ -21,7 +21,7 @@
 //
 #import "LoopbackController.h"
 #import "LoopbackFS.h"
-#import <MacFUSE/UserFileSystem.h>
+#import <MacFUSE/GMUserFileSystem.h>
 
 @implementation LoopbackController
 
@@ -58,14 +58,14 @@
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
   [center addObserver:self selector:@selector(didMount:)
-                 name:kUserFileSystemDidMount object:nil];
+                 name:kGMUserFileSystemDidMount object:nil];
   [center addObserver:self selector:@selector(didUnmount:)
-                 name:kUserFileSystemDidUnmount object:nil];
+                 name:kGMUserFileSystemDidUnmount object:nil];
   
   NSString* mountPath = @"/Volumes/loop";
   loop_ = [[LoopbackFS alloc] initWithRootPath:rootPath];
 
-  fs_ = [[UserFileSystem alloc] initWithDelegate:loop_ isThreadSafe:NO];
+  fs_ = [[GMUserFileSystem alloc] initWithDelegate:loop_ isThreadSafe:NO];
   
   NSMutableArray* options = [NSMutableArray array];
   NSString* volArg = 

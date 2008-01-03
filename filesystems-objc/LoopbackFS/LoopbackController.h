@@ -22,11 +22,11 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class UserFileSystem;
+@class GMUserFileSystem;
 @class LoopbackFS;
 
 @interface LoopbackController : NSObject {
-  UserFileSystem* fs_;
+  GMUserFileSystem* fs_;
   LoopbackFS* loop_;
 }
 

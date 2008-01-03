@@ -21,7 +21,7 @@
 //
 // This is a simple but complete example filesystem that mounts a local 
 // directory. You can modify this to see how the Finder reacts to returning
-// specific error codes or not implementing a particular UserFileSystem
+// specific error codes or not implementing a particular GMUserFileSystem
 // operation.
 //
 // For example, you can mount "/tmp" in /Volumes/loop. Note: It is 
@@ -30,7 +30,7 @@
 #import <sys/xattr.h>
 #import <sys/stat.h>
 #import "LoopbackFS.h"
-#import <MacFUSE/UserFileSystem.h>
+#import <MacFUSE/GMUserFileSystem.h>
 
 @implementation LoopbackFS
 
@@ -66,7 +66,7 @@
   NSString* p_dst = [rootPath_ stringByAppendingString:destination];
   int ret = rename([p_src UTF8String], [p_dst UTF8String]);
   if ( ret < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
   }
   return YES;
 }
@@ -85,7 +85,7 @@
     // do a recursive remove :-(
     int ret = rmdir([p UTF8String]);
     if (ret < 0) {
-      *error = [UserFileSystem errorWithCode:errno];
+      *error = [GMUserFileSystem errorWithCode:errno];
       return NO;
     }
     return YES;
@@ -117,7 +117,7 @@
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
   int fd = creat([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return NO;
   }
   *outHandle = [NSNumber numberWithLong:fd];
@@ -172,7 +172,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int fd = open([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return NO;
   }
   *outHandle = [NSNumber numberWithLong:fd];
@@ -200,7 +200,7 @@
   int fd = [num longValue];
   int ret = pread(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return -1;
   }
   return ret;
@@ -219,7 +219,7 @@
   int fd = [num longValue];
   int ret = pwrite(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return -1;
   }
   return ret;
@@ -234,7 +234,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = truncate([p UTF8String], offset);
   if ( ret < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return NO;    
   }
   return YES;
@@ -289,13 +289,13 @@
   
   ssize_t size = listxattr([p UTF8String], nil, 0, 0);
   if ( size < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
   size = listxattr([p UTF8String], [data mutableBytes], [data length], 0);
   if ( size < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return nil;
   }
   NSMutableArray* contents = [NSMutableArray array];
@@ -319,7 +319,7 @@
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
                          0, 0);
   if ( size < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
@@ -327,7 +327,7 @@
                   [data mutableBytes], [data length],
                   0, 0);
   if ( size < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return nil;
   }  
   return data;
@@ -346,7 +346,7 @@
                      [value bytes], [value length], 
                      0, 0);
   if ( ret < 0 ) {
-    *error = [UserFileSystem errorWithCode:errno];
+    *error = [GMUserFileSystem errorWithCode:errno];
     return NO;
   }
   return YES;
