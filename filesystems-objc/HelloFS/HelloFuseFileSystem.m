@@ -1,13 +1,25 @@
+// ================================================================
+// Copyright (C) 2006 Google Inc.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ================================================================
 //
 //  HelloFuseFileSystem.m
 //  GoogleHelloFuse
 //
 //  Created by alcor on 12/15/06.
-//  Copyright 2006 Google. All rights reserved.
 //
-
 #import "HelloFuseFileSystem.h"
-
 
 static NSString *helloStr = @"Hello World!\n";
 static NSString *helloPath = @"/hello.txt";
@@ -20,21 +32,17 @@ static NSString *helloPath = @"/hello.txt";
 
 - (NSData *)contentsAtPath:(NSString *)path {
   if ([path isEqualToString:helloPath])
-    return [helloStr dataUsingEncoding:NSUTF8StringEncoding];  
+    return [helloStr dataUsingEncoding:NSUTF8StringEncoding];
   return nil;
 }
 
-
 #pragma optional icon method
 
-- (BOOL)usesResourceForks{
-return YES;
-}
-- (NSString *)iconFileForPath:(NSString *)path {
-  if ([path isEqualToString:@"/"])
-    return [[NSBundle mainBundle] pathForResource:@"Fuse" ofType:@"icns"];
-  if ([path isEqualToString:helloPath])
-    return [[NSBundle mainBundle] pathForResource:@"hellodoc" ofType:@"icns"];
+- (NSData *)iconDataAtPath:(NSString *)path {
+  if ([path isEqualToString:helloPath]) {
+    NSString *file = [[NSBundle mainBundle] pathForResource:@"hellodoc" ofType:@"icns"];
+    return [NSData dataWithContentsOfFile:file];
+  }
   return nil;
 }
 
