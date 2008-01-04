@@ -50,6 +50,16 @@
 #import <MacFUSE/GMUserFileSystem.h>
 #import "SpotlightFS.h"
 
+// Category on NSError to  simplify creating an NSError based on posix errno.
+@interface NSError (POSIX)
++ (NSError *)errorWithPOSIXCode:(int)code;
+@end
+@implementation NSError (POSIX)
++ (NSError *)errorWithPOSIXCode:(int) code {
+  return [NSError errorWithDomain:NSPOSIXErrorDomain code:code userInfo:nil];
+}
+@end
+
 // Key name for use in NSUserDefaults
 static NSString* const kDefaultsSearchDirectories = @"SearchDirectories";
 
@@ -280,7 +290,7 @@ static NSString *DecodePath(NSString *path) {
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return nil;
   }
   
@@ -314,7 +324,7 @@ static NSString *DecodePath(NSString *path) {
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
   if (!path) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return NO;
   }
   
@@ -385,12 +395,12 @@ static NSString *DecodePath(NSString *path) {
 // - User created directories in slash are writable
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return nil;
   }
   BOOL isDirectory;
   if (![self fileExistsAtPath:path isDirectory:&isDirectory]) {
-    *error = [GMUserFileSystem errorWithCode:ENOENT];
+    *error = [NSError errorWithPOSIXCode:ENOENT];
     return nil;
   }
   
@@ -426,14 +436,14 @@ static NSString *DecodePath(NSString *path) {
     
   } 
   if (!attr) {
-    *error = [GMUserFileSystem errorWithCode:ENOENT];
+    *error = [NSError errorWithPOSIXCode:ENOENT];
   }
   return attr;
 }
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return nil;
   }
   
@@ -442,13 +452,13 @@ static NSString *DecodePath(NSString *path) {
   if ([lastComponent hasPrefix:@":"])
     return DecodePath(lastComponent);
   
-  *error = [GMUserFileSystem errorWithCode:ENOENT];
+  *error = [NSError errorWithPOSIXCode:ENOENT];
   return nil;
 }
 
 - (BOOL)movePath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
   if (!source || !destination) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return NO;
   }
   
@@ -476,7 +486,7 @@ static NSString *DecodePath(NSString *path) {
 
 - (BOOL)removeFileAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    *error = [NSError errorWithPOSIXCode:EINVAL];
     return NO;
   }
   
