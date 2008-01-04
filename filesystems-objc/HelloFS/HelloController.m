@@ -50,6 +50,8 @@
   NSMutableArray* options = [NSMutableArray array];
   [options addObject:@"rdonly"];
   [options addObject:@"volname=HelloFS"];
+  [options addObject:[NSString stringWithFormat:@"volicon=%@", 
+    [[NSBundle mainBundle] pathForResource:@"Fuse" ofType:@"icns"]]];
   [fs_ mountAtPath:mountPath withOptions:options];
 }
 
