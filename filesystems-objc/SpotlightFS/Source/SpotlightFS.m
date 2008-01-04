@@ -509,7 +509,7 @@ static NSString *DecodePath(NSString *path) {
   NSString *iconPath = [mainBundle pathForResource:@"SmartFolderBlue" ofType:@"icns"];
   
   if ([path isEqualToString:@"/"])
-    iconPath = [mainBundle pathForResource:@"SpotlightFSMount" ofType:@"icns"];
+    return nil;  // Custom volume icon is handled by options to filesystem mount.
   else if ([path isEqualToString:[@"/" stringByAppendingPathComponent:kSmarterFolder]])
     iconPath = [mainBundle pathForResource:@"DynamicFolderBlue" ofType:@"icns"];
   else if ([[self spotlightSavedSearches] containsObject:lastComponent])
