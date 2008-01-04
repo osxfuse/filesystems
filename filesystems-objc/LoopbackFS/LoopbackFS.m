@@ -32,6 +32,16 @@
 #import "LoopbackFS.h"
 #import <MacFUSE/GMUserFileSystem.h>
 
+// Category on NSError to  simplify creating an NSError based on posix errno.
+@interface NSError (POSIX)
++ (NSError *)errorWithPOSIXCode:(int)code;
+@end
+@implementation NSError (POSIX)
++ (NSError *)errorWithPOSIXCode:(int) code {
+  return [NSError errorWithDomain:NSPOSIXErrorDomain code:code userInfo:nil];
+}
+@end
+
 @implementation LoopbackFS
 
 #if 1
@@ -66,7 +76,7 @@
   NSString* p_dst = [rootPath_ stringByAppendingString:destination];
   int ret = rename([p_src UTF8String], [p_dst UTF8String]);
   if ( ret < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
   }
   return YES;
 }
@@ -85,7 +95,7 @@
     // do a recursive remove :-(
     int ret = rmdir([p UTF8String]);
     if (ret < 0) {
-      *error = [GMUserFileSystem errorWithCode:errno];
+      *error = [NSError errorWithPOSIXCode:errno];
       return NO;
     }
     return YES;
@@ -109,7 +119,7 @@
 
 - (BOOL)createFileAtPath:(NSString *)path 
               attributes:(NSDictionary *)attributes
-               outHandle:(id *)outHandle
+            fileDelegate:(id *)fileDelegate
                    error:(NSError **)error {
   LOG_OP(@"[0x%x] createFileAtPath: %@", [NSThread currentThread], path); 
 
@@ -117,10 +127,10 @@
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
   int fd = creat([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
-  *outHandle = [NSNumber numberWithLong:fd];
+  *fileDelegate = [NSNumber numberWithLong:fd];
   return YES;
 }
 
@@ -165,30 +175,30 @@
 
 - (BOOL)openFileAtPath:(NSString *)path 
                   mode:(int)mode
-             outHandle:(id *)outHandle
+          fileDelegate:(id *)fileDelegate
                  error:(NSError **)error {
   LOG_OP(@"[0x%x] openFileAtPath: %@", [NSThread currentThread], path); 
 
   NSString* p = [rootPath_ stringByAppendingString:path];
   int fd = open([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
-  *outHandle = [NSNumber numberWithLong:fd];
+  *fileDelegate = [NSNumber numberWithLong:fd];
   return YES;
 }
 
-- (void)releaseFileAtPath:(NSString *)path handle:(id)handle {
+- (void)releaseFileAtPath:(NSString *)path fileDelegate:(id)fileDelegate {
   LOG_OP(@"[0x%x] releaseFileAtPath: %@", [NSThread currentThread], path);
 
-  NSNumber* num = (NSNumber *)handle;
+  NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   close(fd);
 }
 
 - (int)readFileAtPath:(NSString *)path 
-               handle:(id)handle
+         fileDelegate:(id)fileDelegate
                buffer:(char *)buffer 
                  size:(size_t)size 
                offset:(off_t)offset
@@ -196,18 +206,18 @@
   LOG_OP(@"[0x%x] readFileAtPath: %@, offset=%lld, size=%d", 
          [NSThread currentThread], path, offset, size); 
 
-  NSNumber* num = (NSNumber *)handle;
+  NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   int ret = pread(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return -1;
   }
   return ret;
 }
 
 - (int)writeFileAtPath:(NSString *)path 
-                handle:(id)handle 
+          fileDelegate:(id)fileDelegate 
                 buffer:(const char *)buffer
                   size:(size_t)size 
                 offset:(off_t)offset
@@ -215,11 +225,11 @@
   LOG_OP(@"[0x%x] writeFileAtPath: %@, offset=%lld, size=%d", 
          [NSThread currentThread], path, offset, size);
 
-  NSNumber* num = (NSNumber *)handle;
+  NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   int ret = pwrite(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return -1;
   }
   return ret;
@@ -234,7 +244,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = truncate([p UTF8String], offset);
   if ( ret < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return NO;    
   }
   return YES;
@@ -289,13 +299,13 @@
   
   ssize_t size = listxattr([p UTF8String], nil, 0, 0);
   if ( size < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
   size = listxattr([p UTF8String], [data mutableBytes], [data length], 0);
   if ( size < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return nil;
   }
   NSMutableArray* contents = [NSMutableArray array];
@@ -319,7 +329,7 @@
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
                          0, 0);
   if ( size < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
@@ -327,7 +337,7 @@
                   [data mutableBytes], [data length],
                   0, 0);
   if ( size < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return nil;
   }  
   return data;
@@ -346,7 +356,7 @@
                      [value bytes], [value length], 
                      0, 0);
   if ( ret < 0 ) {
-    *error = [GMUserFileSystem errorWithCode:errno];
+    *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
   return YES;

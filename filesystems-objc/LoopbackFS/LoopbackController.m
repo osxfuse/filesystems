@@ -80,10 +80,10 @@
 
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [fs_ unmount];
   [fs_ release];
   [loop_ release];
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
   return NSTerminateNow;
 }
 
