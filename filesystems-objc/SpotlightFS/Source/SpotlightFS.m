@@ -1,9 +1,23 @@
+// ================================================================
+// Copyright (C) 2007 Google Inc.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// ================================================================
 //
 //  SpotlightFS.m
 //  SpotlightFS
 //
 //  Created by Greg Miller <jgm@> on 1/19/07.
-//  Copyright 2007 Google Inc. All rights reserved.
 //
 
 // The SpotlightFS file system looks roughly like:
@@ -33,6 +47,7 @@
 #import <unistd.h>
 #import <CoreServices/CoreServices.h>
 #import <Foundation/Foundation.h>
+#import <MacFUSE/GMUserFileSystem.h>
 #import "SpotlightFS.h"
 
 // Key name for use in NSUserDefaults
@@ -260,12 +275,12 @@ static NSString *DecodePath(NSString *path) {
 }
 
 
-#pragma mark == Overridden FUSEFileSystem Methods
+#pragma mark == Overridden GMUserFileSystem Delegate Methods
 
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
     return nil;
   }
   
@@ -299,7 +314,7 @@ static NSString *DecodePath(NSString *path) {
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
   if (!path) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
     return NO;
   }
   
@@ -370,7 +385,12 @@ static NSString *DecodePath(NSString *path) {
 // - User created directories in slash are writable
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
+    return nil;
+  }
+  BOOL isDirectory;
+  if (![self fileExistsAtPath:path isDirectory:&isDirectory]) {
+    *error = [GMUserFileSystem errorWithCode:ENOENT];
     return nil;
   }
   
@@ -392,6 +412,7 @@ static NSString *DecodePath(NSString *path) {
       [NSNumber numberWithInt:getegid()], NSFileGroupOwnerAccountID,
       [NSDate date], NSFileCreationDate,
       [NSDate date], NSFileModificationDate,
+      (isDirectory ? NSFileTypeDirectory : NSFileTypeRegular), NSFileType,
       nil];
     
   } else {
@@ -405,14 +426,14 @@ static NSString *DecodePath(NSString *path) {
     
   } 
   if (!attr) {
-    *error = [FUSEFileSystem errorWithCode:ENOENT];
+    *error = [GMUserFileSystem errorWithCode:ENOENT];
   }
   return attr;
 }
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
     return nil;
   }
   
@@ -421,13 +442,13 @@ static NSString *DecodePath(NSString *path) {
   if ([lastComponent hasPrefix:@":"])
     return DecodePath(lastComponent);
   
-  *error = [FUSEFileSystem errorWithCode:ENOENT];
+  *error = [GMUserFileSystem errorWithCode:ENOENT];
   return nil;
 }
 
 - (BOOL)movePath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
   if (!source || !destination) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
     return NO;
   }
   
@@ -455,7 +476,7 @@ static NSString *DecodePath(NSString *path) {
 
 - (BOOL)removeFileAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [FUSEFileSystem errorWithCode:EINVAL];
+    *error = [GMUserFileSystem errorWithCode:EINVAL];
     return NO;
   }
   
@@ -482,7 +503,7 @@ static NSString *DecodePath(NSString *path) {
   return YES;
 }
 
-- (NSString *)iconFileForPath:(NSString *)path {
+- (NSString *)iconDataAtPath:(NSString *)path {
   NSString *lastComponent = [path lastPathComponent];
   NSBundle *mainBundle = [NSBundle mainBundle];
   NSString *iconPath = [mainBundle pathForResource:@"SmartFolderBlue" ofType:@"icns"];
@@ -494,8 +515,7 @@ static NSString *DecodePath(NSString *path) {
   else if ([[self spotlightSavedSearches] containsObject:lastComponent])
     iconPath = [mainBundle pathForResource:@"SmartFolder" ofType:@"icns"];
   
-  return iconPath;
+  return [NSData dataWithContentsOfFile:iconPath];
 }
-
 
 @end

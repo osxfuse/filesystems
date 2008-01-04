@@ -22,20 +22,11 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>0.1.1</string>
-	<key>FUSEFileSystemClass</key>
-	<string>SpotlightFS</string>
 	<key>LSUIElement</key>
 	<string>1</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>NSUserDefaults</key>
-	<dict>
-		<key>FUSEMountName</key>
-		<string>SpotlightFS</string>
-		<key>FUSEMountPath</key>
-		<string>/Volumes/SpotlightFS</string>
-	</dict>
 </dict>
 </plist>

@@ -13,17 +13,14 @@
 		F927CD000B6405DC00AF272E /* DynamicFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */; };
 		F927CD040B64063A00AF272E /* SmartFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD030B64063A00AF272E /* SmartFolderBlue.icns */; };
 		F927CD570B640C8F00AF272E /* SmartFolder.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD560B640C8F00AF272E /* SmartFolder.icns */; };
-		F946437F0B935ECF00220464 /* GTResourceFork.m in Sources */ = {isa = PBXBuildFile; fileRef = F946436F0B935ECF00220464 /* GTResourceFork.m */; };
-		F94643820B935ECF00220464 /* IconFamily.m in Sources */ = {isa = PBXBuildFile; fileRef = F94643750B935ECF00220464 /* IconFamily.m */; };
-		F94643830B935ECF00220464 /* NSString+CarbonFSRefCreation.m in Sources */ = {isa = PBXBuildFile; fileRef = F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */; };
-		F94643850B935ECF00220464 /* FUSEFileSystem.m in Sources */ = {isa = PBXBuildFile; fileRef = F946437A0B935ECF00220464 /* FUSEFileSystem.m */; };
 		F965C17A0B6538CD00BE978D /* SpotlightFSApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = F965C1780B6538CD00BE978D /* SpotlightFSApp.icns */; };
 		F965C17B0B6538CD00BE978D /* SpotlightFSMount.icns in Resources */ = {isa = PBXBuildFile; fileRef = F965C1790B6538CD00BE978D /* SpotlightFSMount.icns */; };
 		F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEF7D0B617DCE0044EAA6 /* main.m */; };
 		F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */; };
 		F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */; };
-		F9CEF0D80B61A09C0044EAA6 /* libfuse.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */; };
 		F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */; };
+		FFBB2A3A0D2E1663001331D2 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFBB2A390D2E1663001331D2 /* MacFUSE.framework */; };
+		FFBB2A430D2E16D3001331D2 /* SpotlightFSController.m in Sources */ = {isa = PBXBuildFile; fileRef = FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,22 +36,16 @@
 		F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = DynamicFolderBlue.icns; sourceTree = "<group>"; };
 		F927CD030B64063A00AF272E /* SmartFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolderBlue.icns; sourceTree = "<group>"; };
 		F927CD560B640C8F00AF272E /* SmartFolder.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolder.icns; sourceTree = "<group>"; };
-		F946436E0B935ECF00220464 /* GTResourceFork.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GTResourceFork.h; sourceTree = "<group>"; };
-		F946436F0B935ECF00220464 /* GTResourceFork.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = GTResourceFork.m; sourceTree = "<group>"; };
-		F94643740B935ECF00220464 /* IconFamily.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IconFamily.h; sourceTree = "<group>"; };
-		F94643750B935ECF00220464 /* IconFamily.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = IconFamily.m; sourceTree = "<group>"; };
-		F94643760B935ECF00220464 /* NSString+CarbonFSRefCreation.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = "NSString+CarbonFSRefCreation.h"; sourceTree = "<group>"; };
-		F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = "NSString+CarbonFSRefCreation.m"; sourceTree = "<group>"; };
-		F94643790B935ECF00220464 /* FUSEFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FUSEFileSystem.h; sourceTree = "<group>"; };
-		F946437A0B935ECF00220464 /* FUSEFileSystem.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = FUSEFileSystem.m; sourceTree = "<group>"; };
 		F965C1780B6538CD00BE978D /* SpotlightFSApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SpotlightFSApp.icns; sourceTree = "<group>"; };
 		F965C1790B6538CD00BE978D /* SpotlightFSMount.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SpotlightFSMount.icns; sourceTree = "<group>"; };
 		F9CEEF7D0B617DCE0044EAA6 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		F9CEEFD40B6198610044EAA6 /* SpotlightFS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFS.h; sourceTree = "<group>"; };
 		F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpotlightFS.m; sourceTree = "<group>"; };
 		F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
-		F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libfuse.dylib; path = /usr/local/lib/libfuse.dylib; sourceTree = "<absolute>"; };
 		F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		FFBB2A390D2E1663001331D2 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
+		FFBB2A410D2E16D3001331D2 /* SpotlightFSController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFSController.h; sourceTree = "<group>"; };
+		FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpotlightFSController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,8 +55,8 @@
 			files = (
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */,
-				F9CEF0D80B61A09C0044EAA6 /* libfuse.dylib in Frameworks */,
 				F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */,
+				FFBB2A3A0D2E1663001331D2 /* MacFUSE.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -75,6 +66,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FFBB2A390D2E1663001331D2 /* MacFUSE.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -84,7 +76,6 @@
 			isa = PBXGroup;
 			children = (
 				F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */,
-				F9CEF0D70B61A09C0044EAA6 /* libfuse.dylib */,
 				F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */,
 				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
 				13E42FB307B3F0F600E4EEF1 /* CoreData.framework */,
@@ -106,7 +97,6 @@
 			children = (
 				32CA4F630368D1EE00C91783 /* SpotlightFS_Prefix.pch */,
 				F9CEEF7C0B617DB00044EAA6 /* Source */,
-				F946436B0B935ECF00220464 /* FUSEObjC */,
 				29B97317FDCFA39411CA2CEA /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
@@ -138,52 +128,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		F946436B0B935ECF00220464 /* FUSEObjC */ = {
-			isa = PBXGroup;
-			children = (
-				F946436C0B935ECF00220464 /* external */,
-				F94643790B935ECF00220464 /* FUSEFileSystem.h */,
-				F946437A0B935ECF00220464 /* FUSEFileSystem.m */,
-			);
-			name = FUSEObjC;
-			path = ../FUSEObjC;
-			sourceTree = SOURCE_ROOT;
-		};
-		F946436C0B935ECF00220464 /* external */ = {
-			isa = PBXGroup;
-			children = (
-				F946436D0B935ECF00220464 /* GTResourceFork */,
-				F94643700B935ECF00220464 /* IconFamily */,
-			);
-			path = external;
-			sourceTree = "<group>";
-		};
-		F946436D0B935ECF00220464 /* GTResourceFork */ = {
-			isa = PBXGroup;
-			children = (
-				F946436E0B935ECF00220464 /* GTResourceFork.h */,
-				F946436F0B935ECF00220464 /* GTResourceFork.m */,
-			);
-			path = GTResourceFork;
-			sourceTree = "<group>";
-		};
-		F94643700B935ECF00220464 /* IconFamily */ = {
-			isa = PBXGroup;
-			children = (
-				F94643740B935ECF00220464 /* IconFamily.h */,
-				F94643750B935ECF00220464 /* IconFamily.m */,
-				F94643760B935ECF00220464 /* NSString+CarbonFSRefCreation.h */,
-				F94643770B935ECF00220464 /* NSString+CarbonFSRefCreation.m */,
-			);
-			path = IconFamily;
-			sourceTree = "<group>";
-		};
 		F9CEEF7C0B617DB00044EAA6 /* Source */ = {
 			isa = PBXGroup;
 			children = (
 				F9CEEFD40B6198610044EAA6 /* SpotlightFS.h */,
 				F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */,
 				F9CEEF7D0B617DCE0044EAA6 /* main.m */,
+				FFBB2A410D2E16D3001331D2 /* SpotlightFSController.h */,
+				FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -215,9 +167,11 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SpotlightFS" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* SpotlightFS */;
 			projectDirPath = "";
+			projectRoot = "";
 			targets = (
 				8D1107260486CEB800E47090 /* SpotlightFS */,
 			);
@@ -248,10 +202,7 @@
 			files = (
 				F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */,
 				F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */,
-				F946437F0B935ECF00220464 /* GTResourceFork.m in Sources */,
-				F94643820B935ECF00220464 /* IconFamily.m in Sources */,
-				F94643830B935ECF00220464 /* NSString+CarbonFSRefCreation.m in Sources */,
-				F94643850B935ECF00220464 /* FUSEFileSystem.m in Sources */,
+				FFBB2A430D2E16D3001331D2 /* SpotlightFSController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -323,8 +274,8 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
-				OTHER_CFLAGS = "-D_FILE_OFFSET_BITS=64";
+				HEADER_SEARCH_PATHS = "";
+				OTHER_CFLAGS = "";
 				PREBINDING = NO;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
@@ -341,8 +292,8 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /usr/local/include;
-				OTHER_CFLAGS = "-D_FILE_OFFSET_BITS=64";
+				HEADER_SEARCH_PATHS = "";
+				OTHER_CFLAGS = "";
 				PREBINDING = NO;
 				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};

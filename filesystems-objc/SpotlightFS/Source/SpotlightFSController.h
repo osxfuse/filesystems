@@ -1,5 +1,5 @@
 // ================================================================
-// Copyright (C) 2007 Google Inc.
+// Copyright (C) 2008 Google Inc.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,15 +14,18 @@
 // limitations under the License.
 // ================================================================
 //
-//  main.m
+//  SpotlightFSController.h
 //  SpotlightFS
 //
-//  Created by Greg Miller on 1/19/07.
+//  Created by ted on 1/3/08.
 //
 
 #import <Cocoa/Cocoa.h>
 
-int main(int argc, char *argv[])
-{
-    return NSApplicationMain(argc,  (const char **) argv);
+@class GMUserFileSystem;
+
+@interface SpotlightFSController : NSObject {
+  GMUserFileSystem* fs_;
 }
+
+@end
