@@ -56,10 +56,10 @@
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [fs_ unmount];  // Just in case we need to unmount;
   [[fs_ delegate] release];  // Clean up HelloFS
   [fs_ release];
-  [[NSNotificationCenter defaultCenter] removeObserver:self];
   return NSTerminateNow;
 }
 
