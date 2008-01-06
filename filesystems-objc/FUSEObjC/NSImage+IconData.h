@@ -26,8 +26,7 @@
 @interface NSImage (IconData)
 
 // Creates the data for a .icns file from this NSImage.  You can use a width
-// of either 256 or 512 bytes.  Only 10.5+ supports 512x512 icons.
-// TODO: Better name for this method?
+// of 128, 256 or 512 pixels (128 and 512 only supported on Leopard).
 - (NSData *)icnsDataWithWidth:(int)width;
 
 @end

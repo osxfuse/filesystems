@@ -27,15 +27,18 @@
 - (NSData *)icnsDataWithWidth:(int)width {
   OSType icnsType;
   switch (width) {
+    case 128:
+      icnsType = 'ic07';      // kIconServices128PixelDataARGB
+      break;
     case 256:
       icnsType = kIconServices256PixelDataARGB;
       break;
     case 512:
-      icnsType = 'ic09';   // kIconServices512PixelDataARGB;
+      icnsType = 'ic09';     // kIconServices512PixelDataARGB
       break;
       
     default:
-      NSLog(@"Invalid icon width; must be 256 or 512.");
+      NSLog(@"Invalid icon width: %d", width);
       return nil;      
   }
   
@@ -54,6 +57,15 @@
   unsigned char* planes[2];
   planes[0] = bitmapData;
   planes[1] = nil;
+  NSBitmapFormat format = NSAlphaFirstBitmapFormat;
+  // TODO: The docs say that the image data should be in non-premultiplied
+  // format, but when NSAlphaNonpremultipliedBitmapFormat is used we get an error
+  // about invalid parameters for graphics context.
+  //   - I read somewhere that this used to work on Tiger?
+  //   - Based on test images, things work fine even without this?
+  //   - Maybe can use the vImage stuff to fix-up if need be?  See 
+  //      vImageUnpremultiplyData_ARGB8888(...);
+  // format |= NSAlphaNonpremultipliedBitmapFormat;
   NSBitmapImageRep* rep = 
     [[[NSBitmapImageRep alloc] 
       initWithBitmapDataPlanes:planes  // Single plane; just our bitmapData
@@ -64,13 +76,13 @@
                       hasAlpha:YES 
                       isPlanar:NO 
                 colorSpaceName:NSCalibratedRGBColorSpace 
-                  bitmapFormat:NSAlphaFirstBitmapFormat
-                   bytesPerRow:0  // Let it compute.
+                  bitmapFormat:format
+                   bytesPerRow:0  // Let it compute bytesPerRow and bitsPerPixel
                   bitsPerPixel:0] autorelease];
   [NSGraphicsContext saveGraphicsState];
   NSGraphicsContext* context = 
     [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
-  [context setShouldAntialias:YES];  // TODO:Do we want this?
+  [context setShouldAntialias:YES];  // TODO: Do we want this?
   [NSGraphicsContext setCurrentContext:context];
   [self drawInRect:rect fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
   [NSGraphicsContext restoreGraphicsState];
