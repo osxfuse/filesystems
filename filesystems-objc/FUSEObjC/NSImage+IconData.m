@@ -28,13 +28,13 @@
   OSType icnsType;
   switch (width) {
     case 128:
-      icnsType = 'ic07';      // kIconServices128PixelDataARGB
+      icnsType = 'ic07';  // kIconServices128PixelDataARGB
       break;
     case 256:
       icnsType = kIconServices256PixelDataARGB;
       break;
     case 512:
-      icnsType = 'ic09';     // kIconServices512PixelDataARGB
+      icnsType = 'ic09';  // kIconServices512PixelDataARGB
       break;
       
     default:
@@ -61,8 +61,8 @@
   // TODO: The docs say that the image data should be in non-premultiplied
   // format, but when NSAlphaNonpremultipliedBitmapFormat is used we get an error
   // about invalid parameters for graphics context.
-  //   - I read somewhere that this used to work on Tiger?
-  //   - Based on test images, things work fine even without this?
+  //   - Based on test images, things work fine on Leopard even without this?
+  //   - On Tiger I don't see an error, but this stuff doesn't work at all :-(
   //   - Maybe can use the vImage stuff to fix-up if need be?  See 
   //      vImageUnpremultiplyData_ARGB8888(...);
   // format |= NSAlphaNonpremultipliedBitmapFormat;
@@ -88,8 +88,8 @@
   [NSGraphicsContext restoreGraphicsState];
 
   // We need to use SetIconFamilyData here rather than just setting the raw
-  // bytes because icon family will compress the bitmap for us in a format that
-  // I haven't yet bothered to figure out. Maybe it is just compressed TIFF?
+  // bytes because icon family will compress the bitmap for us using RLE. This
+  // is described in http://ezix.org/project/wiki/MacOSXIcons
   Handle familyHandle = NewHandle(0);
   SetIconFamilyData((IconFamilyHandle)familyHandle, icnsType, bitmapHandle);
   DisposeHandle(bitmapHandle);
