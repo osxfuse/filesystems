@@ -96,7 +96,7 @@
     src.data = bitmapData;
     src.height = rect.size.height;
     src.width = rect.size.width;
-    src.rowBytes = 1024;  // ?
+    src.rowBytes = [rep bytesPerRow];
     vImage_Buffer dst = src;  // We'll just overwrite our bitmap data.
     uint8_t permuteMap[] = { 3, 0, 1, 2 };  // Used to go from RGBA -> ARGB
     vImagePermuteChannels_ARGB8888(&src, &dst, permuteMap, kvImageDoNotTile);
