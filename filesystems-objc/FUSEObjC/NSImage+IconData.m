@@ -20,11 +20,15 @@
 //  Created by ted on 12/28/07.
 //
 #import <Foundation/Foundation.h>
+#import <Accelerate/Accelerate.h>
 #import "NSImage+IconData.h"
 
 @implementation NSImage (IconData)
 
 - (NSData *)icnsDataWithWidth:(int)width {
+  SInt32 version;
+  Gestalt(gestaltSystemVersionMinor, &version);
+
   OSType icnsType;
   switch (width) {
     case 128:
@@ -54,21 +58,19 @@
   size_t bitmapSize = 4 * rect.size.width * rect.size.height;
   Handle bitmapHandle = NewHandle(bitmapSize);
   unsigned char* bitmapData = (unsigned char *)*bitmapHandle;
-  unsigned char* planes[2];
-  planes[0] = bitmapData;
-  planes[1] = nil;
   NSBitmapFormat format = NSAlphaFirstBitmapFormat;
+
   // TODO: The docs say that the image data should be in non-premultiplied
-  // format, but when NSAlphaNonpremultipliedBitmapFormat is used we get an error
-  // about invalid parameters for graphics context.
-  //   - Based on test images, things work fine on Leopard even without this?
-  //   - On Tiger I don't see an error, but this stuff doesn't work at all :-(
-  //   - Maybe can use the vImage stuff to fix-up if need be?  See 
-  //      vImageUnpremultiplyData_ARGB8888(...);
-  // format |= NSAlphaNonpremultipliedBitmapFormat;
+  // format, but when NSAlphaNonpremultipliedBitmapFormat is used on 10.5 we get 
+  // an error about invalid parameters for graphics context. We should try this
+  // again in future 10.5 releases in case it gets fixed. Until then, maybe 
+  // we should use vImageUnpremultiplyData_ARGB8888(...) on 10.5?
+  if (version != 5) {
+    format |= NSAlphaNonpremultipliedBitmapFormat;
+  }
   NSBitmapImageRep* rep = 
     [[[NSBitmapImageRep alloc] 
-      initWithBitmapDataPlanes:planes  // Single plane; just our bitmapData
+      initWithBitmapDataPlanes:&bitmapData  // Single plane; just our bitmapData
                     pixelsWide:rect.size.width
                     pixelsHigh:rect.size.height
                  bitsPerSample:8 
@@ -87,6 +89,19 @@
   [self drawInRect:rect fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
   [NSGraphicsContext restoreGraphicsState];
 
+  // On Tiger, the above actually returns RGBA data. Probably a bug in Tiger?
+  // We use vImage to permute from RGBA -> ARGB in place on the data buffer.
+  if (version == 4) {
+    vImage_Buffer src;
+    src.data = bitmapData;
+    src.height = rect.size.height;
+    src.width = rect.size.width;
+    src.rowBytes = 1024;  // ?
+    vImage_Buffer dst = src;  // We'll just overwrite our bitmap data.
+    uint8_t permuteMap[] = { 3, 0, 1, 2 };  // Used to go from RGBA -> ARGB
+    vImagePermuteChannels_ARGB8888(&src, &dst, permuteMap, kvImageDoNotTile);
+  }
+  
   // We need to use SetIconFamilyData here rather than just setting the raw
   // bytes because icon family will compress the bitmap for us using RLE. This
   // is described in http://ezix.org/project/wiki/MacOSXIcons
