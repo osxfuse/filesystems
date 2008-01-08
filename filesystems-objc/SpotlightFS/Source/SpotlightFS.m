@@ -341,7 +341,7 @@ static NSString *DecodePath(NSString *path) {
 - (BOOL)fileExistsAtPath:(NSString *)path isDirectory:(BOOL *)isDirectory {
   if (!path || !isDirectory)
     return NO;
-  
+
   NSArray *tlds = [self topLevelDirectories];
   int numComponents = [[path pathComponents] count];
   
@@ -350,7 +350,14 @@ static NSString *DecodePath(NSString *path) {
     *isDirectory = YES;
     return YES;
   }
-  
+
+  // Handle "._" and "Icon\r" that we don't deal with.
+  NSString* lastComponent = [path lastPathComponent];
+  if ([lastComponent hasPrefix:@"._"] ||
+      [lastComponent isEqualToString:@"Icon\r"]) {
+    return NO;
+  }
+
   // Handle stuff in the /SmarterFolder
   if ([path hasPrefix:[@"/" stringByAppendingString:kSmarterFolder]]) {
     // We don't allow the creation of folders in the smarter folder.  But
@@ -358,7 +365,7 @@ static NSString *DecodePath(NSString *path) {
     // existence.  So, we always report that a folder named "untitled folder"
     // does *not* exist.  That way, Finder will then try to create that folder,
     // we'll return an error, and the user will get a reasonable error message.
-    if ([[path lastPathComponent] hasPrefix:@"untitled folder"])
+    if ([lastComponent hasPrefix:@"untitled folder"])
       return NO;
     
     // We report all other directories as existing
@@ -368,7 +375,6 @@ static NSString *DecodePath(NSString *path) {
   
   // Handle other top-level directories, which may contain spotlight's saved
   // searches, as well as other user-created folders.
-  NSString *lastComponent = [path lastPathComponent];
   if (numComponents == 2 && [tlds containsObject:lastComponent]) {
     *isDirectory = YES;
     return YES;
@@ -506,10 +512,6 @@ static NSString *DecodePath(NSString *path) {
   if (ncomp == 2)
     [self removeUserCreatedFolder:firstDir];
   
-  return YES;
-}
-
-- (BOOL)usesResourceForks {
   return YES;
 }
 
