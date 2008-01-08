@@ -362,4 +362,19 @@
   return YES;
 }
 
+- (BOOL)removeExtendedAttribute:(NSString *)name
+                   ofItemAtPath:(NSString *)path
+                          error:(NSError **)error {
+  LOG_OP(@"[0x%x] set extended attribute: %@ forPath:%@", 
+         [NSThread currentThread], name, path);
+  
+  NSString* p = [rootPath_ stringByAppendingString:path];
+  int ret = removexattr([p UTF8String], [name UTF8String], 0);
+  if ( ret < 0 ) {
+    *error = [NSError errorWithPOSIXCode:errno];
+    return NO;
+  }
+  return YES;
+}
+
 @end
