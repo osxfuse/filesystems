@@ -23,7 +23,7 @@
 //  gcc -o loop LoopbackFS.m loop.m -framework MacFUSE -framework Foundation
 //
 #import <Foundation/Foundation.h>
-#import <MacFUSE/UserFileSystem.h>
+#import <MacFUSE/GMUserFileSystem.h>
 #import "LoopbackFS.h"
 
 #define DEFAULT_MOUNT_PATH "/Volumes/loop"
@@ -48,8 +48,8 @@ int main(int argc, char* argv[]) {
   }
 
   LoopbackFS* loop = [[LoopbackFS alloc] initWithRootPath:rootPath];
-  UserFileSystem* userFS = [[UserFileSystem alloc] initWithDelegate:loop 
-                                                       isThreadSafe:YES];
+  GMUserFileSystem* userFS = [[GMUserFileSystem alloc] initWithDelegate:loop 
+                                                           isThreadSafe:YES];
 
   NSMutableArray* options = [NSMutableArray array];
   [options addObject:@"debug"];
