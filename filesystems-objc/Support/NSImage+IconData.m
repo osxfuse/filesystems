@@ -19,7 +19,8 @@
 //
 //  Created by ted on 12/28/07.
 //
-#import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
+#import <CoreServices/CoreServices.h>
 #import <Accelerate/Accelerate.h>
 #import "NSImage+IconData.h"
 
@@ -84,9 +85,11 @@
   [NSGraphicsContext saveGraphicsState];
   NSGraphicsContext* context = 
     [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
-  [context setShouldAntialias:YES];  // TODO: Do we want this?
   [NSGraphicsContext setCurrentContext:context];
+  NSImageInterpolation interpolation = [context imageInterpolation];
+  [context setImageInterpolation:NSImageInterpolationHigh];
   [self drawInRect:rect fromRect:NSZeroRect operation:NSCompositeCopy fraction:1.0];
+  [context setImageInterpolation:interpolation];
   [NSGraphicsContext restoreGraphicsState];
 
   // On Tiger, the above actually returns RGBA data. Probably a bug in Tiger?
