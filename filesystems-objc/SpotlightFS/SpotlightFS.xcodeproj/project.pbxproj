@@ -238,7 +238,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = Resources/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = SpotlightFS;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -256,7 +255,6 @@
 				GCC_MODEL_TUNING = G5;
 				INFOPLIST_FILE = Resources/Info.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				LIBRARY_SEARCH_PATHS = /usr/local/lib;
 				PRODUCT_NAME = SpotlightFS;
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
