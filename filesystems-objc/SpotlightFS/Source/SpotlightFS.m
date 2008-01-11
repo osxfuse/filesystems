@@ -237,24 +237,37 @@ static NSString *DecodePath(NSString *path) {
 - (NSArray *)encodedPathResultsForSpotlightQuery:(NSString *)queryString
                                            scope:(NSArray *)scopeDirectories {
   // Try to create an MDQueryRef from the given queryString.
-  MDQueryRef query = MDQueryCreate(kCFAllocatorDefault,
-                                   (CFStringRef)queryString,
-                                   NULL, NULL);
+  //  MDQueryRef query = MDQueryCreate(kCFAllocatorDefault,
+  //                                   (CFStringRef)queryString,
+  //                                   NULL, NULL);
+  
+  // 10/8/2007 Apple bug - radar 5529459
+  // This does not work on Leopard, because MDQueryCreate() does not return NULL
+  // when given an improperly formatted query string, as it's documented to do.
+  // One way to work around this is to see if the query string contains an "="
+  // and if so assume the query string is properly formatted, otherwise, format
+  // the query ourselves, using the logic in the if body below. This is a hack
+  // and hopefully will be fixed soon (10.5.2???) in which case we will remove 
+  // this.
   
   // The previous MDQueryCreate will fail if queryString isn't a validly
   // formatted MDQuery.  In this case, we'll create a valid MDQuery and try
   // again.
-  if (query == NULL) {
+  
+  if ([queryString rangeOfString:@"="].location == NSNotFound) {
     queryString = [NSString stringWithFormat:
-      @"* == \"%@\"wcd || kMDItemTextContent = \"%@\"c",
-      queryString, queryString
-      ];
-    
-    query = MDQueryCreate(kCFAllocatorDefault,
-                          (CFStringRef)queryString,
-                          NULL, NULL);
+                   @"* == \"%@\"wcd || kMDItemTextContent = \"%@\"c",
+                   queryString, queryString
+                   ];
+    //
+    //    query = MDQueryCreate(kCFAllocatorDefault,
+    //                          (CFStringRef)queryString,
+    //                          NULL, NULL);
   }
   
+  MDQueryRef query = MDQueryCreate(kCFAllocatorDefault,
+                                   (CFStringRef)queryString,
+                                   NULL, NULL);  
   if (query == NULL)
     return nil;
   
@@ -462,7 +475,7 @@ static NSString *DecodePath(NSString *path) {
   return nil;
 }
 
-- (BOOL)movePath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
+- (BOOL)moveItemAtPath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
   if (!source || !destination) {
     *error = [NSError errorWithPOSIXCode:EINVAL];
     return NO;
@@ -490,7 +503,7 @@ static NSString *DecodePath(NSString *path) {
   return YES;
 }
 
-- (BOOL)removeFileAtPath:(NSString *)path error:(NSError **)error {
+- (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
     *error = [NSError errorWithPOSIXCode:EINVAL];
     return NO;
