@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8B93BE9C0D3ACCEF00466F25 /* NSError+POSIX.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B93BE9B0D3ACCEF00466F25 /* NSError+POSIX.m */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -31,6 +32,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* SpotlightFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFS_Prefix.pch; sourceTree = "<group>"; };
+		8B93BE9A0D3ACCEF00466F25 /* NSError+POSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSError+POSIX.h"; path = "../Support/NSError+POSIX.h"; sourceTree = SOURCE_ROOT; };
+		8B93BE9B0D3ACCEF00466F25 /* NSError+POSIX.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSError+POSIX.m"; path = "../Support/NSError+POSIX.m"; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* SpotlightFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpotlightFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = DynamicFolderBlue.icns; sourceTree = "<group>"; };
@@ -136,6 +139,8 @@
 				F9CEEF7D0B617DCE0044EAA6 /* main.m */,
 				FFBB2A410D2E16D3001331D2 /* SpotlightFSController.h */,
 				FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */,
+				8B93BE9A0D3ACCEF00466F25 /* NSError+POSIX.h */,
+				8B93BE9B0D3ACCEF00466F25 /* NSError+POSIX.m */,
 			);
 			path = Source;
 			sourceTree = "<group>";
@@ -203,6 +208,7 @@
 				F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */,
 				F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */,
 				FFBB2A430D2E16D3001331D2 /* SpotlightFSController.m in Sources */,
+				8B93BE9C0D3ACCEF00466F25 /* NSError+POSIX.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

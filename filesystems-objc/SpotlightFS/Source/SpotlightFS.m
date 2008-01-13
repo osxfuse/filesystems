@@ -49,16 +49,7 @@
 #import <Foundation/Foundation.h>
 #import <MacFUSE/GMUserFileSystem.h>
 #import "SpotlightFS.h"
-
-// Category on NSError to  simplify creating an NSError based on posix errno.
-@interface NSError (POSIX)
-+ (NSError *)errorWithPOSIXCode:(int)code;
-@end
-@implementation NSError (POSIX)
-+ (NSError *)errorWithPOSIXCode:(int) code {
-  return [NSError errorWithDomain:NSPOSIXErrorDomain code:code userInfo:nil];
-}
-@end
+#import "NSError+POSIX.h"
 
 // Key name for use in NSUserDefaults
 static NSString* const kDefaultsSearchDirectories = @"SearchDirectories";

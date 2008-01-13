@@ -31,16 +31,7 @@
 #import <sys/stat.h>
 #import "LoopbackFS.h"
 #import <MacFUSE/GMUserFileSystem.h>
-
-// Category on NSError to  simplify creating an NSError based on posix errno.
-@interface NSError (POSIX)
-+ (NSError *)errorWithPOSIXCode:(int)code;
-@end
-@implementation NSError (POSIX)
-+ (NSError *)errorWithPOSIXCode:(int) code {
-  return [NSError errorWithDomain:NSPOSIXErrorDomain code:code userInfo:nil];
-}
-@end
+#import "NSError+POSIX.h"
 
 @implementation LoopbackFS
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8B93BEEF0D3ACD4400466F25 /* NSError+POSIX.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B93BEED0D3ACD4400466F25 /* NSError+POSIX.m */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -26,6 +27,8 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* LoopbackFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopbackFS_Prefix.pch; sourceTree = "<group>"; };
+		8B93BEED0D3ACD4400466F25 /* NSError+POSIX.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSError+POSIX.m"; path = "../Support/NSError+POSIX.m"; sourceTree = SOURCE_ROOT; };
+		8B93BEEE0D3ACD4400466F25 /* NSError+POSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSError+POSIX.h"; path = "../Support/NSError+POSIX.h"; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* LoopbackFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoopbackFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF694BDB0D281C6900CD431F /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
@@ -52,6 +55,8 @@
 		080E96DDFE201D6D7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				8B93BEED0D3ACD4400466F25 /* NSError+POSIX.m */,
+				8B93BEEE0D3ACD4400466F25 /* NSError+POSIX.h */,
 				FF8358210D24649E002F2357 /* LoopbackFS.h */,
 				FF8358220D24649E002F2357 /* LoopbackFS.m */,
 				FF98B8B60D24909700117156 /* LoopbackController.h */,
@@ -187,6 +192,7 @@
 				8D11072D0486CEB800E47090 /* main.m in Sources */,
 				FF8358230D24649E002F2357 /* LoopbackFS.m in Sources */,
 				FF98B8B80D24909700117156 /* LoopbackController.m in Sources */,
+				8B93BEEF0D3ACD4400466F25 /* NSError+POSIX.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
