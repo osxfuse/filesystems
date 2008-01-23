@@ -10,6 +10,7 @@
 		8B450D330D35BD4200B9CA4B /* NSWorkspace+Icon.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B450D320D35BD4200B9CA4B /* NSWorkspace+Icon.m */; };
 		8B450D400D35BF1600B9CA4B /* NSImage+IconData.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B450D3E0D35BF1600B9CA4B /* NSImage+IconData.m */; };
 		8B450D670D35BFDE00B9CA4B /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B450D660D35BFDE00B9CA4B /* Accelerate.framework */; };
+		8B6C6D2F0D470D48006551C1 /* ReadMe.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8B6C6D2E0D470D46006551C1 /* ReadMe.html */; };
 		8B6E131A0D37CA6C005AAFD0 /* NSError+POSIX.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B6E13190D37CA6C005AAFD0 /* NSError+POSIX.m */; };
 		8B6E131F0D37CB33005AAFD0 /* GTMAXUIElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B6E131E0D37CB33005AAFD0 /* GTMAXUIElement.m */; };
 		8BB159590D119FE2006781B8 /* command_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 8BB159580D119FE2006781B8 /* command_main.c */; };
@@ -36,6 +37,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		8B93C4B00D3C6C9C00466F25 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 16;
+			files = (
+				8B6C6D2F0D470D48006551C1 /* ReadMe.html in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
@@ -48,6 +62,7 @@
 		8B450D3E0D35BF1600B9CA4B /* NSImage+IconData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSImage+IconData.m"; path = "../Support/NSImage+IconData.m"; sourceTree = SOURCE_ROOT; };
 		8B450D3F0D35BF1600B9CA4B /* NSImage+IconData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSImage+IconData.h"; path = "../Support/NSImage+IconData.h"; sourceTree = SOURCE_ROOT; };
 		8B450D660D35BFDE00B9CA4B /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
+		8B6C6D2E0D470D46006551C1 /* ReadMe.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = ReadMe.html; sourceTree = "<group>"; };
 		8B6E13180D37CA6C005AAFD0 /* NSError+POSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSError+POSIX.h"; path = "../Support/NSError+POSIX.h"; sourceTree = SOURCE_ROOT; };
 		8B6E13190D37CA6C005AAFD0 /* NSError+POSIX.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSError+POSIX.m"; path = "../Support/NSError+POSIX.m"; sourceTree = SOURCE_ROOT; };
 		8B6E131D0D37CB33005AAFD0 /* GTMAXUIElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMAXUIElement.h; path = Toolbox/GTMAXUIElement.h; sourceTree = "<group>"; };
@@ -127,6 +142,7 @@
 			isa = PBXGroup;
 			children = (
 				8BC3D9690D10EB1E00B4829F /* AccessibilityFS_Prefix.pch */,
+				8B6C6D2E0D470D46006551C1 /* ReadMe.html */,
 				F9CEEF7C0B617DB00044EAA6 /* Source */,
 				8B93C49F0D3C636600466F25 /* Toolbox */,
 				8B93C4A00D3C637B00466F25 /* Support */,
@@ -219,6 +235,7 @@
 				8D1107290486CEB800E47090 /* Resources */,
 				8D11072C0486CEB800E47090 /* Sources */,
 				8D11072E0486CEB800E47090 /* Frameworks */,
+				8B93C4B00D3C6C9C00466F25 /* CopyFiles */,
 			);
 			buildRules = (
 			);
