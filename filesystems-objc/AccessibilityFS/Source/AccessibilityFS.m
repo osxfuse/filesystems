@@ -22,10 +22,9 @@
 #import <sys/types.h>
 #import <unistd.h>
 #import <CoreServices/CoreServices.h>
-#import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #import <MacFUSE/GMUserFileSystem.h>
 #import "AccessibilityFS.h"
-#import "NSWorkspace+Icon.h"
 #import "NSImage+IconData.h"
 #import "NSError+POSIX.h"
 #import "GTMAXUIElement.h"
@@ -253,6 +252,8 @@ static void axObserverCallback(AXObserverRef observer,
 
 - (NSData *)iconForPid:(pid_t)pid {
   // Badges the icon for pid on a folder.
+  const int kIconSize = 256;  // Size of the icon to make
+  
   ProcessSerialNumber psn;
   OSStatus error = GetProcessForPID(pid, &psn);
   if (error) return nil;
@@ -264,8 +265,12 @@ static void axObserverCallback(AXObserverRef observer,
   NSString *path = [(NSURL*)url path];
   CFRelease(url);
   NSWorkspace *ws = [NSWorkspace sharedWorkspace];
-  NSImage *appIcon = [ws fullIconForFile:path];
-  NSImage *folderIcon = [ws fullIconForType:kGenericFolderIcon];
+  NSImage *appIcon = [ws iconForFile:path];
+  NSString *folderType = NSFileTypeForHFSTypeCode(kGenericFolderIcon);
+  NSImage *folderIcon = [ws iconForFileType:folderType];
+  NSSize largeIconSize = NSMakeSize(kIconSize, kIconSize);
+  [appIcon setSize:largeIconSize];
+  [folderIcon setSize:largeIconSize];
   [folderIcon lockFocus];
   NSRect sourceRect;
   sourceRect.origin = NSMakePoint(0, 0);
@@ -287,7 +292,7 @@ static void axObserverCallback(AXObserverRef observer,
              fraction:1.0];
   [context setImageInterpolation:interpolation];
   [folderIcon unlockFocus];
-  return [folderIcon icnsDataWithWidth:256];
+  return [folderIcon icnsDataWithWidth:kIconSize];
 }
 
 - (NSArray *)topLevelDirectories {

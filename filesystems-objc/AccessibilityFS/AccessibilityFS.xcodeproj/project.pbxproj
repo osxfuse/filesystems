@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8B450D330D35BD4200B9CA4B /* NSWorkspace+Icon.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B450D320D35BD4200B9CA4B /* NSWorkspace+Icon.m */; };
 		8B450D400D35BF1600B9CA4B /* NSImage+IconData.m in Sources */ = {isa = PBXBuildFile; fileRef = 8B450D3E0D35BF1600B9CA4B /* NSImage+IconData.m */; };
 		8B450D670D35BFDE00B9CA4B /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8B450D660D35BFDE00B9CA4B /* Accelerate.framework */; };
 		8B6C6D2F0D470D48006551C1 /* ReadMe.html in CopyFiles */ = {isa = PBXBuildFile; fileRef = 8B6C6D2E0D470D46006551C1 /* ReadMe.html */; };
@@ -57,8 +56,6 @@
 		29B97319FDCFA39411CA2CEA /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		8B450D320D35BD4200B9CA4B /* NSWorkspace+Icon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSWorkspace+Icon.m"; path = "Toolbox/NSWorkspace+Icon.m"; sourceTree = "<group>"; };
-		8B450D340D35BD4C00B9CA4B /* NSWorkspace+Icon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSWorkspace+Icon.h"; path = "Toolbox/NSWorkspace+Icon.h"; sourceTree = "<group>"; };
 		8B450D3E0D35BF1600B9CA4B /* NSImage+IconData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSImage+IconData.m"; path = "../Support/NSImage+IconData.m"; sourceTree = SOURCE_ROOT; };
 		8B450D3F0D35BF1600B9CA4B /* NSImage+IconData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSImage+IconData.h"; path = "../Support/NSImage+IconData.h"; sourceTree = SOURCE_ROOT; };
 		8B450D660D35BFDE00B9CA4B /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
@@ -177,8 +174,6 @@
 		8B93C49F0D3C636600466F25 /* Toolbox */ = {
 			isa = PBXGroup;
 			children = (
-				8B450D320D35BD4200B9CA4B /* NSWorkspace+Icon.m */,
-				8B450D340D35BD4C00B9CA4B /* NSWorkspace+Icon.h */,
 				8B6E131D0D37CB33005AAFD0 /* GTMAXUIElement.h */,
 				8B6E131E0D37CB33005AAFD0 /* GTMAXUIElement.m */,
 			);
@@ -296,7 +291,6 @@
 				F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */,
 				8BC3D96C0D10EB2900B4829F /* AccessibilityFS.m in Sources */,
 				8BCFD5C80D351907003A33F4 /* AccessibilityController.m in Sources */,
-				8B450D330D35BD4200B9CA4B /* NSWorkspace+Icon.m in Sources */,
 				8B450D400D35BF1600B9CA4B /* NSImage+IconData.m in Sources */,
 				8B6E131A0D37CA6C005AAFD0 /* NSError+POSIX.m in Sources */,
 				8B6E131F0D37CB33005AAFD0 /* GTMAXUIElement.m in Sources */,
