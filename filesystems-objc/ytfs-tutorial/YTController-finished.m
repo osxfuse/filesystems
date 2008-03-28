@@ -71,7 +71,7 @@
 
 - (void)didMount:(NSNotification *)notification {
   NSDictionary* userInfo = [notification userInfo];
-  NSString* mountPath = [userInfo objectForKey:@"mountPath"];
+  NSString* mountPath = [userInfo objectForKey:kGMUserFileSystemMountPathKey];
   NSString* parentPath = [mountPath stringByDeletingLastPathComponent];
   [[NSWorkspace sharedWorkspace] selectFile:mountPath
                    inFileViewerRootedAtPath:parentPath];
