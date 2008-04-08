@@ -25,6 +25,16 @@
 
 @implementation LoopbackController
 
+- (void)mountFailed:(NSNotification *)notification {
+  NSLog(@"Got mountFailed notification.");
+
+  NSDictionary* userInfo = [notification userInfo];
+  NSError* error = [userInfo objectForKey:kGMUserFileSystemErrorKey];
+  NSLog(@"kGMUserFileSystem Error: %@, userInfo=%@", error, [error userInfo]);  
+  NSRunAlertPanel(@"Mount Failed", [error localizedDescription], nil, nil, nil);
+  [[NSApplication sharedApplication] terminate:nil];
+}
+
 - (void)didMount:(NSNotification *)notification {
   NSLog(@"Got didMount notification.");
 
@@ -57,6 +67,8 @@
   NSString* rootPath = [paths objectAtIndex:0];
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
+  [center addObserver:self selector:@selector(mountFailed:)
+                 name:kGMUserFileSystemMountFailed object:nil];
   [center addObserver:self selector:@selector(didMount:)
                  name:kGMUserFileSystemDidMount object:nil];
   [center addObserver:self selector:@selector(didUnmount:)
