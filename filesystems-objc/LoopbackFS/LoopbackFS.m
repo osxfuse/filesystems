@@ -130,13 +130,20 @@
 - (BOOL)linkItemAtPath:(NSString *)path
                 toPath:(NSString *)otherPath
                  error:(NSError **)error {
-  LOG_OP(@"[0x%x] linkItemAtPath: %@", [NSThread currentThread], path); 
+  LOG_OP(@"[0x%x] linkItemAtPath: %@ <- %@", 
+         [NSThread currentThread], path, otherPath); 
 
-  NSString* p_src = [rootPath_ stringByAppendingString:path];
-  NSString* p_dst = [rootPath_ stringByAppendingString:otherPath];
-  return [[NSFileManager defaultManager] linkItemAtPath:p_src
-                                                 toPath:p_dst
-                                                  error:error];  
+  NSString* p_path = [rootPath_ stringByAppendingString:path];
+  NSString* p_otherPath = [rootPath_ stringByAppendingString:otherPath];
+
+  // We use link rather than the NSFileManager equivalent because it will copy
+  // the file rather than hard link if part of the root path is a symlink.
+  int rc = link([p_path UTF8String], [p_otherPath UTF8String]);
+  if ( rc <  0 ) {
+    *error = [NSError errorWithPOSIXCode:errno];
+    return NO;
+  }
+  return YES;
 }
 
 #pragma mark Symbolic Links
