@@ -104,7 +104,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   return [[NSFileManager defaultManager] createDirectoryAtPath:p 
                                    withIntermediateDirectories:NO
-                                                    attributes:nil
+                                                    attributes:attributes
                                                         error:error];
 }
 
