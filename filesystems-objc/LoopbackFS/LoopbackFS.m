@@ -248,6 +248,22 @@
   return YES;
 }
 
+- (BOOL)exchangeDataOfItemAtPath:(NSString *)path1
+                  withItemAtPath:(NSString *)path2
+                           error:(NSError **)error {
+  LOG_OP(@"[0x%x] exchangeDataOfItemAtPath:%@, withPath:%@", [NSThread currentThread],
+         path1, path2);
+  
+  NSString* p1 = [rootPath_ stringByAppendingString:path1];
+  NSString* p2 = [rootPath_ stringByAppendingString:path2];
+  int ret = exchangedata([p1 UTF8String], [p2 UTF8String], 0);
+  if ( ret < 0 ) {
+    *error = [NSError errorWithPOSIXCode:errno];
+    return NO;    
+  }
+  return YES;  
+}
+
 #pragma mark Directory Contents
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
