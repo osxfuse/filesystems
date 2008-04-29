@@ -68,7 +68,7 @@ diff -Naur old/sshfs.c new/sshfs.c
 +#if !(__FreeBSD__ >= 10)
  #include <semaphore.h>
 +#else
-+#define MACFUSE_SSHFS_VERSION "1.3.0"
++#define MACFUSE_SSHFS_VERSION "1.5.0"
 +#include "fuse_darwin.h"
 +#endif
  #include <pthread.h>
