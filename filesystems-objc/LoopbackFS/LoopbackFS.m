@@ -264,7 +264,9 @@
   LOG_OP(@"[0x%x] attributesOfItemAtAPath: %@", [NSThread currentThread], path);
 
   NSString* p = [rootPath_ stringByAppendingString:path];
-  return [[NSFileManager defaultManager] attributesOfItemAtPath:p error:error];
+  NSDictionary* attribs = 
+    [[NSFileManager defaultManager] attributesOfItemAtPath:p error:error];
+  return attribs;
 }
 
 - (NSDictionary *)attributesOfFileSystemForPath:(NSString *)path
@@ -281,8 +283,16 @@
                 error:(NSError **)error {
   LOG_OP(@"[0x%x] setAttributes:%@ ofItemAtPath: %@", 
          [NSThread currentThread], attributes, path);
-  
   NSString* p = [rootPath_ stringByAppendingString:path];
+  
+  NSNumber* flags = [attributes objectForKey:kGMUserFileSystemFileFlagsKey];
+  if (flags != nil) {
+    int rc = chflags([p UTF8String], [flags intValue]);
+    if (rc < 0) {
+      *error = [NSError errorWithPOSIXCode:errno];
+      return NO;
+    }
+  }
   return [[NSFileManager defaultManager] setAttributes:attributes
                                           ofItemAtPath:p
                                                  error:error];
