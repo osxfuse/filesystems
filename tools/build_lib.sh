@@ -4,6 +4,7 @@
 
 AWK=/usr/bin/awk
 BASENAME=/usr/bin/basename
+CP=/bin/cp
 DIRNAME=/usr/bin/dirname
 HEAD=/usr/bin/head
 MAKE=/usr/bin/make
@@ -15,6 +16,10 @@ UNAME=/usr/bin/uname
 os_name=`$UNAME -s`
 os_codename="Unknown"
 this_dir=`$DIRNAME $0`
+if [ "$this_dir" = "." ]
+then
+    this_dir=`pwd`
+fi
 
 os_release=`$UNAME -r`
 if [ "$1" != "" ]
@@ -52,20 +57,21 @@ echo "Initiating Universal build of libfuse for Mac OS X \"$os_codename\""
 package_dir=`$TAR -tzvf "$lib_dir/fuse-current.tar.gz" | $HEAD -1 | $AWK '{print $NF}'`
 package_name=`$BASENAME "$package_dir"`
 
-if [ "$package_name" -eq "" ]
+if [ "$package_name" = "" ]
 then
     echo "*** failed to determine libfuse version"
     exit 1
 fi
 
+echo "Using package name $package_name"
+
 $RM -rf /tmp/"$package_name"
 
-cd /tmp                                           || exit 1
-$TAR -xzvf "$lib_dir"/fuse-current.tar.gz         || exit 1
-cd "$package_name"                                || exit 1
-$PATCH -p1 < "$lib_dir"/fuse-current-macosx.patch || exit 1
-/bin/sh ./darwin_configure.sh "$src_dir"          || exit 1
-$MAKE                                             || exit 1
+$TAR -C /tmp/ -xzvf "$lib_dir"/fuse-current.tar.gz             || exit 1
+cd /tmp/"$package_name"                                        || exit 1
+$PATCH -p1 < "$lib_dir"/fuse-current-macosx.patch              || exit 1
+/bin/sh ./darwin_configure.sh "$src_dir"                       || exit 1
+$MAKE                                                          || exit 1
 
 echo
 echo "$package_name compiled OK in /tmp/$package_name"
