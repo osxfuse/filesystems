@@ -5,6 +5,7 @@
 AWK=/usr/bin/awk
 BASENAME=/usr/bin/basename
 CP=/bin/cp
+CUT=/usr/bin/cut
 DIRNAME=/usr/bin/dirname
 HEAD=/usr/bin/head
 MAKE=/usr/bin/make
@@ -15,11 +16,21 @@ UNAME=/usr/bin/uname
 
 os_name=`$UNAME -s`
 os_codename="Unknown"
-this_dir=`$DIRNAME $0`
-if [ "$this_dir" = "." ]
+
+is_absolute_path=`echo "$0" | $CUT -c1`
+if [ "$is_absolute_path" = "/" ]
 then
-    this_dir=`pwd`
+    macfuse_dir="`$DIRNAME $0`/.."
+else
+    macfuse_dir="`pwd`/`$DIRNAME $0`/.."
 fi
+pushd . > /dev/null
+cd "$macfuse_dir" || exit 1
+macfuse_dir=`pwd`
+popd > /dev/null
+
+echo "Using MacFUSE source root $macfuse_dir"
+exit 0
 
 os_release=`$UNAME -r`
 if [ "$1" != "" ]
@@ -37,13 +48,13 @@ fi
 
 case "$os_release" in
   8*)
-      lib_dir="$this_dir/../core/10.4/libfuse/"
-      src_dir="$this_dir/../core/10.4/fusefs/"
+      lib_dir="$macfuse_dir/core/10.4/libfuse/"
+      kext_dir="$macfuse_dir/core/10.4/fusefs/"
       os_codename="Tiger"
   ;;
   9*)
-      lib_dir="$this_dir/../core/10.5/libfuse/"
-      src_dir="$this_dir/../core/10.5/fusefs/"
+      lib_dir="$macfuse_dir/core/10.5/libfuse/"
+      kext_dir="$macfuse_dir/core/10.5/fusefs/"
       os_codename="Leopard"
   ;;
   *)
@@ -70,7 +81,7 @@ $RM -rf /tmp/"$package_name"
 $TAR -C /tmp/ -xzvf "$lib_dir"/fuse-current.tar.gz             || exit 1
 cd /tmp/"$package_name"                                        || exit 1
 $PATCH -p1 < "$lib_dir"/fuse-current-macosx.patch              || exit 1
-/bin/sh ./darwin_configure.sh "$src_dir"                       || exit 1
+/bin/sh ./darwin_configure.sh "$kext_dir"                      || exit 1
 $MAKE                                                          || exit 1
 
 echo

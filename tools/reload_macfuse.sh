@@ -5,8 +5,19 @@
 MACFUSE_BUNDLE="com.google.filesystems.fusefs"
 MACFUSE_CONFIG="Debug"
 MACFUSE_KEXT="fusefs.kext"
-MACFUSE_SRCDIR="/work/macfuse/local/fusefs"
 MACFUSE_TMPDIR="/tmp"
+
+is_absolute_path=`echo "$0" | /usr/bin/cut -c1`
+if [ "$is_absolute_path" = "/" ]
+then
+    MACFUSE_SRCDIR="`/usr/bin/dirname $0`/.."
+else
+    MACFUSE_SRCDIR="`pwd`/`/usr/bin/dirname $0`/.."
+fi
+pushd . > /dev/null
+cd "$macfuse_dir" || exit 1
+macfuse_dir=`pwd`
+popd > /dev/null
 
 PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin:/Developer/Tools:/Developer/Applications:
 
