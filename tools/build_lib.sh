@@ -30,7 +30,6 @@ macfuse_dir=`pwd`
 popd > /dev/null
 
 echo "Using MacFUSE source root $macfuse_dir"
-exit 0
 
 os_release=`$UNAME -r`
 if [ "$1" != "" ]
