@@ -5,19 +5,40 @@
 MACFUSE_BUNDLE="com.google.filesystems.fusefs"
 MACFUSE_CONFIG="Debug"
 MACFUSE_KEXT="fusefs.kext"
-MACFUSE_TMPDIR="/tmp"
+MACFUSE_TMP_DIR="/tmp"
 
 is_absolute_path=`echo "$0" | /usr/bin/cut -c1`
 if [ "$is_absolute_path" = "/" ]
 then
-    MACFUSE_SRCDIR="`/usr/bin/dirname $0`/.."
+    MACFUSE_SRC_DIR="`/usr/bin/dirname $0`/.."
 else
-    MACFUSE_SRCDIR="`pwd`/`/usr/bin/dirname $0`/.."
+    MACFUSE_SRC_DIR="`pwd`/`/usr/bin/dirname $0`/.."
 fi
 pushd . > /dev/null
-cd "$macfuse_dir" || exit 1
-macfuse_dir=`pwd`
+cd "$MACFUSE_SRC_DIR" || exit 1
+MACFUSE_SRC_DIR=`pwd`
 popd > /dev/null
+
+os_release=`/usr/bin/uname -r`
+if [ "$1" != "" ]
+then
+    os_release="$1"
+fi
+
+case "$os_release" in
+  8*)
+      MACFUSE_KEXT_DIR="$MACFUSE_SRC_DIR/core/10.4/fusefs/"
+      os_codename="Tiger"
+  ;;
+  9*)
+      MACFUSE_KEXT_DIR="$MACFUSE_SRC_DIR/core/10.5/fusefs/"
+      os_codename="Leopard"
+  ;;
+  *)
+      echo "Unsupported Mac OS X release $os_release"
+      exit 1
+  ;;
+esac
 
 PATH=/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin:/Developer/Tools:/Developer/Applications:
 
@@ -37,32 +58,32 @@ then
     exit_on_error "Failed to unload MacFUSE kernel extension"
 fi
 
-cd "$MACFUSE_SRCDIR"
-exit_on_error "Failed to cd to $MACFUSE_SRCDIR"
+cd "$MACFUSE_KEXT_DIR"
+exit_on_error "Failed to cd to $MACFUSE_SRC_DIR"
 
 xcodebuild -configuration $MACFUSE_CONFIG -target fusefs
 exit_on_error "Failed to build configuration $MACFUSE_CONFIG"
 
-sudo rm -rf "$MACFUSE_TMPDIR"/"$MACFUSE_KEXT"
+sudo rm -rf "$MACFUSE_TMP_DIR"/"$MACFUSE_KEXT"
 exit_on_error "Failed to remove old copy of MacFUSE kernel extension"
 
-sudo rm -rf "$MACFUSE_TMPDIR"/fuse-symbols
+sudo rm -rf "$MACFUSE_TMP_DIR"/fuse-symbols
 exit_on_error "Failed to remove old copy of MacFUSE kernel extension symbols"
 
-mkdir "$MACFUSE_TMPDIR"/fuse-symbols
+mkdir "$MACFUSE_TMP_DIR"/fuse-symbols
 exit_on_error "Failed to create directory for symbols"
 
-sudo cp -R "$MACFUSE_SRCDIR"/build/"$MACFUSE_CONFIG"/"$MACFUSE_KEXT" "$MACFUSE_TMPDIR"/"$MACFUSE_KEXT"
+sudo cp -R "$MACFUSE_KEXT_DIR"/build/"$MACFUSE_CONFIG"/"$MACFUSE_KEXT" "$MACFUSE_TMP_DIR"/"$MACFUSE_KEXT"
 exit_on_error "Failed to copy rebuilt MacFUSE kernel extension"
 
-sudo chown -R root:wheel "$MACFUSE_TMPDIR"/"$MACFUSE_KEXT"
+sudo chown -R root:wheel "$MACFUSE_TMP_DIR"/"$MACFUSE_KEXT"
 exit_on_error "Failed to set permissions on rebuilt MacFUSE kernel extension"
 
-sudo kextload -s "$MACFUSE_TMPDIR"/fuse-symbols -v "$MACFUSE_TMPDIR"/"$MACFUSE_KEXT"
+sudo kextload -s "$MACFUSE_TMP_DIR"/fuse-symbols -v "$MACFUSE_TMP_DIR"/"$MACFUSE_KEXT"
 exit_on_error "Failed to load rebuilt MacFUSE kernel extension"
 
-cd "$MACFUSE_TMPDIR"
-exit_on_error "Failed to change directory to $MACFUSE_TMPDIR"
+cd "$MACFUSE_TMP_DIR"
+exit_on_error "Failed to change directory to $MACFUSE_TMP_DIR"
 
 # Make some testing directories
 mkdir /tmp/dir /tmp/hello /tmp/ssh /tmp/xmp 2>/dev/null
