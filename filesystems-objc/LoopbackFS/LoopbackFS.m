@@ -74,23 +74,27 @@
 
 #pragma mark Removing an Item
 
+- (BOOL)removeDirectoryAtPath:(NSString *)path error:(NSError **)error {
+  LOG_OP(@"[0x%x] removeDirectoryAtPath: %@", [NSThread currentThread], path);
+
+  // We need to special-case directories here and use the bsd API since 
+  // NSFileManager will happily do a recursive remove :-(
+  NSString* p = [rootPath_ stringByAppendingString:path];
+  int ret = rmdir([p UTF8String]);
+  if (ret < 0) {
+    *error = [NSError errorWithPOSIXCode:errno];
+    return NO;
+  }
+  return YES;
+}
+
 - (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
   LOG_OP(@"[0x%x] removeItemAtPath: %@", [NSThread currentThread], path);
 
+  // NOTE: If removeDirectoryAtPath is commented out, then this may be called
+  // with a directory, in which case NSFileManager will recursively remove all
+  // subdirectories. So be careful!
   NSString* p = [rootPath_ stringByAppendingString:path];
-  BOOL isDirectory = NO;
-  BOOL exists = 
-    [[NSFileManager defaultManager] fileExistsAtPath:p isDirectory:&isDirectory];
-  if (exists && isDirectory) {
-    // We need to special-case directories here since NSFileManager will happily
-    // do a recursive remove :-(
-    int ret = rmdir([p UTF8String]);
-    if (ret < 0) {
-      *error = [NSError errorWithPOSIXCode:errno];
-      return NO;
-    }
-    return YES;
-  }
   return [[NSFileManager defaultManager] removeItemAtPath:p error:error];
 }
 
