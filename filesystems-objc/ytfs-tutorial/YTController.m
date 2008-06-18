@@ -20,7 +20,7 @@
 //
 #import "YTController.h"
 #import "YTFS.h"
-// #import <MacFUSE/GMUserFileSystem.h>
+#import <MacFUSE/GMUserFileSystem.h>
 
 @implementation YTController
 

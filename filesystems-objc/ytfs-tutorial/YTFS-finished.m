@@ -20,6 +20,7 @@
 //
 #import "YTFS.h"
 #import "NSImage+IconData.h"
+#import <MacFUSE/GMUserFileSystem.h>
 
 @implementation YTFS
 
@@ -35,25 +36,38 @@ static NSString* const kThumbURLQuery = @"./media:group/media:thumbnail/@url";
   return [videos_ allKeys];
 }
 
-- (NSURL *)URLOfWeblocAtPath:(NSString *)path {
-  return [self URLFromQuery:kPlayerURLQuery atPath:path];
-}
-
-- (NSData *)iconDataAtPath:(NSString *)path {
-  NSURL* url = [self URLFromQuery:kThumbURLQuery atPath:path];
-  if (url) {
-    NSImage* image = [[[NSImage alloc] initWithContentsOfURL:url] autorelease];
-    return [image icnsDataWithWidth:256];
-  }
-  return nil;
-}
-
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
                                    error:(NSError **)error {
   if ([self nodeAtPath:path]) {
     return [NSDictionary dictionary];
   }
   return nil;
+}
+
+- (NSDictionary *)finderAttributesAtPath:(NSString *)path 
+                                   error:(NSError **)error {
+  if ([self nodeAtPath:path]) {
+    NSNumber* finderFlags = [NSNumber numberWithLong:kHasCustomIcon];
+    return [NSDictionary dictionaryWithObject:finderFlags
+                                       forKey:kGMUserFileSystemFinderFlagsKey];
+  }
+  return nil;
+}
+
+- (NSDictionary *)resourceAttributesAtPath:(NSString *)path
+                                     error:(NSError **)error {
+  NSMutableDictionary* attribs = [NSMutableDictionary dictionary];
+  NSURL* url = [self URLFromQuery:kPlayerURLQuery atPath:path];
+  if (url) {
+    [attribs setObject:url forKey:kGMUserFileSystemWeblocURLKey];
+  }
+  url = [self URLFromQuery:kThumbURLQuery atPath:path];
+  if (url) {
+    NSImage* image = [[[NSImage alloc] initWithContentsOfURL:url] autorelease];
+    NSData* icnsData = [image icnsDataWithWidth:256];
+    [attribs setObject:icnsData forKey:kGMUserFileSystemCustomIconDataKey];
+  }
+  return attribs;
 }
 
 // Optional: Just for fun we return the xml string as our file contents.
@@ -64,11 +78,6 @@ static NSString* const kThumbURLQuery = @"./media:group/media:thumbnail/@url";
     return [xml dataUsingEncoding:NSUTF8StringEncoding];
   }
   return nil;
-}
-
-// Optional: Leads to one less call of iconDataAtPath.
-- (UInt16)finderFlagsAtPath:(NSString *)path {
-  return ([self nodeAtPath:path] ? kHasCustomIcon : 0);
 }
 
 #pragma mark -

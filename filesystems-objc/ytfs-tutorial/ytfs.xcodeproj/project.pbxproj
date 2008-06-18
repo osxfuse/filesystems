@@ -16,6 +16,7 @@
 		FF6A95EB0D318BA0004BBE7A /* YTController.m in Sources */ = {isa = PBXBuildFile; fileRef = FF6A95EA0D318BA0004BBE7A /* YTController.m */; };
 		FF6A96FE0D31A26A004BBE7A /* ytfs.icns in Resources */ = {isa = PBXBuildFile; fileRef = FF6A96FD0D31A26A004BBE7A /* ytfs.icns */; };
 		FF6A9A2E0D31C146004BBE7A /* NSImage+IconData.m in Sources */ = {isa = PBXBuildFile; fileRef = FF6A9A2D0D31C146004BBE7A /* NSImage+IconData.m */; };
+		FF9C34820E09943400D8FE67 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF9C34810E09943400D8FE67 /* MacFUSE.framework */; };
 		FFAA6CC30D34420400837805 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFAA6CC20D34420400837805 /* Accelerate.framework */; };
 /* End PBXBuildFile section */
 
@@ -38,6 +39,7 @@
 		FF6A96FD0D31A26A004BBE7A /* ytfs.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = ytfs.icns; sourceTree = "<group>"; };
 		FF6A9A2C0D31C146004BBE7A /* NSImage+IconData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+IconData.h"; sourceTree = "<group>"; };
 		FF6A9A2D0D31C146004BBE7A /* NSImage+IconData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+IconData.m"; sourceTree = "<group>"; };
+		FF9C34810E09943400D8FE67 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
 		FFAA6CC20D34420400837805 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
@@ -49,6 +51,7 @@
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				FF694E1A0D2839E000CD431F /* Carbon.framework in Frameworks */,
 				FFAA6CC30D34420400837805 /* Accelerate.framework in Frameworks */,
+				FF9C34820E09943400D8FE67 /* MacFUSE.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +134,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				FF9C34810E09943400D8FE67 /* MacFUSE.framework */,
 				1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */,
 				1058C7A2FEA54F0111CA2CBB /* Other Frameworks */,
 			);
