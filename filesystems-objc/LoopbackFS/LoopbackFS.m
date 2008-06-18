@@ -295,7 +295,15 @@
          [NSThread currentThread], path);
 
   NSString* p = [rootPath_ stringByAppendingString:path];
-  return [[NSFileManager defaultManager] attributesOfFileSystemForPath:p error:error];
+  NSDictionary* d =
+    [[NSFileManager defaultManager] attributesOfFileSystemForPath:p error:error];
+  if (d) {
+    NSMutableDictionary* attribs = [NSMutableDictionary dictionaryWithDictionary:d];
+    [attribs setObject:[NSNumber numberWithBool:YES]
+                forKey:kGMUserFileSystemVolumeSupportsExtendedDatesKey];
+    return attribs;
+  }
+  return nil;
 }
 
 - (BOOL)setAttributes:(NSDictionary *)attributes 

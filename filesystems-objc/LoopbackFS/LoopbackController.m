@@ -84,7 +84,6 @@
   [NSString stringWithFormat:@"volicon=%@", 
    [[NSBundle mainBundle] pathForResource:@"LoopbackFS" ofType:@"icns"]];
   [options addObject:volArg];
-  [options addObject:@"xtimes"];  // Support create and backup times.
   [options addObject:@"debug"];
   [fs_ mountAtPath:mountPath 
        withOptions:options];
