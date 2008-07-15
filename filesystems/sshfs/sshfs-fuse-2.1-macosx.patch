@@ -1,0 +1,416 @@
+diff -Naur old/Makefile.in new/Makefile.in
+--- old/Makefile.in	2008-07-11 04:04:11.000000000 -0700
++++ new/Makefile.in	2008-07-14 18:14:24.000000000 -0700
+@@ -660,7 +660,11 @@
+ @SSH_NODELAY_SO_TRUE@	rm -f "$(DESTDIR)$(libdir)/sshnodelay.so"
+ 
+ @SSH_NODELAY_SO_TRUE@sshnodelay.so:
++ifeq "$(shell uname)" "Darwin"
++@SSH_NODELAY_SO_TRUE@	$(CC) -Wall -dynamiclib $(CFLAGS) $(sshnodelay_libs) -install_name "$(DESTDIR)$(libdir)/sshnodelay.so" sshnodelay.c -o sshnodelay.so
++else
+ @SSH_NODELAY_SO_TRUE@	$(CC) -Wall -W -s --shared -fPIC $(sshnodelay_libs) sshnodelay.c -o sshnodelay.so
++endif
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
+diff -Naur old/README.MacFUSE new/README.MacFUSE
+--- old/README.MacFUSE	1969-12-31 16:00:00.000000000 -0800
++++ new/README.MacFUSE	2008-07-14 18:14:24.000000000 -0700
+@@ -0,0 +1,9 @@
++MacFUSE Project Page:
++
++http://code.google.com/p/macfuse/
++
++Making a Universal build of sshfs:
++
++0. Make sure dependencies (glib, MacFUSE) are installed
++1. Run ./configure_for_macfuse.sh
++2. Run make
+diff -Naur old/cache.c new/cache.c
+--- old/cache.c	2008-07-11 04:00:33.000000000 -0700
++++ new/cache.c	2008-07-14 18:30:25.000000000 -0700
+@@ -553,6 +553,9 @@
+ 	cache.next_oper = oper;
+ 
+ 	cache_unity_fill(oper, &cache_oper);
++#if (__FreeBSD__ >= 10)
++	cache_enabled = cache.on;
++#endif
+ 	if (cache.on) {
+ 		cache_fill(oper, &cache_oper);
+ 		pthread_mutex_init(&cache.lock, NULL);
+@@ -587,3 +590,7 @@
+ 
+ 	return fuse_opt_parse(args, &cache, cache_opts, NULL);
+ }
++
++#if (__FreeBSD__ >= 10)
++int cache_enabled;
++#endif
+diff -Naur old/cache.h new/cache.h
+--- old/cache.h	2008-07-11 04:00:33.000000000 -0700
++++ new/cache.h	2008-07-14 18:16:57.000000000 -0700
+@@ -27,3 +27,7 @@
+ void cache_add_attr(const char *path, const struct stat *stbuf, uint64_t wrctr);
+ void cache_invalidate(const char *path);
+ uint64_t cache_get_write_ctr(void);
++
++#if (__FreeBSD__ >= 10)
++extern int cache_enabled;
++#endif
+diff -Naur old/sshfs.c new/sshfs.c
+--- old/sshfs.c	2008-07-11 04:00:33.000000000 -0700
++++ new/sshfs.c	2008-07-14 18:32:07.000000000 -0700
+@@ -19,7 +19,12 @@
+ #include <string.h>
+ #include <stdint.h>
+ #include <errno.h>
++#if !(__FreeBSD__ >= 10)
+ #include <semaphore.h>
++#else
++#define MACFUSE_SSHFS_VERSION "1.7.0"
++#include "fuse_darwin.h"
++#endif
+ #include <pthread.h>
+ #include <netdb.h>
+ #include <signal.h>
+@@ -34,6 +39,10 @@
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
+ #include <glib.h>
++#if (__FreeBSD__ >= 10)
++#include <libgen.h>
++#include <strings.h>
++#endif
+ 
+ #include "cache.h"
+ 
+@@ -120,6 +129,16 @@
+ 
+ #define SSHNODELAY_SO "sshnodelay.so"
+ 
++#if (__FreeBSD__ >= 10)
++
++#ifndef LIBDIR
++#define LIBDIR "/usr/local/lib"
++#endif
++
++static char sshfs_program_path[PATH_MAX] = { 0 };
++
++#endif
++
+ struct buffer {
+ 	uint8_t *p;
+ 	size_t len;
+@@ -169,6 +188,9 @@
+ 	int connver;
+ 	int modifver;
+ 	int refs;
++#if (__FreeBSD__ >= 10)
++	pthread_mutex_t file_lock;
++#endif
+ };
+ 
+ struct sshfs {
+@@ -208,6 +230,10 @@
+ 	int server_version;
+ 	unsigned remote_uid;
+ 	unsigned local_uid;
++#if (__FreeBSD__ >= 10)
++	unsigned remote_gid;
++	unsigned local_gid;
++#endif
+ 	int remote_uid_detected;
+ 	unsigned blksize;
+ 	char *progname;
+@@ -641,8 +667,17 @@
+ 		}
+ 	}
+ 
++#if (__FreeBSD__ >= 10)
++	if (sshfs.remote_uid_detected) {
++		if (uid == sshfs.remote_uid)
++			uid = sshfs.local_uid;
++		if (gid == sshfs.remote_gid)
++			gid = sshfs.local_gid;
++	}
++#else
+ 	if (sshfs.remote_uid_detected && uid == sshfs.remote_uid)
+ 		uid = sshfs.local_uid;
++#endif
+ 
+ 	memset(stbuf, 0, sizeof(struct stat));
+ 	stbuf->st_mode = mode;
+@@ -745,11 +780,33 @@
+ #ifdef SSH_NODELAY_WORKAROUND
+ static int do_ssh_nodelay_workaround(void)
+ {
++#if (__FreeBSD__ >= 10)
++	char *oldpreload = getenv("DYLD_INSERT_LIBRARIES");
++#else
+ 	char *oldpreload = getenv("LD_PRELOAD");
++#endif
+ 	char *newpreload;
+ 	char sopath[PATH_MAX];
+ 	int res;
+ 
++#if (__FreeBSD__ >= 10)
++	char *sshfs_program_path_base = NULL;
++	if (!sshfs_program_path[0]) {
++		goto nobundle;
++	}
++	sshfs_program_path_base = dirname(sshfs_program_path);
++	if (!sshfs_program_path_base) {
++		goto nobundle;
++	}
++	snprintf(sopath, sizeof(sopath), "%s/%s", sshfs_program_path_base,
++		SSHNODELAY_SO);
++	res = access(sopath, R_OK);
++	if (res == -1) {
++		goto nobundle;
++	}
++	goto pathok;
++nobundle:
++#endif
+ 	snprintf(sopath, sizeof(sopath), "%s/%s", LIBDIR, SSHNODELAY_SO);
+ 	res = access(sopath, R_OK);
+ 	if (res == -1) {
+@@ -774,16 +831,24 @@
+ 			return -1;
+ 		}
+ 	}
++#if (__FreeBSD__ >= 10)
++pathok:
++#endif
+ 
+ 	newpreload = g_strdup_printf("%s%s%s",
+ 				     oldpreload ? oldpreload : "",
+ 				     oldpreload ? " " : "",
+ 				     sopath);
+ 
++#if (__FreeBSD__ >= 10)
++	if (!newpreload || setenv("DYLD_INSERT_LIBRARIES", newpreload, 1) == -1)
++		fprintf(stderr, "warning: failed set DYLD_INSERT_LIBRARIES for ssh nodelay workaround\n");
++#else
+ 	if (!newpreload || setenv("LD_PRELOAD", newpreload, 1) == -1) {
+ 		fprintf(stderr, "warning: failed set LD_PRELOAD "
+ 			"for ssh nodelay workaround\n");
+ 	}
++#endif
+ 	g_free(newpreload);
+ 	return 0;
+ }
+@@ -1476,6 +1541,10 @@
+ 
+ 	sshfs.remote_uid = stbuf.st_uid;
+ 	sshfs.local_uid = getuid();
++#if (__FreeBSD__ >= 10)
++	sshfs.remote_gid = stbuf.st_gid;
++	sshfs.local_gid = getgid();
++#endif
+ 	sshfs.remote_uid_detected = 1;
+ 	DEBUG("remote_uid = %i\n", sshfs.remote_uid);
+ 
+@@ -2070,6 +2139,14 @@
+ 	buf_init(&buf, 0);
+ 	buf_add_path(&buf, path);
+ 	buf_add_uint32(&buf, SSH_FILEXFER_ATTR_UIDGID);
++#if (__FreeBSD__ >= 10)
++	if (sshfs.remote_uid_detected) {
++		if (uid == sshfs.local_uid)
++			uid = sshfs.remote_uid;
++		if (gid == sshfs.local_gid)
++			gid = sshfs.remote_gid;
++	}
++#endif
+ 	buf_add_uint32(&buf, uid);
+ 	buf_add_uint32(&buf, gid);
+ 	err = sftp_request(SSH_FXP_SETSTAT, &buf, SSH_FXP_STATUS, NULL);
+@@ -2153,6 +2230,9 @@
+ 	sf = g_new0(struct sshfs_file, 1);
+ 	list_init(&sf->write_reqs);
+ 	pthread_cond_init(&sf->write_finished, NULL);
++#if (__FreeBSD__ >= 10)
++	pthread_mutex_init(&sf->file_lock, NULL);
++#endif
+ 	/* Assume random read after open */
+ 	sf->is_seq = 0;
+ 	sf->refs = 1;
+@@ -2186,11 +2266,21 @@
+ 	}
+ 
+ 	if (!err) {
++#if (__FreeBSD__ >= 10)
++		if (cache_enabled)
++			cache_add_attr(path, &stbuf, wrctr);
++#else
+ 		cache_add_attr(path, &stbuf, wrctr);
++#endif
+ 		buf_finish(&sf->handle);
+ 		fi->fh = (unsigned long) sf;
+ 	} else {
++#if (__FreeBSD__ >= 10)
++		if (cache_enabled)
++			cache_invalidate(path);
++#else
+ 		cache_invalidate(path);
++#endif
+ 		g_free(sf);
+ 	}
+ 	buf_free(&buf);
+@@ -2245,14 +2335,32 @@
+ 
+ static void sshfs_file_put(struct sshfs_file *sf)
+ {
++#if (__FreeBSD__ >= 10)
++	pthread_mutex_lock(&sf->file_lock);
++#endif
+ 	sf->refs--;
++#if (__FreeBSD__ >= 10)
++	if (!sf->refs) {
++		pthread_mutex_unlock(&sf->file_lock);
++		g_free(sf);
++	} else {
++		pthread_mutex_unlock(&sf->file_lock);
++	}
++#else
+ 	if (!sf->refs)
+ 		g_free(sf);
++#endif
+ }
+ 
+ static void sshfs_file_get(struct sshfs_file *sf)
+ {
++#if (__FreeBSD__ >= 10)
++	pthread_mutex_lock(&sf->file_lock);
++#endif
+ 	sf->refs++;
++#if (__FreeBSD__ >= 10)
++	pthread_mutex_unlock(&sf->file_lock);
++#endif
+ }
+ 
+ static int sshfs_release(const char *path, struct fuse_file_info *fi)
+@@ -2942,7 +3050,12 @@
+ 		exit(1);
+ 
+ 	case KEY_VERSION:
++#if (__FreeBSD__ >= 10)
++		fprintf(stderr, "SSHFS version %s (MacFUSE SSHFS %s)\n",
++			PACKAGE_VERSION, MACFUSE_SSHFS_VERSION);
++#else
+ 		fprintf(stderr, "SSHFS version %s\n", PACKAGE_VERSION);
++#endif
+ #if FUSE_VERSION >= 25
+ 		fuse_opt_add_arg(outargs, "--version");
+ 		sshfs_fuse_main(outargs);
+@@ -3026,6 +3139,15 @@
+ 		perror("Failed to allocate locked page for password");
+ 		return -1;
+ 	}
++#if (__FreeBSD__ >= 10)
++	if (mlock(sshfs.password, size) != 0) {
++		memset(sshfs.password, 0, size);
++		munmap(sshfs.password, size);
++		sshfs.password = NULL;
++		perror("Failed to allocate locked page for password");
++		return -1;
++	}
++#endif /* __FreeBSD__ >= 10 */
+ 
+ 	/* Don't use fgets() because password might stay in memory */
+ 	for (n = 0; n < max_password; n++) {
+@@ -3091,8 +3213,17 @@
+ 	}
+ }
+ 
++#if (__FreeBSD__ >= 10)
++int main(int argc, char *argv[], __unused char *envp[], char **exec_path)
++#else
+ int main(int argc, char *argv[])
++#endif
+ {
++#if (__FreeBSD__ >= 10)
++	if (!realpath(*exec_path, sshfs_program_path)) {
++		memset(sshfs_program_path, 0, PATH_MAX);
++	}
++#endif
+ 	int res;
+ 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+ 	char *tmp;
+@@ -3101,6 +3232,10 @@
+ 	const char *sftp_server;
+ 	int libver;
+ 
++#if (__FreeBSD__ >= 10)
++	/* Until this gets fixed somewhere else. */
++	g_slice_set_config(G_SLICE_CONFIG_ALWAYS_MALLOC, TRUE);
++#endif /* __FreeBSD__ >= 10 */
+ 	g_thread_init(NULL);
+ 
+ 	sshfs.blksize = 4096;
+@@ -3108,7 +3243,11 @@
+ 	sshfs.max_write = 65536;
+ 	sshfs.nodelay_workaround = 1;
+ 	sshfs.nodelaysrv_workaround = 0;
++#if (__FreeBSD__ >= 10)
++	sshfs.rename_workaround = 1;
++#else
+ 	sshfs.rename_workaround = 0;
++#endif /* __FreeBSD__ >= 10 */
+ 	sshfs.truncate_workaround = 0;
+ 	sshfs.buflimit_workaround = 1;
+ 	sshfs.ssh_ver = 2;
+@@ -3121,6 +3260,10 @@
+ 	ssh_add_arg("-a");
+ 	ssh_add_arg("-oClearAllForwardings=yes");
+ 
++#if (__FreeBSD__ >= 10)
++	sshfs.detect_uid = 1;
++#endif
++
+ 	if (fuse_opt_parse(&args, &sshfs, sshfs_opts, sshfs_opt_proc) == -1 ||
+ 	    parse_workarounds() == -1)
+ 		exit(1);
+diff -Naur old/sshnodelay.c new/sshnodelay.c
+--- old/sshnodelay.c	2007-12-11 14:23:29.000000000 -0800
++++ new/sshnodelay.c	2008-07-14 18:14:32.000000000 -0700
+@@ -5,6 +5,32 @@
+ #include <netinet/in.h>
+ #include <netinet/tcp.h>
+ 
++#if (__FreeBSD__ >= 10)
++
++int custom_connect(int sock, const struct sockaddr *addr, socklen_t addrlen);
++
++typedef struct interpose_s {
++	void *new_func;
++	void *orig_func;
++} interpose_t;
++
++static const interpose_t interposers[] \
++	__attribute__ ((section("__DATA, __interpose"))) = {
++	{ (void *)custom_connect,  (void *)connect  },
++};
++
++int custom_connect(int sock, const struct sockaddr *addr, socklen_t addrlen)
++{
++	int res = connect(sock, addr, addrlen);
++	if (!res && addr->sa_family == AF_INET) {
++		int opt = 1;
++		setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
++	}
++	return res;
++}
++
++#else
++
+ int connect(int sock, const struct sockaddr *addr, socklen_t addrlen)
+ {
+ 	int (*next_connect)(int, const struct sockaddr *, socklen_t) =
+@@ -16,3 +42,5 @@
+ 	}
+ 	return res;
+ }
++
++#endif
