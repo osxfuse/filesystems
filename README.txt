@@ -3,6 +3,6 @@ for Mac OS X.
 
 The MacFUSE project page is at:
 
-http://code.google.com/p/macfuse/
+http://macfuse.googlecode.com
 
 Amit Singh <singh@>
