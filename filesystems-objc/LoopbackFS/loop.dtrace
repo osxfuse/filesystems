@@ -2,6 +2,7 @@
 
 #pragma D option quiet
 
-macfuse_objc*:::delegate-entry {
-  printf("%s: %s\n", probefunc, copyinstr(arg0));
+macfuse_objc*:::delegate-entry
+{
+    printf("%s: %s\n", probefunc, copyinstr(arg0));
 }
