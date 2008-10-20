@@ -35,12 +35,6 @@
 
 @implementation LoopbackFS
 
-#if 1
-#define LOG_OP(fmt, ...) NSLog(fmt, ## __VA_ARGS__)
-#else
-#define LOG_OP(fmt, ...) do {} while(0)
-#endif
-
 - (id)initWithRootPath:(NSString *)rootPath {
   if ((self = [super init])) {
     rootPath_ = [rootPath retain];
@@ -58,9 +52,6 @@
 - (BOOL)moveItemAtPath:(NSString *)source 
                 toPath:(NSString *)destination
                  error:(NSError **)error {
-  LOG_OP(@"[0x%x] moveItemAtPath: %@ -> %@", [NSThread currentThread], 
-         source, destination);
-
   // We use rename directly here since NSFileManager can sometimes fail to 
   // rename and return non-posix error codes.
   NSString* p_src = [rootPath_ stringByAppendingString:source];
@@ -75,8 +66,6 @@
 #pragma mark Removing an Item
 
 - (BOOL)removeDirectoryAtPath:(NSString *)path error:(NSError **)error {
-  LOG_OP(@"[0x%x] removeDirectoryAtPath: %@", [NSThread currentThread], path);
-
   // We need to special-case directories here and use the bsd API since 
   // NSFileManager will happily do a recursive remove :-(
   NSString* p = [rootPath_ stringByAppendingString:path];
@@ -89,8 +78,6 @@
 }
 
 - (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
-  LOG_OP(@"[0x%x] removeItemAtPath: %@", [NSThread currentThread], path);
-
   // NOTE: If removeDirectoryAtPath is commented out, then this may be called
   // with a directory, in which case NSFileManager will recursively remove all
   // subdirectories. So be careful!
@@ -103,8 +90,6 @@
 - (BOOL)createDirectoryAtPath:(NSString *)path 
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
-  LOG_OP(@"[0x%x] createDirectoryAtPath: %@", [NSThread currentThread], path);
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   return [[NSFileManager defaultManager] createDirectoryAtPath:p 
                                    withIntermediateDirectories:NO
@@ -116,8 +101,6 @@
               attributes:(NSDictionary *)attributes
             fileDelegate:(id *)fileDelegate
                    error:(NSError **)error {
-  LOG_OP(@"[0x%x] createFileAtPath: %@", [NSThread currentThread], path); 
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
   int fd = creat([p UTF8String], mode);
@@ -134,9 +117,6 @@
 - (BOOL)linkItemAtPath:(NSString *)path
                 toPath:(NSString *)otherPath
                  error:(NSError **)error {
-  LOG_OP(@"[0x%x] linkItemAtPath: %@ <- %@", 
-         [NSThread currentThread], path, otherPath); 
-
   NSString* p_path = [rootPath_ stringByAppendingString:path];
   NSString* p_otherPath = [rootPath_ stringByAppendingString:otherPath];
 
@@ -155,8 +135,6 @@
 - (BOOL)createSymbolicLinkAtPath:(NSString *)path 
              withDestinationPath:(NSString *)otherPath
                            error:(NSError **)error {
-  LOG_OP(@"[0x%x] createSymbolicLinkAtPath: %@", [NSThread currentThread], path); 
-  
   NSString* p_src = [rootPath_ stringByAppendingString:path];
   NSString* p_dst = [rootPath_ stringByAppendingString:otherPath];
   return [[NSFileManager defaultManager] createSymbolicLinkAtPath:p_src
@@ -166,8 +144,6 @@
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
                                         error:(NSError **)error {
-  LOG_OP(@"[0x%x] desinationOfSymbolicLinkAtPath: %@", [NSThread currentThread], path); 
-  
   NSString* p = [rootPath_ stringByAppendingString:path];
   return [[NSFileManager defaultManager] destinationOfSymbolicLinkAtPath:p
                                                                    error:error];
@@ -179,8 +155,6 @@
                   mode:(int)mode
           fileDelegate:(id *)fileDelegate
                  error:(NSError **)error {
-  LOG_OP(@"[0x%x] openFileAtPath: %@", [NSThread currentThread], path); 
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   int fd = open([p UTF8String], mode);
   if ( fd < 0 ) {
@@ -192,8 +166,6 @@
 }
 
 - (void)releaseFileAtPath:(NSString *)path fileDelegate:(id)fileDelegate {
-  LOG_OP(@"[0x%x] releaseFileAtPath: %@", [NSThread currentThread], path);
-
   NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   close(fd);
@@ -205,9 +177,6 @@
                  size:(size_t)size 
                offset:(off_t)offset
                 error:(NSError **)error {
-  LOG_OP(@"[0x%x] readFileAtPath: %@, offset=%lld, size=%d", 
-         [NSThread currentThread], path, offset, size); 
-
   NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   int ret = pread(fd, buffer, size, offset);
@@ -224,9 +193,6 @@
                   size:(size_t)size 
                 offset:(off_t)offset
                  error:(NSError **)error {
-  LOG_OP(@"[0x%x] writeFileAtPath: %@, offset=%lld, size=%d", 
-         [NSThread currentThread], path, offset, size);
-
   NSNumber* num = (NSNumber *)fileDelegate;
   int fd = [num longValue];
   int ret = pwrite(fd, buffer, size, offset);
@@ -240,9 +206,6 @@
 - (BOOL)truncateFileAtPath:(NSString *)path 
                     offset:(off_t)offset 
                      error:(NSError **)error {
-  LOG_OP(@"[0x%x] truncateFileAtPath:%@, offset=%d", [NSThread currentThread],
-         path, offset);
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = truncate([p UTF8String], offset);
   if ( ret < 0 ) {
@@ -255,9 +218,6 @@
 - (BOOL)exchangeDataOfItemAtPath:(NSString *)path1
                   withItemAtPath:(NSString *)path2
                            error:(NSError **)error {
-  LOG_OP(@"[0x%x] exchangeDataOfItemAtPath:%@, withPath:%@", [NSThread currentThread],
-         path1, path2);
-  
   NSString* p1 = [rootPath_ stringByAppendingString:path1];
   NSString* p2 = [rootPath_ stringByAppendingString:path2];
   int ret = exchangedata([p1 UTF8String], [p2 UTF8String], 0);
@@ -271,8 +231,6 @@
 #pragma mark Directory Contents
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
-  LOG_OP(@"[0x%x] directory contents: %@", [NSThread currentThread], path);
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   return [[NSFileManager defaultManager] contentsOfDirectoryAtPath:p error:error];
 }
@@ -281,8 +239,6 @@
 
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
                                    error:(NSError **)error {
-  LOG_OP(@"[0x%x] attributesOfItemAtAPath: %@", [NSThread currentThread], path);
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   NSDictionary* attribs = 
     [[NSFileManager defaultManager] attributesOfItemAtPath:p error:error];
@@ -291,9 +247,6 @@
 
 - (NSDictionary *)attributesOfFileSystemForPath:(NSString *)path
                                           error:(NSError **)error {
-  LOG_OP(@"[0x%x] attributesOfFileSystemForPath: %@", 
-         [NSThread currentThread], path);
-
   NSString* p = [rootPath_ stringByAppendingString:path];
   NSDictionary* d =
     [[NSFileManager defaultManager] attributesOfFileSystemForPath:p error:error];
@@ -309,8 +262,6 @@
 - (BOOL)setAttributes:(NSDictionary *)attributes 
          ofItemAtPath:(NSString *)path
                 error:(NSError **)error {
-  LOG_OP(@"[0x%x] setAttributes:%@ ofItemAtPath: %@", 
-         [NSThread currentThread], attributes, path);
   NSString* p = [rootPath_ stringByAppendingString:path];
   
   NSNumber* flags = [attributes objectForKey:kGMUserFileSystemFileFlagsKey];
@@ -329,8 +280,6 @@
 #pragma mark Extended Attributes
 
 - (NSArray *)extendedAttributesOfItemAtPath:(NSString *)path error:(NSError **)error {
-  LOG_OP(@"[0x%x] extended Attributes: %@", [NSThread currentThread], path);
-  
   NSString* p = [rootPath_ stringByAppendingString:path];
   
   ssize_t size = listxattr([p UTF8String], nil, 0, 0);
@@ -357,10 +306,7 @@
 - (NSData *)valueOfExtendedAttribute:(NSString *)name 
                         ofItemAtPath:(NSString *)path
                             position:(off_t)position
-                               error:(NSError **)error {
-  LOG_OP(@"[0x%x] value of extended attribute: %@ forPath:%@", 
-         [NSThread currentThread], name, path);
-  
+                               error:(NSError **)error {  
   NSString* p = [rootPath_ stringByAppendingString:path];
 
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
@@ -386,9 +332,6 @@
                     position:(off_t)position
                        options:(int)options
                        error:(NSError **)error {
-  LOG_OP(@"[0x%x] set extended attribute: %@ forPath:%@", 
-         [NSThread currentThread], name, path);
-
   // Setting com.apple.FinderInfo happens in the kernel, so security related 
   // bits are set in the options. We need to explicitly remove them or the call
   // to setxattr will fail.
@@ -408,9 +351,6 @@
 - (BOOL)removeExtendedAttribute:(NSString *)name
                    ofItemAtPath:(NSString *)path
                           error:(NSError **)error {
-  LOG_OP(@"[0x%x] set extended attribute: %@ forPath:%@", 
-         [NSThread currentThread], name, path);
-  
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = removexattr([p UTF8String], [name UTF8String], 0);
   if ( ret < 0 ) {
