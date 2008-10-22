@@ -84,6 +84,13 @@
   [NSString stringWithFormat:@"volicon=%@", 
    [[NSBundle mainBundle] pathForResource:@"LoopbackFS" ofType:@"icns"]];
   [options addObject:volArg];
+
+  // Do not use the 'native_xattr' mount-time option unless the underlying
+  // file system supports native extended attributes. Typically, the user
+  // would be mounting an HFS+ directory through LoopbackFS, so we do want
+  // this option in that case.
+  [options addObject:@"native_xattr"];
+
   [options addObject:@"volname=LoopbackFS"];
   [options addObject:@"debug"];
   [fs_ mountAtPath:mountPath 
