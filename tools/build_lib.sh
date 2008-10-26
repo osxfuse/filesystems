@@ -56,6 +56,11 @@ case "$os_release" in
       kext_dir="$macfuse_dir/core/10.5/fusefs/"
       os_codename="Leopard"
   ;;
+  10*)
+      lib_dir="$macfuse_dir/core/10.5/libfuse/"
+      kext_dir="$macfuse_dir/core/10.5/fusefs/"
+      os_codename="Snow Leopard"
+  ;;
   *)
       echo "Unsupported Mac OS X release $os_release"
       exit 1
