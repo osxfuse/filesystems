@@ -1816,7 +1816,7 @@ getproccmdline(pid_t pid, char *cmdlinebuf, int len)
 {
     int i, mib[4], rlen, tlen, thislen;
     int    argmax, target_argc;
-    char *target_argv;
+    char *target_argv, *target_argv_end;
     char  *cp;
     size_t size;
 
@@ -1837,6 +1837,8 @@ getproccmdline(pid_t pid, char *cmdlinebuf, int len)
         return -1;
     }
 
+    target_argv_end = target_argv + argmax;
+
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
@@ -1853,8 +1855,16 @@ getproccmdline(pid_t pid, char *cmdlinebuf, int len)
     rlen = len;
     tlen = 0;
     for (i = 1; i < target_argc + 1; i++) {
-        while (*cp == '\0')
+        while (cp < target_argv_end && *cp == '\0')
             cp++;
+        if (cp == target_argv_end) {
+            /*
+             * We've reached the end of target_argv without finding target_argc
+             * arguments. This can happen when a process changes its argv.
+             * Reported by Francis Devereux.
+             */
+            break;
+        }
         thislen = snprintf(cmdlinebuf + tlen, rlen, "%s ", cp);
         tlen += thislen; 
         rlen -= thislen;
