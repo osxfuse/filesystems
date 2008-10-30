@@ -92,7 +92,6 @@
   [options addObject:@"native_xattr"];
 
   [options addObject:@"volname=LoopbackFS"];
-  [options addObject:@"debug"];
   [fs_ mountAtPath:mountPath 
        withOptions:options];
 }
