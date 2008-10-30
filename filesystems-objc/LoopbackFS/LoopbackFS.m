@@ -203,18 +203,6 @@
   return ret;
 }
 
-- (BOOL)truncateFileAtPath:(NSString *)path 
-                    offset:(off_t)offset 
-                     error:(NSError **)error {
-  NSString* p = [rootPath_ stringByAppendingString:path];
-  int ret = truncate([p UTF8String], offset);
-  if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
-    return NO;    
-  }
-  return YES;
-}
-
 - (BOOL)exchangeDataOfItemAtPath:(NSString *)path1
                   withItemAtPath:(NSString *)path2
                            error:(NSError **)error {
@@ -263,7 +251,17 @@
          ofItemAtPath:(NSString *)path
                 error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
+
+  // TODO: Handle other keys not handled by NSFileManager setAttributes call.
   
+  NSNumber* offset = [attributes objectForKey:NSFileSize];
+  if ( offset ) {
+    int ret = truncate([p UTF8String], [offset longLongValue]);
+    if ( ret < 0 ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+      return NO;    
+    }
+  }
   NSNumber* flags = [attributes objectForKey:kGMUserFileSystemFileFlagsKey];
   if (flags != nil) {
     int rc = chflags([p UTF8String], [flags intValue]);
