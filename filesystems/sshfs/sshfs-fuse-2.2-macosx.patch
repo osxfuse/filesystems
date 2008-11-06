@@ -24,7 +24,7 @@ diff -Naur old/README.MacFUSE new/README.MacFUSE
 +Making a Universal build of sshfs:
 +
 +0. Make sure dependencies (glib, MacFUSE) are installed
-+1. Run ./configure_for_macfuse.sh
++1. Run macfuse_buildtool.sh -t swconfigure
 +2. Run make
 diff -Naur old/cache.c new/cache.c
 --- old/cache.c	2008-10-20 05:10:08.000000000 -0700
