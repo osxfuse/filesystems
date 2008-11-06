@@ -99,7 +99,7 @@
 
 - (BOOL)createFileAtPath:(NSString *)path 
               attributes:(NSDictionary *)attributes
-            fileDelegate:(id *)fileDelegate
+                userData:(id *)userData
                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
@@ -108,7 +108,7 @@
     *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
-  *fileDelegate = [NSNumber numberWithLong:fd];
+  *userData = [NSNumber numberWithLong:fd];
   return YES;
 }
 
@@ -153,7 +153,7 @@
 
 - (BOOL)openFileAtPath:(NSString *)path 
                   mode:(int)mode
-          fileDelegate:(id *)fileDelegate
+              userData:(id *)userData
                  error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   int fd = open([p UTF8String], mode);
@@ -161,23 +161,23 @@
     *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
-  *fileDelegate = [NSNumber numberWithLong:fd];
+  *userData = [NSNumber numberWithLong:fd];
   return YES;
 }
 
-- (void)releaseFileAtPath:(NSString *)path fileDelegate:(id)fileDelegate {
-  NSNumber* num = (NSNumber *)fileDelegate;
+- (void)releaseFileAtPath:(NSString *)path userData:(id)userData {
+  NSNumber* num = (NSNumber *)userData;
   int fd = [num longValue];
   close(fd);
 }
 
 - (int)readFileAtPath:(NSString *)path 
-         fileDelegate:(id)fileDelegate
+             userData:(id)userData
                buffer:(char *)buffer 
                  size:(size_t)size 
                offset:(off_t)offset
                 error:(NSError **)error {
-  NSNumber* num = (NSNumber *)fileDelegate;
+  NSNumber* num = (NSNumber *)userData;
   int fd = [num longValue];
   int ret = pread(fd, buffer, size, offset);
   if ( ret < 0 ) {
@@ -188,12 +188,12 @@
 }
 
 - (int)writeFileAtPath:(NSString *)path 
-          fileDelegate:(id)fileDelegate 
+              userData:(id)userData
                 buffer:(const char *)buffer
                   size:(size_t)size 
                 offset:(off_t)offset
                  error:(NSError **)error {
-  NSNumber* num = (NSNumber *)fileDelegate;
+  NSNumber* num = (NSNumber *)userData;
   int fd = [num longValue];
   int ret = pwrite(fd, buffer, size, offset);
   if ( ret < 0 ) {
@@ -225,7 +225,8 @@
 
 #pragma mark Getting and Setting Attributes
 
-- (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path
+                                userData:(id)userData
                                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   NSDictionary* attribs = 
@@ -249,6 +250,7 @@
 
 - (BOOL)setAttributes:(NSDictionary *)attributes 
          ofItemAtPath:(NSString *)path
+             userData:(id)userData
                 error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
 
