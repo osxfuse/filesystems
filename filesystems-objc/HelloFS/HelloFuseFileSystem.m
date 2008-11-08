@@ -20,7 +20,7 @@
 //  Created by alcor on 12/15/06.
 //
 #import "HelloFuseFileSystem.h"
-#import <MacFUSE/GMUserFileSystem.h>
+#import <MacFUSE/MacFUSE.h>
 
 static NSString *helloStr = @"Hello World!\n";
 static NSString *helloPath = @"/hello.txt";

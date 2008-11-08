@@ -21,7 +21,7 @@
 //
 #import "HelloController.h"
 #import "HelloFuseFileSystem.h"
-#import <MacFUSE/GMUserFileSystem.h>
+#import <MacFUSE/MacFUSE.h>
 
 @implementation HelloController
 
