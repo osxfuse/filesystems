@@ -30,7 +30,7 @@
 #import <sys/xattr.h>
 #import <sys/stat.h>
 #import "LoopbackFS.h"
-#import <MacFUSE/GMUserFileSystem.h>
+#import <MacFUSE/MacFUSE.h>
 #import "NSError+POSIX.h"
 
 @implementation LoopbackFS
