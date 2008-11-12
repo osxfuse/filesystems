@@ -13,6 +13,12 @@
  * Loopback MacFUSE file system in C. Uses the high-level FUSE API.
  */
 
+#include <AvailabilityMacros.h>
+
+#if !defined(AVAILABLE_MAC_OS_X_VERSION_10_5_AND_LATER)
+#error "This file system requires Leopard and above."
+#endif
+
 #define FUSE_USE_VERSION 26
 
 #define _GNU_SOURCE
