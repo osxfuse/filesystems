@@ -1,3 +1,0 @@
-MacFUSE HOWTOs are available at the following URL:
-
-http://code.google.com/p/macfuse/w/list
