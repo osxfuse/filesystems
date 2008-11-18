@@ -36,7 +36,8 @@ static NSString* const kThumbURLQuery = @"./media:group/media:thumbnail/@url";
   return [videos_ allKeys];
 }
 
-- (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path
+                                userData:(id)userData
                                    error:(NSError **)error {
   if ([self nodeAtPath:path]) {
     return [NSDictionary dictionary];
