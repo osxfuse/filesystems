@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>AccessibilityFS 0.5</string>
+	<string>AccessibilityFS 0.6</string>
 	<key>CFBundleIconFile</key>
 	<string>AccessibilityFSApp</string>
 	<key>CFBundleIdentifier</key>
@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>0.5.2</string>
+	<string>0.6</string>
 	<key>FUSEFileSystemClass</key>
 	<string>AccessibilityFS</string>
 	<key>NSMainNibFile</key>

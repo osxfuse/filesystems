@@ -57,7 +57,7 @@ static NSRange GTMNSMakeRangeFromTo(unsigned int start, unsigned int end) {
 // for each one of the elements, especially the date which is needed so the
 // icon doesn't flicker in the Finder, and the icon, which is expensive
 // to produce.
-NSString *const kIconKey = @"iconKey";  // The icon for the process
+#define kIconKey kGMUserFileSystemCustomIconDataKey  // The icon for the process
 NSString *const kNameKey = @"nameKey";  // The name for the process
 NSString *const kDateKey = @"dateKey";  // The date the process was launched
 
@@ -307,13 +307,23 @@ static void axObserverCallback(AXObserverRef observer,
 }
 
 #pragma mark == Overridden GMUserFileSystem Methods
-- (UInt16)finderFlagsAtPath:(NSString *)path {
-  UInt16 flags = 0;
+- (NSDictionary *)finderAttributesAtPath:(NSString *)path 
+                                   error:(NSError **)error {
+  return [self resourceAttributesAtPath:path error:error];
+}
+
+- (NSDictionary *)resourceAttributesAtPath:(NSString *)path
+                                     error:(NSError **)error {
   NSArray *pathComponents = [path pathComponents];
   if ([pathComponents count] == 2) {
-    flags = kHasCustomIcon;
+    NSString *name = [pathComponents objectAtIndex:1];
+    pid_t pid = [self pidFromName:name];
+    GTMAXUIElement *key = [GTMAXUIElement elementWithProcessIdentifier:pid];
+    if (key) {
+      return [appDictionary_ objectForKey:key];
+    }
   }
-  return flags;
+  return nil;
 }
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path 
@@ -339,7 +349,8 @@ static void axObserverCallback(AXObserverRef observer,
   return contents;
 }
 
-- (NSDictionary *)attributesOfItemAtPath:(NSString *)path 
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path
+                                userData:(id)userData
                                    error:(NSError **)error {
   
   NSString* lastComponent = [path lastPathComponent];
@@ -352,7 +363,11 @@ static void axObserverCallback(AXObserverRef observer,
   int mode = 0755;
   BOOL isRoot = [lastComponent isEqualToString:@"/"];
   if (!isRoot) {
-    GTMAXUIElement *element = [self elementFromPath:path];
+    GTMAXUIElement *element = (GTMAXUIElement *)userData;
+    if (!element) {
+      element = [self elementFromPath:path];
+    }
+    
     if (!element) {
       *error = [NSError errorWithPOSIXCode:ENOENT];
       return nil;
@@ -392,30 +407,31 @@ static void axObserverCallback(AXObserverRef observer,
 
 - (BOOL)setAttributes:(NSDictionary *)attributes 
          ofItemAtPath:(NSString *)path
+             userData:(id)userData
                 error:(NSError **)error {
   return YES;
 }
 
 - (BOOL)openFileAtPath:(NSString *)path 
                   mode:(int)mode
-          fileDelegate:(id *)outHandle
+              userData:(id *)userData
                  error:(NSError **)error {
   GTMAXUIElement *element = [self elementFromPath:path];
-  *outHandle = [element retain];
-  return *outHandle != nil;
+  *userData = [element retain];
+  return *userData != nil;
 }
 
-- (void)releaseFileAtPath:(NSString *)path fileDelegate:(id)handle {
-  [handle release];
+- (void)releaseFileAtPath:(NSString *)path userData:(id)userData {
+  [userData release];
 }  
 
 - (int)writeFileAtPath:(NSString *)path 
-          fileDelegate:(id)handle 
+              userData:(id)userData 
                 buffer:(const char *)buffer
                   size:(size_t)size 
                 offset:(off_t)offset
                  error:(NSError **)error {
-  if (!handle) {
+  if (!userData) {
     *error = [NSError errorWithPOSIXCode:EINVAL];
     return -1;
   }
@@ -424,24 +440,22 @@ static void axObserverCallback(AXObserverRef observer,
                                              encoding:NSUTF8StringEncoding] autorelease];
   NSCharacterSet *whiteset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
   action = [action stringByTrimmingCharactersInSet:whiteset];
-  if (![handle performAccessibilityAction:action]) {
+  if (![userData performAccessibilityAction:action]) {
     *error = [NSError errorWithPOSIXCode:EIO];
     size = -1;
   }
   return size;
 }
 
-- (BOOL)truncateFileAtPath:(NSString *)path 
-                    offset:(off_t)offset 
-                     error:(NSError **)error {
-  // Supporting truncate allows us to do things like "echo AXPress > blah"
-  // where blah is one of our accessibility FS items.
-  return YES;
-}
-
-- (NSData *)valueOfExtendedAttribute:(NSString *)name 
+- (NSData *)valueOfExtendedAttribute:(NSString *)name
                         ofItemAtPath:(NSString *)path
+                            position:(off_t)position
                                error:(NSError **)error {
+  // We don't support getting values with a position other than zero
+  if (position) {
+    *error = [NSError errorWithPOSIXCode:ENOTSUP];
+    return NO;
+  }
   // We only want to deal with our attributes
   if (![name hasPrefix:kXAttrPrefix]) {
     *error = [NSError errorWithPOSIXCode:ENOTSUP];
@@ -465,16 +479,20 @@ static void axObserverCallback(AXObserverRef observer,
     *error = [NSError errorWithPOSIXCode:ENOATTR];
     return nil;
   }
-  
   return [stringValue dataUsingEncoding:NSUTF8StringEncoding];
 }
 
 - (BOOL)setExtendedAttribute:(NSString *)name 
                 ofItemAtPath:(NSString *)path 
                        value:(NSData *)value
-                       flags:(int) flags
+                    position:(off_t)position
+                     options:(int)options
                        error:(NSError **)error {
-  BOOL success = NO;
+  // We don't support setting values with a position other than zero
+  if (position) {
+    *error = [NSError errorWithPOSIXCode:ENOTSUP];
+    return NO;
+  }
   // We only want to deal with our attributes
   if (![name hasPrefix:kXAttrPrefix]) {
     *error = [NSError errorWithPOSIXCode:ENOTSUP];
@@ -489,7 +507,7 @@ static void axObserverCallback(AXObserverRef observer,
   }
   NSString *string = [[[NSString alloc] initWithData:value 
                                             encoding:NSUTF8StringEncoding] autorelease];
-  success = [element setStringValue:string forAttribute:name];
+  BOOL success = [element setStringValue:string forAttribute:name];
   if (!success) {
     *error = [NSError errorWithPOSIXCode:EINVAL];
   }
@@ -516,21 +534,6 @@ static void axObserverCallback(AXObserverRef observer,
                              kXAttrPrefix, attr]];
   }
   return mutableArray;
-}
-
-- (NSData *)iconDataAtPath:(NSString *)path {
-  NSData *iconData = nil;
-  NSArray *pathComponents = [path pathComponents];
-  if ([pathComponents count] == 2) {
-    NSString *name = [pathComponents objectAtIndex:1];
-    pid_t pid = [self pidFromName:name];
-    GTMAXUIElement *key = [GTMAXUIElement elementWithProcessIdentifier:pid];
-    if (key) {
-      NSDictionary *appDict = [appDictionary_ objectForKey:key];
-      iconData = [appDict objectForKey:kIconKey];
-    }
-  }
-  return iconData;
 }
       
 @end
