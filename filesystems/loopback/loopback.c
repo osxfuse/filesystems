@@ -8,9 +8,9 @@
 */
 
 /*
- * Based on fusexmp_fh.c
- *
  * Loopback MacFUSE file system in C. Uses the high-level FUSE API.
+ * Based on the fusexmp_fh.c example from the Linux FUSE distribution.
+ * Amit Singh <http://osxbook.com>
  */
 
 #include <AvailabilityMacros.h>
