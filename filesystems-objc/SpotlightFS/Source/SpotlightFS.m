@@ -212,9 +212,8 @@ static NSString *DecodePath(NSString *path) {
 - (NSArray *)topLevelDirectories {
   NSArray *spotlightSavedSearches = [self spotlightSavedSearches];
   NSArray *userCreatedFolders = [self userCreatedFolders];
-  NSArray *smarterFolder = [NSArray arrayWithObject:kSmarterFolder];
   return [[spotlightSavedSearches arrayByAddingObjectsFromArray:userCreatedFolders]
-                                  arrayByAddingObjectsFromArray:smarterFolder];
+                                  arrayByAddingObject:kSmarterFolder];
 }
 
 // -encodedPathResultsForSpotlightQuery:
