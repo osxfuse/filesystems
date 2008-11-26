@@ -407,7 +407,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
     }
 
     if (SETATTR_WANTS_FLAGS(attr)) {
-        res = chflags(path, attr->flags);
+        res = lchflags(path, attr->flags);
         if (res == -1) {
             return -errno;
         }
