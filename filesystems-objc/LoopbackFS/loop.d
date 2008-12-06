@@ -5,5 +5,5 @@
 macfuse_objc*:::delegate-entry 
 /execname == "LoopbackFS"/
 {
-    printf("%s: %s\n", probefunc, copyinstr(arg0));
+    printf("%-14d %s: %s\r\n", timestamp, probefunc, copyinstr(arg0));
 }
