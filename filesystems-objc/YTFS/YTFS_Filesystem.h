@@ -23,6 +23,8 @@
 //
 #import <Foundation/Foundation.h>
 
+@class YTVideo;
+
 // The core set of file system operations. This class will serve as the delegate
 // for GMUserFileSystemFilesystem. For more details, see the section on 
 // GMUserFileSystemOperations found in the documentation at:
