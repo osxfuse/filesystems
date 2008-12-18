@@ -126,7 +126,12 @@ unixfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
 
         size_t oldsize = b.size;
         b.size += fuse_add_direntry(req, NULL, 0, dent.name, NULL, 0);
-        b.p = (char *)realloc(b.p, b.size);
+        char* newp = (char *)realloc(b.p, b.size);
+        if (!newp) {
+            fprintf(stderr, "*** fatal error: cannot allocate memory\n");
+            abort();
+        }
+        b.p = newp;
         fuse_add_direntry(req, b.p + oldsize, b.size - oldsize, dent.name,
                           &stbuf, b.size);
     }
