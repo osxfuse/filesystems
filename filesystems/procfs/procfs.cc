@@ -1285,6 +1285,7 @@ doread:
         (struct ProcfsWindowData *)malloc(sizeof(struct ProcfsWindowData));
     if (!pwd) {
         CFRelease(window_png);
+        return -ENOMEM;
     }
 
     pwd->window_png = window_png;
@@ -1294,7 +1295,6 @@ doread:
     fi->fh = (uint64_t)pwd;
 
     return 0;
-
 }
 
 OPEN_HANDLER(system__hardware__camera__screenshot)
@@ -4962,6 +4962,8 @@ main(int argc, char *argv[])
 
     argc++;
     new_argv = (char **)malloc(sizeof(char *) * argc);
+    if (!new_argv)
+        return -1;
     for (i = 0; i < (argc - 1); i++) {
         new_argv[i] = argv[i];
     }
