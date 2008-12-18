@@ -85,7 +85,12 @@ static void dirbuf_add(fuse_req_t req, struct dirbuf *b, const char *name,
 	struct stat stbuf;
 	size_t oldsize = b->size;
 	b->size += fuse_add_direntry(req, NULL, 0, name, NULL, 0);
-	b->p = (char *) realloc(b->p, b->size);
+        char *newp = realloc(b->p, b->size);
+        if (!newp) {
+            fprintf(stderr, "*** fatal error: cannot allocate memory\n");
+            abort();
+        }
+	b->p = newp;
 	memset(&stbuf, 0, sizeof(stbuf));
 	stbuf.st_ino = ino;
 	fuse_add_direntry(req, b->p + oldsize, b->size - oldsize, name, &stbuf,
