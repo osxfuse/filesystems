@@ -93,7 +93,7 @@ ancientfs_v123_mode(mode_t mode, uint32_t flags)
 {
     int newmode = 0;
 
-    mode = mode & ~(IALLOC | ILARG);
+    mode = mode & ~(IALLOC | ILARG | IMOD);
 
     if ((mode & IFMT) == 0)
         newmode |= S_IFREG;

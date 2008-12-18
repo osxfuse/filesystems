@@ -190,7 +190,7 @@ unixfs_internal_bmap(struct inode* ip, off_t lblkno, int* error)
         /* small file algorithm */
         if ((bn & ~7) != 0) /* convert small to large */
             return 0; /* !writable */
-        nb = (a_int)(ip->I_addr[bn]);
+        nb = (a_int)(ip->I_daddr[bn]);
         if (nb == 0)
             return 0; /* !writable */
         *error = 0;
@@ -250,6 +250,9 @@ unixfs_internal_bread(off_t blkno, char* blkbuf)
 static struct inode*
 unixfs_internal_iget(ino_t ino)
 {
+    if (ino == MACFUSE_ROOTINO)
+        ino = ROOTINO;
+
     struct inode* ip = unixfs_inodelayer_iget(ino);
     if (!ip) {
         fprintf(stderr, "*** fatal error: no inode for %llu\n", ino);
@@ -291,7 +294,7 @@ unixfs_internal_iget(ino_t ino)
     int i;
 
     for (i = 0; i < 8; i++)
-        ip->I_daddr[i] = (a_int)fs16_to_host(unixfs->s_endian, dip->di_addr[i]);
+        ip->I_daddr[i] = fs16_to_host(unixfs->s_endian, dip->di_addr[i]);
 
     unixfs_inodelayer_isucceeded(ip);
 
@@ -307,6 +310,9 @@ unixfs_internal_iput(struct inode* ip)
 static int
 unixfs_internal_igetattr(ino_t ino, struct stat* stbuf)
 {
+    if (ino == MACFUSE_ROOTINO)
+        ino = ROOTINO;
+
     struct inode* ip = unixfs_internal_iget(ino);
     if (!ip)
         return ENOENT;
@@ -328,6 +334,9 @@ unixfs_internal_istat(struct inode* ip, struct stat* stbuf)
 static int
 unixfs_internal_namei(ino_t parentino, const char* name, struct stat* stbuf)
 {
+    if (parentino == MACFUSE_ROOTINO)
+        parentino = ROOTINO;
+
     stbuf->st_ino = 0;
 
     struct inode* dp = unixfs_internal_iget(parentino);
