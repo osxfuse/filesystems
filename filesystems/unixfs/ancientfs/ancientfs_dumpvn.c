@@ -226,9 +226,9 @@ next:
             ip->I_uid          = dip->di_uid;
             ip->I_gid          = dip->di_gid;
             ip->I_size         = dip->di_size;
-            ip->I_atime.tv_sec = dip->di_atime;
-            ip->I_mtime.tv_sec = dip->di_mtime;
-            ip->I_ctime.tv_sec = dip->di_ctime;
+            ip->I_atime_sec = dip->di_atime;
+            ip->I_mtime_sec = dip->di_mtime;
+            ip->I_ctime_sec = dip->di_ctime;
 
             if (S_ISDIR(ip->I_mode))
                 fs->s_directories++;
@@ -316,8 +316,8 @@ next:
         err = EINVAL;
         goto out;
     }
-    fs->s_rootip->I_mtime.tv_sec = fs->s_date;
-    fs->s_rootip->I_ctime.tv_sec = fs->s_ddate;
+    fs->s_rootip->I_mtime_sec = fs->s_date;
+    fs->s_rootip->I_ctime_sec = fs->s_ddate;
     unixfs_internal_iput(fs->s_rootip);
 
     snprintf(unixfs->s_fsname, UNIXFS_MNAMELEN, "UNIX dump/restor");

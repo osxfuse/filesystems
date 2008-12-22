@@ -101,7 +101,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
     rootip->I_uid  = getuid();
     rootip->I_gid  = getgid();
     rootip->I_size = 2;
-    rootip->I_atime.tv_sec = rootip->I_mtime.tv_sec = rootip->I_ctime.tv_sec =        time(0);
+    rootip->I_atime_sec = rootip->I_mtime_sec = rootip->I_ctime_sec =        time(0);
 
     struct tap_node_info* rootti = (struct tap_node_info*)rootip->I_private;
     rootti->ti_self = rootip;
@@ -151,9 +151,9 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
                                   ((pathlen == 2) && (*(path + 1) == '/')))) {
                 /* root */
                 rootip->I_mode = fs16_to_host(unixfs->s_endian, di->di_mode);
-                rootip->I_atime.tv_sec = \
-                    rootip->I_mtime.tv_sec = \
-                        rootip->I_ctime.tv_sec = \
+                rootip->I_atime_sec = \
+                    rootip->I_mtime_sec = \
+                        rootip->I_ctime_sec = \
                             fs32_to_host(unixfs->s_endian, di->di_mtime);
                 continue;
             }
@@ -190,7 +190,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
                 ip->I_daddr[0] = (uint32_t)fs16_to_host(unixfs->s_endian,
                                                         di->di_addr);
                 ip->I_nlink = 1;
-                ip->I_atime.tv_sec = ip->I_mtime.tv_sec = ip->I_ctime.tv_sec =
+                ip->I_atime_sec = ip->I_mtime_sec = ip->I_ctime_sec =
                     fs32_to_host(unixfs->s_endian, di->di_mtime);
                 struct tap_node_info* ti = (struct tap_node_info*)ip->I_private;
                 memcpy(ti->ti_name, cnp, strlen(cnp));

@@ -352,9 +352,9 @@ unixfs_internal_iget(ino_t ino)
 
     /* ip->I_ic2 = dip->di_ic2 */
 
-    ip->I_atime.tv_sec = fs32_to_host(unixfs->s_endian, dip->di_atime);
-    ip->I_mtime.tv_sec = fs32_to_host(unixfs->s_endian, dip->di_mtime);
-    ip->I_ctime.tv_sec = fs32_to_host(unixfs->s_endian, dip->di_ctime);
+    ip->I_atime_sec = fs32_to_host(unixfs->s_endian, dip->di_atime);
+    ip->I_mtime_sec = fs32_to_host(unixfs->s_endian, dip->di_mtime);
+    ip->I_ctime_sec = fs32_to_host(unixfs->s_endian, dip->di_ctime);
 
 #endif
 

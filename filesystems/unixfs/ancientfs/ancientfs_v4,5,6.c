@@ -342,13 +342,13 @@ unixfs_internal_iget(ino_t ino)
 
     uint16_t t0 = fs16_to_host(unixfs->s_endian, dip->di_atime[0]);
     uint16_t t1 = fs16_to_host(unixfs->s_endian, dip->di_atime[1]);
-    ip->I_atime.tv_sec = t0 << 16 | t1;
+    ip->I_atime_sec = t0 << 16 | t1;
 
     t0 = fs16_to_host(unixfs->s_endian, dip->di_mtime[0]);
     t1 = fs16_to_host(unixfs->s_endian, dip->di_mtime[1]);
-    ip->I_mtime.tv_sec = t0 << 16 | t1;
+    ip->I_mtime_sec = t0 << 16 | t1;
 
-    ip->I_ctime.tv_sec = ip->I_mtime.tv_sec; /* no ctime on disk */
+    ip->I_ctime_sec = ip->I_mtime_sec; /* no ctime on disk */
 
     int i;
 

@@ -217,7 +217,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
     rootip->I_uid  = getuid();
     rootip->I_gid  = getgid();
     rootip->I_size = 2;
-    rootip->I_atime.tv_sec = rootip->I_mtime.tv_sec = rootip->I_ctime.tv_sec =        time(0);
+    rootip->I_atime_sec = rootip->I_mtime_sec = rootip->I_ctime_sec =        time(0);
 
     struct ar_node_info* rootai = (struct ar_node_info*)rootip->I_private;
     rootai->ar_self = rootip;
@@ -256,7 +256,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
         ip->I_gid   = ar.gid;
         ip->I_nlink = 1;
         ip->I_size  = ar.size;
-        ip->I_atime.tv_sec = ip->I_mtime.tv_sec = ip->I_ctime.tv_sec = ar.date;
+        ip->I_atime_sec = ip->I_mtime_sec = ip->I_ctime_sec = ar.date;
         ip->I_daddr[0] = ar.addr;
 
         struct ar_node_info* ai = (struct ar_node_info*)ip->I_private;
