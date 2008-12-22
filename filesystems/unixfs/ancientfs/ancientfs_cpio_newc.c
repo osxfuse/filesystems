@@ -56,7 +56,8 @@ ancientfs_cpio_newc_readheader(int fd, struct cpio_newc_entry* ce)
 
     if (strncmp(hdr->c_magic, magic, CPIO_NEWC_MAGLEN) != 0) {
         fprintf(stderr, "*** fatal error: bad magic in record @ %llu - %lu\n",
-                lseek(fd, (off_t)0, SEEK_CUR), sizeof(struct cpio_newc_header));
+                lseek(fd, (off_t)0, SEEK_CUR),
+                (unsigned long)sizeof(struct cpio_newc_header));
         return -1;
     }
 

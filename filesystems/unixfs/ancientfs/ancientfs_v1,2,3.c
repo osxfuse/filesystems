@@ -286,10 +286,14 @@ unixfs_internal_iget(ino_t ino)
     ip->I_atime_sec = ip->I_mtime_sec = ip->I_ctime_sec =
         ancientfs_v123_time(t, unixfs->s_flags);
 
+#if __linux__
+    ip->I_crtime_sec = 0;
+#else
     t0 = fs16_to_host(unixfs->s_endian, dip->di_crtime[0]);
     t1 = fs16_to_host(unixfs->s_endian, dip->di_crtime[1]);
     t = t0 << 16 | t1;
     ip->I_crtime_sec = ancientfs_v123_time(t, unixfs->s_flags);
+#endif
 
     int i;
 
