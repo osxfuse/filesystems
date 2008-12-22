@@ -14,8 +14,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#include <dlfcn.h>
 #include <fcntl.h>
+#if __linux__
+#define __USE_GNU 1
+#endif
+#include <dlfcn.h>
 
 static const char* PROGNAME = "ancientfs";
 static const char* PROGVERS = "1.0";
