@@ -21,7 +21,7 @@ endif
 
 ifeq ($(OSNAME), FreeBSD)
 CC = gcc
-CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/fuse -I$(UNIXFS)
+CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I/usr/local/include/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
 ARCHS =
 LIBS = -L/usr/local/lib -lfuse
