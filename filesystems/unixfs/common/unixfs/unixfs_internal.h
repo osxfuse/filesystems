@@ -73,11 +73,11 @@ extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 #endif
 
 #define OSSwapLittleToHostInt64(x) le64toh(x)
-#define OSSwapBigToHostInt64(x)    htole64(x)
+#define OSSwapBigToHostInt64(x)    be64toh(x)
 #define OSSwapLittleToHostInt32(x) le32toh(x)
-#define OSSwapBigToHostInt32(x)    htole32(x)
+#define OSSwapBigToHostInt32(x)    be32toh(x)
 #define OSSwapLittleToHostInt16(x) le16toh(x)
-#define OSSwapBigToHostInt16(x)    htole16(x)
+#define OSSwapBigToHostInt16(x)    be16toh(x)
 
 #endif
 
