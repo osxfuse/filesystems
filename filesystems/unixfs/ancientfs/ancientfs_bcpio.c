@@ -144,7 +144,7 @@ ancientfs_bcpio_readheader(int fd, struct bcpio_entry* ce)
 }
 
 static void*
-unixfs_internal_init(const char* dmg, uint32_t flags,
+unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
                      char** fsname, char** volname)
 {
     int fd = -1;

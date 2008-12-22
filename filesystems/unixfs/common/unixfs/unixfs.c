@@ -246,6 +246,7 @@ static struct fuse_lowlevel_ops unixfs_ll_oper = {
 struct options {
     char* dmg;
     int   force;
+    char* fsendian;
     char* type;
 } options;
 
@@ -255,6 +256,7 @@ static struct fuse_opt unixfs_opts[] = {
 
     UNIXFS_OPT_KEY("--dmg %s", dmg, 0),
     UNIXFS_OPT_KEY("--force", force, 1),
+    UNIXFS_OPT_KEY("--fsendian %s", fsendian, 0),
     UNIXFS_OPT_KEY("--type %s", type, 0),
 
     FUSE_OPT_END
@@ -296,8 +298,23 @@ main(int argc, char* argv[])
 
     unixfs->fsname = options.type; /* XXX quick fix */
 
+    unixfs->fsendian = UNIXFS_FS_INVALID;
+
+    if (options.fsendian) {
+        if (strcasecmp(options.fsendian, "pdp") == 0) {
+            unixfs->fsendian = UNIXFS_FS_PDP;
+        } else if (strcasecmp(options.fsendian, "big") == 0) {
+            unixfs->fsendian = UNIXFS_FS_BIG;
+        } else if (strcasecmp(options.fsendian, "little") == 0) {
+            unixfs->fsendian = UNIXFS_FS_LITTLE;
+        } else {
+            fprintf(stderr, "invalid endian type %s\n", options.fsendian);
+            return -1;
+        }
+    }
+
     if ((unixfs->filsys =
-        unixfs->ops->init(options.dmg, unixfs->flags,
+        unixfs->ops->init(options.dmg, unixfs->flags, unixfs->fsendian,
                           &unixfs->fsname, &unixfs->volname)) == NULL) {
         fprintf(stderr, "failed to initialize file system\n");
         return -1;

@@ -303,7 +303,7 @@ unixfs_usage(void)
 "AncientFS (%s): a MacFUSE file system to mount ancient Unix disks and tapes\n"
 "Amit Singh <http://osxbook.com>\n"
 "usage:\n"
-"      %s [--force] --dmg DMG --type TYPE MOUNTPOINT [MacFUSE args...]\n"
+"      %s [--force] [--fsendian pdp|big|little] --dmg DMG --type TYPE MOUNTPOINT [MacFUSE args...]\n"
 "where:\n"
 "     . DMG is an ancient Unix disk or tape image of a valid type\n"
 "     . TYPE is one of the following:\n\n",

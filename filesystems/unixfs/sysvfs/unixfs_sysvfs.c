@@ -19,7 +19,7 @@
 DECL_UNIXFS("UNIX System V", sysv);
 
 static void*
-unixfs_internal_init(const char* dmg, uint32_t flags,
+unixfs_internal_init(const char* dmg, uint32_t flags, __unused fs_endian_t fse,
                      char** fsname, char** volname)
 {
     int fd = -1;

@@ -182,7 +182,7 @@ retry:
 }
 
 static void*
-unixfs_internal_init(const char* dmg, uint32_t flags,
+unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
                      char** fsname, char** volname)
 {
     int fd = -1;
@@ -243,7 +243,10 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
     unixfs = sb;
 
     unixfs->s_flags = flags;
-    unixfs->s_endian = UNIXFS_FS_LITTLE; /* not used */
+
+    /* not used */
+    unixfs->s_endian = (fse == UNIXFS_FS_INVALID) ? UNIXFS_FS_LITTLE : fse;
+
     unixfs->s_fs_info = (void*)fs;
     unixfs->s_bdev = fd;
 

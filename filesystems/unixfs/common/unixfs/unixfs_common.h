@@ -14,7 +14,8 @@
 /* Implementation of Ancient Unix file system internals. */
 
 static void*         unixfs_internal_init(const char* dmg, uint32_t flags,
-                                          char** fsname, char** volname);
+                                          fs_endian_t fse, char** fsname,
+                                          char** volname);
 static void          unixfs_internal_fini(void*);
 static off_t         unixfs_internal_alloc(void);
 static off_t         unixfs_internal_bmap(struct inode* ip, off_t lblkno,

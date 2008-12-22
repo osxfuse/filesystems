@@ -36,13 +36,14 @@ struct unixfs {
     struct      unixfs_ops *ops;       /* file system operations */
     void*       filsys;                /* in-core super block */
     uint32_t    flags;                 /* directives/miscellaneous flags */
+    fs_endian_t fsendian;
     char*       fsname;
     char*       volname;
 };
 
 /* flags */
 
-#define UNIXFS_FORCE 0x00000001 /* mount even if things look fishy */
+#define UNIXFS_FORCE           0x00000001 /* mount even if things look fishy */
 
 /* Our encapsulation of an Ancient Unix directory entry. */
 
@@ -66,7 +67,7 @@ struct inode;
 struct stat;
 
 struct unixfs_ops {
-    void*         (*init)(const char* dmg, uint32_t flags,
+    void*         (*init)(const char* dmg, uint32_t flags, fs_endian_t fse,
                           char** fsname, char** volname);
     void          (*fini)(void*);
     off_t         (*alloc)(void);
