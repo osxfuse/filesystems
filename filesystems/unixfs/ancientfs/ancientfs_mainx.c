@@ -403,8 +403,12 @@ __private_extern__
 void
 unixfs_postflight(char* fsname, char* volname, char* extra_args)
 {
+#if __APPLE__
     snprintf(extra_args, UNIXFS_ARGLEN,
         "-oro,defer_permissions,daemon_timeout=5,"
         "volname=%s,fsname=%s File System",
         volname, fsname);
+#else
+    snprintf(extra_args, UNIXFS_ARGLEN, "-oro");
+#endif
 }
