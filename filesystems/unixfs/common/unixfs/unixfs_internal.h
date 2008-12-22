@@ -25,10 +25,12 @@
 
 #if __APPLE__
 
+#define ino64_t ino_t
 #include <libkern/OSByteOrder.h>
 
 #elif __linux__
 
+#define ino64_t ino_t
 extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 
 #include <endian.h>
@@ -59,6 +61,7 @@ extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 
 #elif __FreeBSD__
 
+#define ino64_t uint64_t
 #include <sys/endian.h>
 
 #if BYTE_ORDER == LITTLE_ENDIAN

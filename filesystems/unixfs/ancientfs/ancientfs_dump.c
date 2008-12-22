@@ -211,7 +211,7 @@ next:
             struct inode* ip = unixfs_inodelayer_iget((ino_t)candidate);
             if (!ip) {
                 fprintf(stderr, "*** fatal error: no inode for %llu\n",
-                        (ino_t)candidate);
+                        (ino64_t)candidate);
                 abort();
             }
 
@@ -425,7 +425,7 @@ unixfs_internal_iget(ino_t ino)
 
     struct inode* ip = unixfs_inodelayer_iget(ino);
     if (!ip) {
-        fprintf(stderr, "*** fatal error: no inode for %llu\n", ino);
+        fprintf(stderr, "*** fatal error: no inode for %llu\n", (ino64_t)ino);
         abort();
     }
 

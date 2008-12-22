@@ -89,7 +89,7 @@ unixfs_inodelayer_fini(void)
                 struct inode* ip;
                 LIST_FOREACH(ip, &ihash_table[ihash_index], I_hashlink) {
                     fprintf(stderr, "*** warning: inode %llu still present\n",
-                            ip->I_number);
+                            (ino64_t)ip->I_number);
                     node_index++;
                 }
             }
@@ -171,7 +171,7 @@ unixfs_inodelayer_iget(ino_t ino)
                                                  &ihash_lock);
                     if (ret) {
                         fprintf(stderr, "lock %p failed for inode %llu\n",
-                                &this_node->I_state_cond, ino);
+                                &this_node->I_state_cond, (ino64_t)ino);
                         abort();
                     }
                 }

@@ -312,7 +312,7 @@ unixfs_internal_iget(ino_t ino)
 {
     struct inode* ip = unixfs_inodelayer_iget(ino);
     if (!ip) {
-        fprintf(stderr, "*** fatal error: no inode for %llu\n", ino);
+        fprintf(stderr, "*** fatal error: no inode for %llu\n", (ino64_t)ino);
         abort();
     }
 

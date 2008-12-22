@@ -312,7 +312,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
                     if (!dirp || !dirp->I_initialized) {
                         fprintf(stderr,
                                 "*** fatal error: inode %llu inconsistent\n",
-                                parent_ino);
+                                (ino64_t)parent_ino);
                         abort();
                     }
                     dirp->I_mode = ce->stat.st_mode;
@@ -327,7 +327,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
                 /* unixfs_inodelayer_iget(ce->stat.st_ino); */
             if (!ip) {
                 fprintf(stderr, "*** fatal error: no inode for %llu\n",
-                        (ino_t)(fs->s_lastino + 1));
+                        (ino64_t)(fs->s_lastino + 1));
                 abort();
             }
 
@@ -493,7 +493,7 @@ unixfs_internal_iget(ino_t ino)
 {
     struct inode* ip = unixfs_inodelayer_iget(ino);
     if (!ip) {
-        fprintf(stderr, "*** fatal error: no inode for %llu\n", ino);
+        fprintf(stderr, "*** fatal error: no inode for %llu\n", (ino64_t)ino);
         abort();
     }
 
