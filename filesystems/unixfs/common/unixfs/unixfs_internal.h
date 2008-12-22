@@ -22,8 +22,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
+
 #if __APPLE__
+
 #include <libkern/OSByteOrder.h>
+
 #elif __linux__
 
 extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
@@ -50,8 +53,14 @@ extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 #define __BIG_ENDIAN__ 1
 #elif __BYTE_ORDER == __LITTLE_ENDIAN
 #define __LITTLE_ENDIAN__ 1
+#else
+#error Endian Problem
+#endif
+
 #elif __FreeBSD__
+
 #include <sys/endian.h>
+
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define __LITTLE_ENDIAN__ 1
 #elif BYTE_ORDER == BIG_ENDIAN
@@ -59,15 +68,14 @@ extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
 #else
 #error Endian Problem
 #endif
+
 #define OSSwapLittleToHostInt64(x) le64toh(x)
 #define OSSwapBigToHostInt64(x)    htole64(x)
 #define OSSwapLittleToHostInt32(x) le32toh(x)
 #define OSSwapBigToHostInt32(x)    htole32(x)
 #define OSSwapLittleToHostInt16(x) le16toh(x)
 #define OSSwapBigToHostInt16(x)    htole16(x)
-#else
-#error Endian Problem
-#endif
+
 #endif
 
 #define UNIXFS_ENABLE_INODEHASH   1 /* 1 => enable; 0 => disable */
