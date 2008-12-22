@@ -19,8 +19,8 @@
 #include <ctype.h>
 #include <dlfcn.h>
 
-#include <fuse_opt.h>
-#include <fuse_lowlevel.h>
+#include <fuse/fuse_opt.h>
+#include <fuse/fuse_lowlevel.h>
 
 #define UNIXFS_META_TIMEOUT 60.0 /* timeout for nodes and their attributes */
 
