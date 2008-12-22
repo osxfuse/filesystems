@@ -14,11 +14,46 @@
 #include "unixfs.h"
 
 #include <libgen.h>
+#if __linux__
+#include <darwin/queue.h>
+#else
 #include <sys/queue.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#if __APPLE__
 #include <libkern/OSByteOrder.h>
+#elif __linux__
+
+extern ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+
+#include <endian.h>
+#include <asm/byteorder.h>
+
+#define OSSwapLittleToHostInt64(x) __le64_to_cpu(x)
+#define OSSwapBigToHostInt64(x)    __be64_to_cpu(x)
+#define OSSwapHostToLittleInt64(x) __cpu_to_le64(x)
+#define OSSwapHostToBigInt64(x)    __cpu_to_be64(x)
+  
+#define OSSwapLittleToHostInt32(x) __le32_to_cpu(x)
+#define OSSwapBigToHostInt32(x)    __be32_to_cpu(x)
+#define OSSwapHostToLittleInt32(x) __cpu_to_le32(x)
+#define OSSwapHostToBigInt32(x)    __cpu_to_be32(x)
+  
+#define OSSwapLittleToHostInt16(x) __le16_to_cpu(x)
+#define OSSwapBigToHostInt16(x)    __be16_to_cpu(x)
+#define OSSwapHostToLittleInt16(x) __cpu_to_le16(x)
+#define OSSwapHostToBigInt16(x)    __cpu_to_be16(x)
+
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define __BIG_ENDIAN__ 1
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN__ 1
+#else
+#error Endian Problem
+#endif
+#endif
 
 #define UNIXFS_ENABLE_INODEHASH   1 /* 1 => enable; 0 => disable */
 
@@ -88,6 +123,16 @@ typedef struct inode {
 #define I_mtime      I_stat.st_mtimespec
 #define I_ctime      I_stat.st_ctimespec
 #define I_crtime     I_stat.st_birthtimespec
+#if __linux__
+#define I_atime_sec  I_stat.st_atime
+#define I_mtime_sec  I_stat.st_mtime
+#define I_ctime_sec  I_stat.st_ctime
+#else
+#define I_atime_sec  I_stat.st_atimespec.tv_sec
+#define I_mtime_sec  I_stat.st_mtimespec.tv_sec
+#define I_ctime_sec  I_stat.st_ctimespec.tv_sec
+#define I_crtime_sec I_stat.st_birthtimespec.tv_sec
+#endif
 #define I_size       I_stat.st_size
 #define I_blocks     I_stat.st_blocks
 #define I_blksize    I_stat.st_blksize

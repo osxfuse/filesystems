@@ -81,7 +81,7 @@ unixfs_inodelayer_fini(void)
         if (ihash_count != 0) {
             fprintf(stderr,
                     "*** warning: ihash terminated when not empty (%lu)\n",
-                    ihash_count);
+                    (unsigned long)ihash_count);
 
             int node_index = 0;
             u_long ihash_index = 0;
