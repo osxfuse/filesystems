@@ -6,13 +6,34 @@
 TARGETS = ancientfs
 
 COMMON=../common
+OSNAME=$(shell uname)
 UNIXFS=$(COMMON)/unixfs
 
+CC = false
+
+ifeq ($(OSNAME), Darwin)
 CC = gcc
 CFLAGS_MACFUSE = -D__FreeBSD__=10 -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g
 ARCHS = -arch i386 -arch ppc
 LIBS = -lfuse_ino64
+endif
+
+ifeq ($(OSNAME), FreeBSD)
+CC = gcc
+CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/fuse -I$(UNIXFS)
+CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
+ARCHS =
+LIBS = -L/usr/local/lib -lfuse
+endif
+
+ifeq ($(OSNAME), Linux)
+CC = gcc
+CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I$(UNIXFS)
+CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
+ARCHS =
+LIBS = -lfuse -ldl
+endif
 
 all: $(TARGETS)
 
