@@ -87,8 +87,10 @@ unixfs_ll_readlink(fuse_req_t req, fuse_ino_t ino)
 
 static void
 unixfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-                  __unused struct fuse_file_info* fi)
+                  struct fuse_file_info* fi)
 {
+    (void)fi;
+
     struct inode* dp = unixfs->ops->iget(ino);
     if (!dp) {
         fuse_reply_err(req, ENOENT);
