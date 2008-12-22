@@ -309,7 +309,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags,
                     if (!dirp || !dirp->I_initialized) {
                         fprintf(stderr,
                                 "*** fatal error: inode %llu inconsistent\n",
-                                parent_ino);
+                                (ino64_t)parent_ino);
                         abort();
                     }
                     dirp->I_mode = ce->stat.st_mode;
