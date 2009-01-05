@@ -132,6 +132,12 @@ static struct filesystems {
         0, { 0x65, 0xff }, 2,
     },
     {
+        1, "ar", "oar",
+        0,
+        "Old (0177545) archive (.a)",
+        0, { 0xff, 0x65 }, 2,
+    },
+    {
         0, "ar", "ar",
         0,
         "Current (!<arch>\\n), old (0177545), or very old (0177555)\n"

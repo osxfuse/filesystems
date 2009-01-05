@@ -72,12 +72,17 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
         goto out;
     }
 
-    magic = fs16_to_host(UNIXFS_FS_PDP, magic);
+    uint16_t armagic = fs16_to_host(UNIXFS_FS_PDP, magic);
+    fs_endian_t e = UNIXFS_FS_PDP;
 
-    if (magic != ARMAG) {
-        err = EINVAL;
-        fprintf(stderr, "%s is not an ar image file\n", dmg);
-        goto out;
+    if (armagic != ARMAG) {
+        armagic = fs16_to_host(UNIXFS_FS_BIG, magic);
+        e = UNIXFS_FS_BIG;
+        if (armagic != ARMAG) { 
+            err = EINVAL;
+            fprintf(stderr, "%s is not an ar image file\n", dmg);
+            goto out;
+        }
     }
 
     sb = malloc(sizeof(struct super_block));
@@ -98,7 +103,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
     unixfs = sb;
 
     unixfs->s_flags = flags;
-    unixfs->s_endian = (fse == UNIXFS_FS_INVALID) ? UNIXFS_FS_PDP : fse;
+    unixfs->s_endian = (fse == UNIXFS_FS_INVALID) ? e : fse;
     unixfs->s_fs_info = (void*)fs;
     unixfs->s_bdev = fd;
 
