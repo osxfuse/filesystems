@@ -4,7 +4,7 @@
  * http://osxbook.com
  *
  * Most of the code in this file comes from the Linux kernel implementation
- * of sysvfs. See fs/sysvfs/ in the Linux kernel source tree.
+ * of sysvfs. See fs/sysv/ in the Linux kernel source tree.
  *
  * The code is Copyright (c) its various authors. It is covered by the
  * GNU GENERAL PUBLIC LICENSE Version 2.
