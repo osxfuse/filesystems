@@ -1,12 +1,12 @@
 /*
- * windowfs as a MacFUSE file system for Mac OS X
+ * windowfs as a OSXFUSE file system for Mac OS X
  *
  * Copyright Amit Singh. All Rights Reserved.
  * http://osxbook.com
  *
  */
 
-#define MACFUSE_WINDOWFS_VERSION "1.0"
+#define OSXFUSE_WINDOWFS_VERSION "1.0"
 #define FUSE_USE_VERSION 26
 
 __attribute__((used)) static const char* copyright = "(C) Amit Singh <osxbook.com>, 2007-2008. All Rights Reserved.";

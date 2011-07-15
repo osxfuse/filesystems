@@ -1,12 +1,12 @@
-# windowfs as a MacFUSE file system for Mac OS X
+# windowfs as a OSXFUSE file system for Mac OS X
 #
 # Copyright Amit Singh. All Rights Reserved.
 # http://osxbook.com
 #
 # http://code.google.com/p/macfuse/
 
-CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk
-LDFLAGS=-L/usr/local/lib -lfuse -framework Carbon
+CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk
+LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon
 
 # Configure this depending on where you installed pcrecpp
 # http://www.pcre.org
