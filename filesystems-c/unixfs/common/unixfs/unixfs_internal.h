@@ -2,7 +2,7 @@
  * UnixFS
  *
  * A general-purpose file system layer for writing/reimplementing/porting
- * Unix file systems through MacFUSE.
+ * Unix file systems through OSXFUSE.
 
  * Copyright (c) 2008 Amit Singh. All Rights Reserved.
  * http://osxbook.com
@@ -105,7 +105,7 @@ struct super_block {
 
 #define s_id s_fsname
 
-#define MACFUSE_ROOTINO 1
+#define OSXFUSE_ROOTINO 1
 
 /*
  * The I node is the focus of all

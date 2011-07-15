@@ -1,5 +1,5 @@
 /*
- * UFS for MacFUSE
+ * UFS for OSXFUSE
  * Copyright (c) 2008 Amit Singh
  * http://osxbook.com
  */
@@ -42,10 +42,10 @@ void
 unixfs_usage(void)
 {
     fprintf(stderr,
-    "%s (version %s): UFS family of file systems for MacFUSE\n"
+    "%s (version %s): UFS family of file systems for OSXFUSE\n"
     "Amit Singh <http://osxbook.com>\n"
     "usage:\n"
-    "      %s [--force] --dmg DMG --type TYPE MOUNTPOINT [MacFUSE args...]\n"
+    "      %s [--force] --dmg DMG --type TYPE MOUNTPOINT [OSXFUSE args...]\n"
     "where:\n"
     "     . DMG must point to an ancient Unix disk image of a valid type\n"
     "     . TYPE is one of:",

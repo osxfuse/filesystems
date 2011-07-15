@@ -1,5 +1,5 @@
 /*
- * SYSV File System Famiy for MacFUSE
+ * SYSV File System Famiy for OSXFUSE
  * Copyright (c) 2008 Amit Singh
  * http://osxbook.com
  */
@@ -32,10 +32,10 @@ void
 unixfs_usage(void)
 {
     fprintf(stderr,
-    "%s (version %s): System V family of file systems for MacFUSE\n"
+    "%s (version %s): System V family of file systems for OSXFUSE\n"
     "Amit Singh <http://osxbook.com>\n"
     "usage:\n"
-    "      %s [--force] --dmg DMG MOUNTPOINT [MacFUSE args...]\n"
+    "      %s [--force] --dmg DMG MOUNTPOINT [OSXFUSE args...]\n"
     "where:\n"
     "     . DMG must point to a disk image of a valid type; one of:\n"
     "         SVR4, SVR2, Xenix, Coherent, SCO EAFS, and related\n" 

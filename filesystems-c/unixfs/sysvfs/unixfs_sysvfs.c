@@ -1,5 +1,5 @@
 /*
- * SYSV File System Famiy for MacFUSE
+ * SYSV File System Famiy for OSXFUSE
  * Copyright (c) 2008 Amit Singh
  * http://osxbook.com
  */
@@ -154,7 +154,7 @@ unixfs_internal_bread(off_t blkno, char* blkbuf)
 struct inode*
 unixfs_internal_iget(ino_t ino)
 {
-   if (ino == MACFUSE_ROOTINO)
+   if (ino == OSXFUSE_ROOTINO)
         ino = SYSV_ROOT_INO;
 
    struct super_block* sb = unixfs;
@@ -234,7 +234,7 @@ unixfs_internal_iput(struct inode* ip)
 static int
 unixfs_internal_igetattr(ino_t ino, struct stat* stbuf)
 {
-    if (ino == MACFUSE_ROOTINO)
+    if (ino == OSXFUSE_ROOTINO)
         ino = SYSV_ROOT_INO;
 
     struct inode* ip = unixfs_internal_iget(ino);
@@ -257,7 +257,7 @@ unixfs_internal_istat(struct inode* ip, struct stat* stbuf)
 static int
 unixfs_internal_namei(ino_t parentino, const char* name, struct stat* stbuf)
 {
-    if (parentino == MACFUSE_ROOTINO)
+    if (parentino == OSXFUSE_ROOTINO)
         parentino = SYSV_ROOT_INO;
 
     stbuf->st_ino = ENOENT;

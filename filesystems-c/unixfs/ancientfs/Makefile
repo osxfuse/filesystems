@@ -1,5 +1,5 @@
 #
-# Ancient Unix File Systems for MacFUSE
+# Ancient Unix File Systems for OSXFUSE
 # Amit Singh
 # http://osxbook.com
 
@@ -13,15 +13,15 @@ CC = false
 
 ifeq ($(OSNAME), Darwin)
 CC = gcc
-CFLAGS_MACFUSE = -D__FreeBSD__=10 -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/fuse -I$(UNIXFS)
+CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g
-ARCHS = -arch i386 -arch ppc
-LIBS = -lfuse_ino64
+ARCHS = -arch i386 -arch x86_64
+LIBS = -losxfuse
 endif
 
 ifeq ($(OSNAME), FreeBSD)
 CC = gcc
-CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I/usr/local/include/fuse -I$(UNIXFS)
+CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I/usr/local/include/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
 ARCHS =
 LIBS = -L/usr/local/lib -lfuse
@@ -29,7 +29,7 @@ endif
 
 ifeq ($(OSNAME), Linux)
 CC = gcc
-CFLAGS_MACFUSE = -D__DARWIN_64_BIT_INO_T=1 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I$(COMMON) -I$(UNIXFS)
+CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I$(COMMON) -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
 ARCHS =
 LIBS = -lfuse -ldl
@@ -41,13 +41,13 @@ OBJS = ancientfs_tap.o ancientfs_tp.o ancientfs_itp.o ancientfs_dtp.o ancientfs_
 OBJS_COMMON = $(UNIXFS)/unixfs.o $(UNIXFS)/unixfs_internal.o
 
 ancientfs: $(OBJS) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_MACFUSE) $(CFLAGS_EXTRA) $(ARCHS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) $(ARCHS) -o $@ $^ $(LIBS)
 
 -include $(OBJS:.o=.d)
 
 %.o: %.c
-	$(CC) $(CFLAGS_MACFUSE) $(CFLAGS_EXTRA) $(ARCHS) $*.c -c -o $*.o
-	$(CC) $(CFLAGS_MACFUSE) $(CFLAGS_EXTRA) -MM $*.c > $*.d
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) $(ARCHS) $*.c -c -o $*.o
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) -MM $*.c > $*.d
 	@mv -f $*.d $*.d.tmp
 	@sed -e 's|.*:|$*.o:|' < $*.d.tmp > $*.d
 	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | sed -e 's/^ *//' -e 's/$$/:/' >> $*.d

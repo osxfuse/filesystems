@@ -1,5 +1,5 @@
 /*
- * Minix File System Famiy for MacFUSE
+ * Minix File System Famiy for OSXFUSE
  * Copyright (c) 2008 Amit Singh
  * http://osxbook.com
  */
@@ -32,10 +32,10 @@ void
 unixfs_usage(void)
 {
     fprintf(stderr,
-    "%s (version %s): Minix File System for MacFUSE\n"
+    "%s (version %s): Minix File System for OSXFUSE\n"
     "Amit Singh <http://osxbook.com>\n"
     "usage:\n"
-    "      %s [--force] --dmg DMG MOUNTPOINT [MacFUSE args...]\n"
+    "      %s [--force] --dmg DMG MOUNTPOINT [OSXFUSE args...]\n"
     "where:\n"
     "     . DMG must point to a Minix disk image\n"
     "     . --force attempts mounting even if there are warnings or errors\n",
