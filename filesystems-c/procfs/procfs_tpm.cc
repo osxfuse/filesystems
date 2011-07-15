@@ -4,13 +4,13 @@
  */
 
 /*
- * MacFUSE-Based procfs
+ * OSXFUSE-Based procfs
  * TPM Files
  */
 
 extern "C" {
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 
 #include "procfs_tpm.h"
 
@@ -94,6 +94,6 @@ TPM_GetCapability_Key_Handle(uint16_t * num, uint32_t keys[])
 	return (ret);
 }
 
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
 }

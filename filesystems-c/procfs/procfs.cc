@@ -1,5 +1,5 @@
 /*
- * procfs as a MacFUSE file system for Mac OS X
+ * procfs as a OSXFUSE file system for Mac OS X
  *
  * Copyright Amit Singh. All Rights Reserved.
  * http://osxbook.com
@@ -9,7 +9,7 @@
  * Source License: GNU GENERAL PUBLIC LICENSE (GPL)
  */
 
-#define MACFUSE_PROCFS_VERSION "2.0"
+#define OSXFUSE_PROCFS_VERSION "2.0"
 #define FUSE_USE_VERSION 26
 
 #include <dirent.h>
@@ -44,9 +44,9 @@
 #include "procfs_windows.h"
 #include "sequencegrab/procfs_sequencegrab.h"
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 #include "procfs_tpm.h"
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
 static int procfs_ui = 0;
 #define PROCFS_DEFAULT_FILE_SIZE 65536
@@ -462,10 +462,10 @@ PROTO_GETATTR_HANDLER(byname__name);
 PROTO_GETATTR_HANDLER(system__hardware__camera__screenshot);
 PROTO_GETATTR_HANDLER(system__hardware__displays__display);
 PROTO_GETATTR_HANDLER(system__hardware__displays__display__screenshot);
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 PROTO_GETATTR_HANDLER(system__hardware__tpm__keyslots__slot);
 PROTO_GETATTR_HANDLER(system__hardware__tpm__pcrs__pcr);
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 PROTO_GETATTR_HANDLER(proc__task__ports__port);
 PROTO_GETATTR_HANDLER(proc__task__threads__thread);
 PROTO_GETATTR_HANDLER(proc__windows__screenshots__window);
@@ -502,13 +502,13 @@ PROTO_READ_HANDLER(system__hardware__camera__screenshot);
 PROTO_READ_HANDLER(system__hardware__cpus__cpu__data);
 PROTO_READ_HANDLER(system__hardware__displays__display__info);
 PROTO_READ_HANDLER(system__hardware__displays__display__screenshot);
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 PROTO_READ_HANDLER(system__hardware__tpm__hwmodel);
 PROTO_READ_HANDLER(system__hardware__tpm__hwvendor);
 PROTO_READ_HANDLER(system__hardware__tpm__hwversion);
 PROTO_READ_HANDLER(system__hardware__tpm__keyslots__slot);
 PROTO_READ_HANDLER(system__hardware__tpm__pcrs__pcr);
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 PROTO_READ_HANDLER(system__hardware__xsensor);
 
 PROTO_READDIR_HANDLER(default);
@@ -522,10 +522,10 @@ PROTO_READDIR_HANDLER(system__hardware__cpus);
 PROTO_READDIR_HANDLER(system__hardware__cpus__cpu);
 PROTO_READDIR_HANDLER(system__hardware__displays);
 PROTO_READDIR_HANDLER(system__hardware__displays__display);
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 PROTO_READDIR_HANDLER(system__hardware__tpm__keyslots);
 PROTO_READDIR_HANDLER(system__hardware__tpm__pcrs);
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
 PROTO_READLINK_HANDLER(einval);
 PROTO_READLINK_HANDLER(byname__name);
@@ -610,7 +610,7 @@ procfs_file_table[] = {
         system__hardware__displays__display__screenshot
     )
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
     DECL_FILE(
         "/system/hardware/tpm/hwmodel",
         0,
@@ -655,7 +655,7 @@ procfs_file_table[] = {
         system__hardware__tpm__pcrs__pcr,
         system__hardware__tpm__pcrs__pcr
     )
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
     DECL_FILE(
         "/(\\d+)/carbon/(name|psn)",
@@ -897,7 +897,7 @@ procfs_directory_table[] = {
     DECL_DIRECTORY_COMPACT(
         "/system/hardware",
         { NULL },
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
         {
             "camera", "cpus", "displays", "lightsensor", "motionsensor",
              "mouse", "tpm", NULL
@@ -907,7 +907,7 @@ procfs_directory_table[] = {
             "camera", "cpus", "displays", "lightsensor", "motionsensor",
             "mouse", NULL
         }
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
     )
 
     DECL_DIRECTORY_COMPACT(
@@ -978,7 +978,7 @@ procfs_directory_table[] = {
         { NULL },
     )
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
     DECL_DIRECTORY_COMPACT(
         "/system/hardware/tpm",
         { "hwmodel", "hwvendor", "hwversion", NULL },
@@ -1006,7 +1006,7 @@ procfs_directory_table[] = {
         { NULL },
         { NULL },
     )
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
     DECL_DIRECTORY_COMPACT(
         "/\\d+",
@@ -1222,7 +1222,7 @@ OPEN_HANDLER(proc__windows__identify)
         fi->fh = 1;
     }
     char *whandler = NULL;
-    if ((whandler = getenv("MACFUSE_PROCFS_WHANDLER")) == NULL) {
+    if ((whandler = getenv("OSXFUSE_PROCFS_WHANDLER")) == NULL) {
         goto bail;
     }
     int npid = vfork();
@@ -1599,7 +1599,7 @@ GETATTR_HANDLER(system__hardware__displays__display__screenshot)
     return 0;
 }
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 GETATTR_HANDLER(system__hardware__tpm__keyslots__slot)
 {
     uint32_t keys[256];
@@ -1647,7 +1647,7 @@ GETATTR_HANDLER(system__hardware__tpm__pcrs__pcr)
 
     return 0;
 }  
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
 GETATTR_HANDLER(proc__task__ports__port)
 {
@@ -2251,11 +2251,11 @@ gotdata:
  *
  * 2. Get IBM's libtpm user-space library.
  *
- * 3. Define MACFUSE_PROCFS_ENABLE_TPM to 1, compile procfs.cc, and link with
+ * 3. Define OSXFUSE_PROCFS_ENABLE_TPM to 1, compile procfs.cc, and link with
  *    libtpm.
  */
 
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
 READ_HANDLER(system__hardware__tpm__hwmodel)
 {
     int len;
@@ -2396,7 +2396,7 @@ READ_HANDLER(system__hardware__tpm__pcrs__pcr)
 
     return size;
 }
-#endif /* MACFUSE_PROCFS_ENABLE_TPM */
+#endif /* OSXFUSE_PROCFS_ENABLE_TPM */
 
 READ_HANDLER(proc__carbon)
 {
@@ -4085,7 +4085,7 @@ READDIR_HANDLER(system__hardware__displays__display)
 
 READDIR_HANDLER(system__hardware__tpm__keyslots)
 {
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
     unsigned int i, len;
     char the_name[MAXNAMLEN + 1];  
     struct stat the_stat;
@@ -4127,7 +4127,7 @@ READDIR_HANDLER(system__hardware__tpm__keyslots)
 
 READDIR_HANDLER(system__hardware__tpm__pcrs)
 {
-#if MACFUSE_PROCFS_ENABLE_TPM
+#if OSXFUSE_PROCFS_ENABLE_TPM
     unsigned int i, len;
     uint32_t pcrs;
     char the_name[MAXNAMLEN + 1];  
@@ -4955,7 +4955,7 @@ main(int argc, char *argv[])
     char **new_argv;
     char *extra_opts = def_opts;
 
-    if (getenv("MACFUSE_PROCFS_UI")) {
+    if (getenv("OSXFUSE_PROCFS_UI")) {
         procfs_ui = 1;
         extra_opts = def_opts_ui;
     }

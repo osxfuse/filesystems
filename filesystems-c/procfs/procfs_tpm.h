@@ -4,7 +4,7 @@
  */
 
 /*
- * MacFUSE-Based procfs
+ * OSXFUSE-Based procfs
  */
 
 #ifndef _PROCFS_TPM_H_

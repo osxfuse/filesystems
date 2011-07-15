@@ -1,12 +1,12 @@
-# procfs as a MacFUSE file system for Mac OS X
+# procfs as a OSXFUSE file system for Mac OS X
 #
 # Copyright Amit Singh. All Rights Reserved.
 # http://osxbook.com
 #
 # http://code.google.com/p/macfuse/
 
-CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk
-LDFLAGS=-L/usr/local/lib -lfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc
+CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk
+LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc
 SEQUENCEGRAB_LDFLAGS=-framework AudioUnit -framework Cocoa -framework CoreAudioKit -framework Foundation -framework QuartzCore -framework QuickTime -framework QuartzCore
 
 # Configure this depending on where you installed pcrecpp
