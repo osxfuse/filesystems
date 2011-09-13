@@ -21,7 +21,7 @@
 //
 #import "LoopbackController.h"
 #import "LoopbackFS.h"
-#import <MacFUSE/MacFUSE.h>
+#import <OSXFUSE/OSXFUSE.h>
 
 @implementation LoopbackController
 
