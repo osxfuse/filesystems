@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		439243B3141EEDA400739591 /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 439243B1141EED9600739591 /* OSXFUSE.framework */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		FFBB287E0D2DF26A001331D2 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFBB287D0D2DF26A001331D2 /* MacFUSE.framework */; };
 		FFBB28BC0D2E0051001331D2 /* HelloFuseFileSystem.m in Sources */ = {isa = PBXBuildFile; fileRef = FFBB28BB0D2E0051001331D2 /* HelloFuseFileSystem.m */; };
 		FFBB29230D2E0AFC001331D2 /* HelloController.m in Sources */ = {isa = PBXBuildFile; fileRef = FFBB29200D2E0A68001331D2 /* HelloController.m */; };
 		FFBB29310D2E0B27001331D2 /* hellodoc.icns in Resources */ = {isa = PBXBuildFile; fileRef = FFBB29300D2E0B27001331D2 /* hellodoc.icns */; };
@@ -27,9 +27,9 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* HelloFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HelloFS_Prefix.pch; sourceTree = "<group>"; };
+		439243B1141EED9600739591 /* OSXFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OSXFUSE.framework; path = /Library/Frameworks/OSXFUSE.framework; sourceTree = "<absolute>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* HelloFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HelloFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FFBB287D0D2DF26A001331D2 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
 		FFBB28BA0D2E0051001331D2 /* HelloFuseFileSystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HelloFuseFileSystem.h; sourceTree = "<group>"; };
 		FFBB28BB0D2E0051001331D2 /* HelloFuseFileSystem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HelloFuseFileSystem.m; sourceTree = "<group>"; };
 		FFBB291F0D2E0A68001331D2 /* HelloController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HelloController.h; sourceTree = "<group>"; };
@@ -43,8 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				439243B3141EEDA400739591 /* OSXFUSE.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
-				FFBB287E0D2DF26A001331D2 /* MacFUSE.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,7 +65,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				FFBB287D0D2DF26A001331D2 /* MacFUSE.framework */,
+				439243B1141EED9600739591 /* OSXFUSE.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -159,7 +159,11 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "HelloFS" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* HelloFS */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -219,6 +223,7 @@
 		C01FCF4B08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
@@ -237,6 +242,7 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -251,40 +257,20 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-					ppc64,
-				);
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				"MACOSX_DEPLOYMENT_TARGET[sdk=macosx10.5][arch=*]" = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.4;
-				"SDKROOT[arch=ppc64]" = macosx10.5;
-				"SDKROOT[arch=x86_64]" = macosx10.5;
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-					ppc64,
-				);
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				"MACOSX_DEPLOYMENT_TARGET[sdk=macosx10.5][arch=*]" = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.4;
-				"SDKROOT[arch=ppc64]" = macosx10.5;
-				"SDKROOT[arch=x86_64]" = macosx10.5;
 			};
 			name = Release;
 		};
