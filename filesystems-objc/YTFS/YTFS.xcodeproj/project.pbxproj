@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		1DDD58160DA1D0A300B32029 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DDD58140DA1D0A300B32029 /* MainMenu.xib */; };
+		4392439F141EC0F100739591 /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4392439D141EC0D800739591 /* OSXFUSE.framework */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		FFA311CF0EE5160400FF2904 /* YTFS.icns in Resources */ = {isa = PBXBuildFile; fileRef = FFA311CE0EE5160400FF2904 /* YTFS.icns */; };
-		FFA311D10EE5167200FF2904 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFA311D00EE5167200FF2904 /* MacFUSE.framework */; };
 		FFD925C00EE507A800A7B2B2 /* YTFS_Controller.m in Sources */ = {isa = PBXBuildFile; fileRef = FFD925BF0EE507A800A7B2B2 /* YTFS_Controller.m */; };
 		FFD925C30EE5082D00A7B2B2 /* YTFS_Filesystem.m in Sources */ = {isa = PBXBuildFile; fileRef = FFD925C20EE5082D00A7B2B2 /* YTFS_Filesystem.m */; };
 		FFEBC39D0EECF2710044F5BB /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFEBC39C0EECF2710044F5BB /* Accelerate.framework */; };
@@ -29,10 +29,10 @@
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* YTFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YTFS_Prefix.pch; sourceTree = "<group>"; };
+		4392439D141EC0D800739591 /* OSXFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OSXFUSE.framework; path = /Library/Frameworks/OSXFUSE.framework; sourceTree = "<absolute>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* YTFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YTFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FFA311CE0EE5160400FF2904 /* YTFS.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = YTFS.icns; sourceTree = "<group>"; };
-		FFA311D00EE5167200FF2904 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
 		FFD925BE0EE507A800A7B2B2 /* YTFS_Controller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YTFS_Controller.h; sourceTree = "<group>"; };
 		FFD925BF0EE507A800A7B2B2 /* YTFS_Controller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YTFS_Controller.m; sourceTree = "<group>"; };
 		FFD925C10EE5082D00A7B2B2 /* YTFS_Filesystem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YTFS_Filesystem.h; sourceTree = "<group>"; };
@@ -49,8 +49,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4392439F141EC0F100739591 /* OSXFUSE.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
-				FFA311D10EE5167200FF2904 /* MacFUSE.framework in Frameworks */,
 				FFEBC39D0EECF2710044F5BB /* Accelerate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -76,9 +76,9 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4392439D141EC0D800739591 /* OSXFUSE.framework */,
 				FFEBC39C0EECF2710044F5BB /* Accelerate.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
-				FFA311D00EE5167200FF2904 /* MacFUSE.framework */,
 			);
 			name = "Linked Frameworks";
 			sourceTree = "<group>";
@@ -170,7 +170,11 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "YTFS" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* YTFS */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -262,26 +266,26 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_VERSION = 4.2;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
 			};
 			name = Release;
 		};

@@ -22,7 +22,7 @@
 #import "YTFS_Filesystem.h"
 #import "YTVideo.h"
 #import "NSImage+IconData.h"
-#import <MacFUSE/MacFUSE.h>
+#import <OSXFUSE/OSXFUSE.h>
 
 // Category on NSError to  simplify creating an NSError based on posix errno.
 @interface NSError (POSIX)

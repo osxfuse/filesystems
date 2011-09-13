@@ -22,7 +22,7 @@
 #import "YTFS_Controller.h"
 #import "YTFS_Filesystem.h"
 #import "YTVideo.h"
-#import <MacFUSE/MacFUSE.h>
+#import <OSXFUSE/OSXFUSE.h>
 
 @implementation YTFS_Controller
 
