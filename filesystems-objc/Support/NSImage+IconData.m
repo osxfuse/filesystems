@@ -1,24 +1,39 @@
-// ================================================================
-// Copyright (C) 2007 Google Inc.
-// 
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-// 
-//      http://www.apache.org/licenses/LICENSE-2.0
-// 
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// ================================================================
-//
-//  NSImage+IconData.m
-//  MacFUSE
-//
-//  Created by ted on 12/28/07.
-//
+/*
+ * Copyright (C) 2011 Benjamin Fleischer
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*
+ * This file has been modified from Google Inc.'s original release. This 
+ * notice is included in support of clause 4.2 of the Apache License, 
+ * Version 2.0.
+ */
+/*
+ * Copyright (C) 2007 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #import <AppKit/AppKit.h>
 #import <CoreServices/CoreServices.h>
 #import <Accelerate/Accelerate.h>
@@ -66,7 +81,7 @@
   // an error about invalid parameters for graphics context. We should try this
   // again in future 10.5 releases in case it gets fixed. Until then, maybe 
   // we should use vImageUnpremultiplyData_ARGB8888(...) on 10.5?
-  if (version != 5) {
+  if (version == 4 || version == 6) {
     format |= NSAlphaNonpremultipliedBitmapFormat;
   }
   NSBitmapImageRep* rep = 
