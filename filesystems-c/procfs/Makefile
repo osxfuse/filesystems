@@ -5,7 +5,7 @@
 #
 # http://code.google.com/p/macfuse/
 
-CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk
+CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -I/usr/local/include/osxfuse -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc
 SEQUENCEGRAB_LDFLAGS=-framework AudioUnit -framework Cocoa -framework CoreAudioKit -framework Foundation -framework QuartzCore -framework QuickTime -framework QuartzCore
 
@@ -15,7 +15,7 @@ SEQUENCEGRAB_LDFLAGS=-framework AudioUnit -framework Cocoa -framework CoreAudioK
 PCRECPP_PREFIX=/usr/local
 
 PCRECPP_CXXFLAGS=-I$(PCRECPP_PREFIX)/include
-PCRECPP_LDFLAGS=-arch i386 -arch ppc $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre.a
+PCRECPP_LDFLAGS=-arch i386 $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre.a
 
 all: procfs
 

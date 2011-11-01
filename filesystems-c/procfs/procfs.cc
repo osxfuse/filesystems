@@ -91,16 +91,16 @@ static kern_return_t
 sms_getOrientation_hardware_apple(MotionSensorData_t *odata)
 {
     kern_return_t      kr;
-    IOItemCount        isize = sms_gStructureInputSize;
-    IOByteCount        osize = sms_gStructureOutputSize;
+    size_t             isize = sms_gStructureInputSize;
+    size_t             osize = sms_gStructureOutputSize;
     MotionSensorData_t idata;
 
-    kr = IOConnectMethodStructureIStructureO(motionsensor_port,
-                                             sms_gIndex,
-                                             isize,
-                                             &osize,
-                                             &idata,
-                                             odata);
+    kr = IOConnectCallStructMethod((mach_port_t) motionsensor_port,
+                                   sms_gIndex,
+                                   &idata,
+                                   isize,
+                                   odata,
+                                   &osize);
     return kr;
 }
 
@@ -1225,10 +1225,12 @@ OPEN_HANDLER(proc__windows__identify)
     if ((whandler = getenv("OSXFUSE_PROCFS_WHANDLER")) == NULL) {
         goto bail;
     }
-    int npid = vfork();
-    if (npid == 0) {
-        execl(whandler, whandler, argv[0], NULL);
-        return 0;
+    {
+        int npid = vfork();
+        if (npid == 0) {
+            execl(whandler, whandler, argv[0], NULL);
+            return 0;
+        }
     }
 
 bail:
@@ -1954,14 +1956,16 @@ READ_HANDLER(system__firmware__variables)
                 goto done;
             }
 
-            const UInt8 *tmpbuf = CFDataGetBytePtr(xml);
+            {
+                const UInt8 *tmpbuf = CFDataGetBytePtr(xml);
    
-            if (offset < len) {
-                if (offset + size > len)
-                    size = len - offset;
-                memcpy(buf, tmpbuf + offset, size);
-            } else
-                size = 0;
+                if (offset < len) {
+                    if (offset + size > len)
+                        size = len - offset;
+                    memcpy(buf, tmpbuf + offset, size);
+                } else
+                    size = 0;
+            }
 done:
             CFRelease(xml);
             CFRelease(optionsDict);
@@ -2182,18 +2186,17 @@ READ_HANDLER(system__hardware__xsensor)
 
     if (strcmp(whichfile, "lightsensor") == 0) {
         unsigned int  gIndex = 0;
-        IOItemCount   scalarInputCount = 0;
-        IOItemCount   scalarOutputCount = 2;
-        SInt32 left = 0, right = 0;
+        uint64_t      scalarOutputValues[2];
+        uint32_t      scalarOutputCount = 2;
         if (lightsensor_port == 0) {
             len = snprintf(tmpbuf, 4096, "not available\n");
             goto gotdata;
         }
-        kr = IOConnectMethodScalarIScalarO(lightsensor_port, gIndex,
-                                           scalarInputCount, scalarOutputCount,
-                                           &left, &right);
+        kr = IOConnectCallScalarMethod(lightsensor_port, gIndex, NULL, 0, 
+                                       scalarOutputValues, &scalarOutputCount);
         if (kr == KERN_SUCCESS) {
-            len = snprintf(tmpbuf, 4096, "%ld %ld\n", left, right);
+            len = snprintf(tmpbuf, 4096, "%ld %ld\n", 
+                           scalarOutputValues[0], scalarOutputValues[1]);
         } else if (kr == kIOReturnBusy) {
             len = snprintf(tmpbuf, 4096, "busy\n");
         } else {

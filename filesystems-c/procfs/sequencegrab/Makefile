@@ -3,8 +3,8 @@
 # Dave MacLachlan
 
 CC = gcc
-CFLAGS = -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk
-CPPFLAGS = -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.5.sdk
+CFLAGS = -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk
+CPPFLAGS = -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk
 LDFLAGS = -framework Cocoa -framework CoreAudioKit -framework Foundation -framework QuartzCore -framework QuickTime -framework QuartzCore
 
 OBJECTS = CSGCamera.o CSGImage.o procfs_sequencegrab.o
