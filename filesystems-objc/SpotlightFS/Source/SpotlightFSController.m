@@ -22,7 +22,7 @@
 
 #import "SpotlightFSController.h"
 #import "SpotlightFS.h"
-#import <MacFUSE/GMUserFileSystem.h>
+#import <OSXFUSE/OSXFUSE.h>
 
 @implementation SpotlightFSController
 
