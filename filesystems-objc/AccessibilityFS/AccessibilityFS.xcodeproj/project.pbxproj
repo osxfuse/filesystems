@@ -16,11 +16,11 @@
 		8BB15D6F0D12E1C2006781B8 /* AccessibilityFSApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8BB15D6D0D12E1C2006781B8 /* AccessibilityFSApp.icns */; };
 		8BB15D700D12E1C2006781B8 /* AccessibilityFSMount.icns in Resources */ = {isa = PBXBuildFile; fileRef = 8BB15D6E0D12E1C2006781B8 /* AccessibilityFSMount.icns */; };
 		8BC3D96C0D10EB2900B4829F /* AccessibilityFS.m in Sources */ = {isa = PBXBuildFile; fileRef = 8BC3D96B0D10EB2900B4829F /* AccessibilityFS.m */; };
-		8BCFD5930D3459E1003A33F4 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8BCFD5920D3459E1003A33F4 /* MacFUSE.framework */; };
 		8BCFD5C80D351907003A33F4 /* AccessibilityController.m in Sources */ = {isa = PBXBuildFile; fileRef = 8BCFD5C60D351907003A33F4 /* AccessibilityController.m */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		919BD9B014C2ABCC007CFA71 /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 919BD9AF14C2ABCC007CFA71 /* OSXFUSE.framework */; };
 		F9CEEF7E0B617DCE0044EAA6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEF7D0B617DCE0044EAA6 /* main.m */; };
 		F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */; };
 		F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */; };
@@ -71,11 +71,11 @@
 		8BC3D9690D10EB1E00B4829F /* AccessibilityFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AccessibilityFS_Prefix.pch; sourceTree = "<group>"; };
 		8BC3D96A0D10EB2900B4829F /* AccessibilityFS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AccessibilityFS.h; sourceTree = "<group>"; };
 		8BC3D96B0D10EB2900B4829F /* AccessibilityFS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AccessibilityFS.m; sourceTree = "<group>"; };
-		8BCFD5920D3459E1003A33F4 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
 		8BCFD5C60D351907003A33F4 /* AccessibilityController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AccessibilityController.m; sourceTree = "<group>"; };
 		8BCFD5C70D351907003A33F4 /* AccessibilityController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AccessibilityController.h; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* AccessibilityFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AccessibilityFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		919BD9AF14C2ABCC007CFA71 /* OSXFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OSXFUSE.framework; path = /Library/Frameworks/OSXFUSE.framework; sourceTree = "<absolute>"; };
 		F9CEEF7D0B617DCE0044EAA6 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
 		F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
@@ -93,10 +93,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				919BD9B014C2ABCC007CFA71 /* OSXFUSE.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */,
 				F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */,
-				8BCFD5930D3459E1003A33F4 /* MacFUSE.framework in Frameworks */,
 				8B450D670D35BFDE00B9CA4B /* Accelerate.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -107,6 +107,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				919BD9AF14C2ABCC007CFA71 /* OSXFUSE.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -116,7 +117,6 @@
 			isa = PBXGroup;
 			children = (
 				8B450D660D35BFDE00B9CA4B /* Accelerate.framework */,
-				8BCFD5920D3459E1003A33F4 /* MacFUSE.framework */,
 				F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */,
 				F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */,
 				29B97324FDCFA39411CA2CEA /* AppKit.framework */,
@@ -250,7 +250,11 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "AccessibilityFS" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* SpotlightFS */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -357,10 +361,6 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				INFOPLIST_FILE = Resources/Info.plist;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -376,24 +376,20 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					ppc,
-				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Release;
 		};

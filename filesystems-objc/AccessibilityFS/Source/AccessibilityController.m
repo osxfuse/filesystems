@@ -20,7 +20,7 @@
 
 #import "AccessibilityController.h"
 #import "AccessibilityFS.h"
-#import <MacFUSE/GMUserFileSystem.h>
+#import <OSXFUSE/OSXFUSE.h>
 #import "GTMAXUIElement.h"
 
 NSString *const kMountPath = @"/Volumes/Accessibility";
