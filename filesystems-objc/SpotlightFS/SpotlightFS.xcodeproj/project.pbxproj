@@ -11,6 +11,7 @@
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		919BD9A814C2A95A007CFA71 /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 919BD9A714C2A95A007CFA71 /* OSXFUSE.framework */; };
 		F927CD000B6405DC00AF272E /* DynamicFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */; };
 		F927CD040B64063A00AF272E /* SmartFolderBlue.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD030B64063A00AF272E /* SmartFolderBlue.icns */; };
 		F927CD570B640C8F00AF272E /* SmartFolder.icns in Resources */ = {isa = PBXBuildFile; fileRef = F927CD560B640C8F00AF272E /* SmartFolder.icns */; };
@@ -20,7 +21,6 @@
 		F9CEEFD60B6198610044EAA6 /* SpotlightFS.m in Sources */ = {isa = PBXBuildFile; fileRef = F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */; };
 		F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */; };
 		F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */; };
-		FFBB2A3A0D2E1663001331D2 /* MacFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FFBB2A390D2E1663001331D2 /* MacFUSE.framework */; };
 		FFBB2A430D2E16D3001331D2 /* SpotlightFSController.m in Sources */ = {isa = PBXBuildFile; fileRef = FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */; };
 /* End PBXBuildFile section */
 
@@ -36,6 +36,7 @@
 		8B93BE9B0D3ACCEF00466F25 /* NSError+POSIX.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSError+POSIX.m"; path = "../Support/NSError+POSIX.m"; sourceTree = SOURCE_ROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* SpotlightFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SpotlightFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		919BD9A714C2A95A007CFA71 /* OSXFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OSXFUSE.framework; path = /Library/Frameworks/OSXFUSE.framework; sourceTree = "<absolute>"; };
 		F927CCFF0B6405DC00AF272E /* DynamicFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = DynamicFolderBlue.icns; sourceTree = "<group>"; };
 		F927CD030B64063A00AF272E /* SmartFolderBlue.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolderBlue.icns; sourceTree = "<group>"; };
 		F927CD560B640C8F00AF272E /* SmartFolder.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = SmartFolder.icns; sourceTree = "<group>"; };
@@ -46,7 +47,6 @@
 		F9CEEFD50B6198610044EAA6 /* SpotlightFS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpotlightFS.m; sourceTree = "<group>"; };
 		F9CEF0D20B61A0420044EAA6 /* DiskArbitration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DiskArbitration.framework; path = /System/Library/Frameworks/DiskArbitration.framework; sourceTree = "<absolute>"; };
 		F9CEF0E90B61A0E40044EAA6 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
-		FFBB2A390D2E1663001331D2 /* MacFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MacFUSE.framework; path = /Library/Frameworks/MacFUSE.framework; sourceTree = "<absolute>"; };
 		FFBB2A410D2E16D3001331D2 /* SpotlightFSController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SpotlightFSController.h; sourceTree = "<group>"; };
 		FFBB2A420D2E16D3001331D2 /* SpotlightFSController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SpotlightFSController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,10 +56,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				919BD9A814C2A95A007CFA71 /* OSXFUSE.framework in Frameworks */,
 				8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */,
 				F9CEF0D30B61A0420044EAA6 /* DiskArbitration.framework in Frameworks */,
 				F9CEF0EA0B61A0E40044EAA6 /* Carbon.framework in Frameworks */,
-				FFBB2A3A0D2E1663001331D2 /* MacFUSE.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,7 +69,7 @@
 		1058C7A0FEA54F0111CA2CBB /* Linked Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				FFBB2A390D2E1663001331D2 /* MacFUSE.framework */,
+				919BD9A714C2A95A007CFA71 /* OSXFUSE.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 			);
 			name = "Linked Frameworks";
@@ -173,7 +173,11 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "SpotlightFS" */;
 			compatibilityVersion = "Xcode 2.4";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* SpotlightFS */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -253,10 +257,6 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				INFOPLIST_FILE = Resources/Info.plist;
@@ -270,36 +270,28 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					ppc,
-				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = "";
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					ppc,
-				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = "";
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CFLAGS = "";
 				PREBINDING = NO;
-				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
 			};
 			name = Release;
 		};

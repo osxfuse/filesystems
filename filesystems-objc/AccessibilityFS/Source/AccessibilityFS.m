@@ -23,7 +23,7 @@
 #import <unistd.h>
 #import <CoreServices/CoreServices.h>
 #import <AppKit/AppKit.h>
-#import <MacFUSE/GMUserFileSystem.h>
+#import <OSXFUSE/OSXFUSE.h>
 #import "AccessibilityFS.h"
 #import "NSImage+IconData.h"
 #import "NSError+POSIX.h"

@@ -47,7 +47,7 @@
 #import <unistd.h>
 #import <CoreServices/CoreServices.h>
 #import <Foundation/Foundation.h>
-#import <MacFUSE/GMUserFileSystem.h>
+#import <OSXFUSE/OSXFUSE.h>
 #import "SpotlightFS.h"
 #import "NSError+POSIX.h"
 
