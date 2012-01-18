@@ -101,10 +101,8 @@ static NSString *DecodePath(NSString *path) {
 - (NSArray *)spotlightSavedSearches {
   NSString *savedSearchesPath = [kSpotlightSavedSearchesPath stringByStandardizingPath];
   NSMutableArray *savedSearches = [NSMutableArray array];
-  NSArray *files = [[NSFileManager defaultManager] directoryContentsAtPath:savedSearchesPath];
-  NSEnumerator *fileEnumerator = [files objectEnumerator];
-  NSString *filename = nil;
-  while ((filename = [fileEnumerator nextObject])) {
+  NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:savedSearchesPath error:nil];
+  for (NSString* filename in files) {
     if ([[filename pathExtension] isEqualToString:kSpotlightSavedSearchesExtension])
       [savedSearches addObject:[filename stringByDeletingPathExtension]];
   }
@@ -153,9 +151,7 @@ static NSString *DecodePath(NSString *path) {
 //
 - (BOOL)isUserCreatedFolder:(NSString *)path {
   NSArray *folders = [self userCreatedFolders];
-  NSString *folder = nil;
-  NSEnumerator *folderEnumerator = [folders objectEnumerator];
-  while ((folder = [folderEnumerator nextObject])) {
+  for (NSString* folder in folders) {
     if ([folder isEqualToString:path])
       return YES;
     if ([[@"/" stringByAppendingPathComponent:folder] isEqualToString:path])
@@ -293,7 +289,9 @@ static NSString *DecodePath(NSString *path) {
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return nil;
   }
   
@@ -327,7 +325,9 @@ static NSString *DecodePath(NSString *path) {
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   
@@ -402,14 +402,18 @@ static NSString *DecodePath(NSString *path) {
 // By default, directories are not writeable, with the notable exceptions below:
 // - Slash is writable
 // - User created directories in slash are writable
-- (NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path userData:(id)userData error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return nil;
   }
   BOOL isDirectory;
   if (![self fileExistsAtPath:path isDirectory:&isDirectory]) {
-    *error = [NSError errorWithPOSIXCode:ENOENT];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:ENOENT];
+    }
     return nil;
   }
   
@@ -438,21 +442,27 @@ static NSString *DecodePath(NSString *path) {
     
     NSString *decodedPath = DecodePath([path lastPathComponent]);
     NSFileManager *fm = [NSFileManager defaultManager];
-    attr = [[[fm fileAttributesAtPath:decodedPath traverseLink:NO] mutableCopy] autorelease];
+    attr = [[[fm attributesOfItemAtPath:decodedPath error:nil] mutableCopy] autorelease];
     if (!attr)
       attr = [NSMutableDictionary dictionary];
     [attr setObject:NSFileTypeSymbolicLink forKey:NSFileType];
     
   } 
   if (!attr) {
-    *error = [NSError errorWithPOSIXCode:ENOENT];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:ENOENT];
+    }
   }
   return attr;
 }
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      if ( error ) {
+        *error = [NSError errorWithPOSIXCode:EINVAL];
+      }
+    }
     return nil;
   }
   
@@ -461,13 +471,17 @@ static NSString *DecodePath(NSString *path) {
   if ([lastComponent hasPrefix:@":"])
     return DecodePath(lastComponent);
   
-  *error = [NSError errorWithPOSIXCode:ENOENT];
+  if ( error ) {
+    *error = [NSError errorWithPOSIXCode:ENOENT];
+  }
   return nil;
 }
 
 - (BOOL)moveItemAtPath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
   if (!source || !destination) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   
@@ -495,7 +509,9 @@ static NSString *DecodePath(NSString *path) {
 
 - (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   
@@ -518,19 +534,32 @@ static NSString *DecodePath(NSString *path) {
   return YES;
 }
 
-- (NSString *)iconDataAtPath:(NSString *)path {
+- (NSDictionary *)finderAttributesAtPath:(NSString *)path 
+                                   error:(NSError **)error
+{
+  return [self resourceAttributesAtPath:path error:error];
+}
+
+- (NSDictionary*)resourceAttributesAtPath:(NSString *)path error:(NSError **)error
+{
   NSString *lastComponent = [path lastPathComponent];
   NSBundle *mainBundle = [NSBundle mainBundle];
   NSString *iconPath = [mainBundle pathForResource:@"SmartFolderBlue" ofType:@"icns"];
   
   if ([path isEqualToString:@"/"])
     return nil;  // Custom volume icon is handled by options to filesystem mount.
-  else if ([path isEqualToString:[@"/" stringByAppendingPathComponent:kSmarterFolder]])
+  
+  if ([path isEqualToString:[@"/" stringByAppendingPathComponent:kSmarterFolder]])
     iconPath = [mainBundle pathForResource:@"DynamicFolderBlue" ofType:@"icns"];
   else if ([[self spotlightSavedSearches] containsObject:lastComponent])
     iconPath = [mainBundle pathForResource:@"SmartFolder" ofType:@"icns"];
   
-  return [NSData dataWithContentsOfFile:iconPath];
+  NSData* iconData = [NSData dataWithContentsOfFile:iconPath options:0 error:error];
+  
+  if ( iconData == nil )
+    return nil;
+  
+  return [NSDictionary dictionaryWithObjectsAndKeys:iconData, kGMUserFileSystemCustomIconDataKey, nil];
 }
 
 @end

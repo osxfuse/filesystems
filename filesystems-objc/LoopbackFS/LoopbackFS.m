@@ -58,7 +58,10 @@
   NSString* p_dst = [rootPath_ stringByAppendingString:destination];
   int ret = rename([p_src UTF8String], [p_dst UTF8String]);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
+    return NO;
   }
   return YES;
 }
@@ -71,7 +74,9 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = rmdir([p UTF8String]);
   if (ret < 0) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   return YES;
@@ -105,7 +110,9 @@
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
   int fd = creat([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   *userData = [NSNumber numberWithLong:fd];
@@ -124,7 +131,9 @@
   // the file rather than hard link if part of the root path is a symlink.
   int rc = link([p_path UTF8String], [p_otherPath UTF8String]);
   if ( rc <  0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   return YES;
@@ -158,7 +167,9 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int fd = open([p UTF8String], mode);
   if ( fd < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   *userData = [NSNumber numberWithLong:fd];
@@ -181,7 +192,9 @@
   int fd = [num longValue];
   int ret = pread(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return -1;
   }
   return ret;
@@ -197,7 +210,9 @@
   int fd = [num longValue];
   int ret = pwrite(fd, buffer, size, offset);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return -1;
   }
   return ret;
@@ -210,7 +225,9 @@
   NSString* p2 = [rootPath_ stringByAppendingString:path2];
   int ret = exchangedata([p1 UTF8String], [p2 UTF8String], 0);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;    
   }
   return YES;  
@@ -260,7 +277,9 @@
   if ( offset ) {
     int ret = truncate([p UTF8String], [offset longLongValue]);
     if ( ret < 0 ) {
-      *error = [NSError errorWithPOSIXCode:errno];
+      if ( error ) {
+        *error = [NSError errorWithPOSIXCode:errno];
+      }
       return NO;    
     }
   }
@@ -268,7 +287,9 @@
   if (flags != nil) {
     int rc = chflags([p UTF8String], [flags intValue]);
     if (rc < 0) {
-      *error = [NSError errorWithPOSIXCode:errno];
+      if ( error ) {
+        *error = [NSError errorWithPOSIXCode:errno];
+      }
       return NO;
     }
   }
@@ -284,13 +305,17 @@
   
   ssize_t size = listxattr([p UTF8String], nil, 0, 0);
   if ( size < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
   size = listxattr([p UTF8String], [data mutableBytes], [data length], 0);
   if ( size < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return nil;
   }
   NSMutableArray* contents = [NSMutableArray array];
@@ -312,7 +337,9 @@
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
                          position, 0);
   if ( size < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
@@ -320,7 +347,9 @@
                   [data mutableBytes], [data length],
                   position, 0);
   if ( size < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return nil;
   }  
   return data;
@@ -342,7 +371,9 @@
                      [value bytes], [value length], 
                      position, options);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   return YES;
@@ -354,7 +385,9 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = removexattr([p UTF8String], [name UTF8String], 0);
   if ( ret < 0 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:errno];
+    }
     return NO;
   }
   return YES;

@@ -27,6 +27,7 @@
 // GData Objective-C API: http://code.google.com/p/gdata-objectivec-client/
 @interface YTVideo : NSObject {
   NSXMLNode* xmlNode_;
+  NSXMLDocument* xmlDoc_;
 }
 
 // Returns a dictionary keyed by filename-safe video name of the top rated
