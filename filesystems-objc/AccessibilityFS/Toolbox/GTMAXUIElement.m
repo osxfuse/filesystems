@@ -97,7 +97,7 @@
   return element_;
 }
 
-- (unsigned)hash {
+- (NSUInteger)hash {
   return CFHash(element_);
 }
 
