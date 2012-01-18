@@ -101,7 +101,7 @@ static NSString *DecodePath(NSString *path) {
 - (NSArray *)spotlightSavedSearches {
   NSString *savedSearchesPath = [kSpotlightSavedSearchesPath stringByStandardizingPath];
   NSMutableArray *savedSearches = [NSMutableArray array];
-  NSArray *files = [[NSFileManager defaultManager] directoryContentsAtPath:savedSearchesPath];
+  NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:savedSearchesPath error:nil];
   for (NSString* filename in files) {
     if ([[filename pathExtension] isEqualToString:kSpotlightSavedSearchesExtension])
       [savedSearches addObject:[filename stringByDeletingPathExtension]];
@@ -442,7 +442,7 @@ static NSString *DecodePath(NSString *path) {
     
     NSString *decodedPath = DecodePath([path lastPathComponent]);
     NSFileManager *fm = [NSFileManager defaultManager];
-    attr = [[[fm fileAttributesAtPath:decodedPath traverseLink:NO] mutableCopy] autorelease];
+    attr = [[[fm attributesOfItemAtPath:decodedPath error:nil] mutableCopy] autorelease];
     if (!attr)
       attr = [NSMutableDictionary dictionary];
     [attr setObject:NSFileTypeSymbolicLink forKey:NSFileType];
