@@ -38,11 +38,13 @@ static NSString* const kThumbURLQuery = @"./media:group/media:thumbnail/@url";
 - (id)initWithXMLNode:(NSXMLNode *)node {
   if ((self = [super init])) {
     xmlNode_ = [node retain];
+    xmlDoc_ = [[node rootDocument] retain];
   }
   return self;
 }
 - (void)dealloc {
   [xmlNode_ release];
+  [xmlDoc_ release];
   [super dealloc];
 }
 
@@ -88,9 +90,9 @@ static NSString* const kFeedURL =
                     @"Quit", nil, nil);
     exit(1);
   }
-  NSXMLDocument* doc = [[[NSXMLDocument alloc] initWithData:data 
+  NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data 
                                                    options:0 
-                                                     error:&error] autorelease];  
+                                                     error:&error];  
   NSArray* xmlEntries = [[doc rootElement] nodesForXPath:@"./entry" 
                                                    error:&error];
   if ([xmlEntries count] == 0) {
@@ -112,6 +114,9 @@ static NSString* const kFeedURL =
     YTVideo* video = [YTVideo videoWithXMLNode:node];
     [videos setObject:video forKey:name];
   }
+  
+  [doc release];
+  
   return videos;
 }
 
