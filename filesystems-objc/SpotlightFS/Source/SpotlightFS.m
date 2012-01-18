@@ -102,9 +102,7 @@ static NSString *DecodePath(NSString *path) {
   NSString *savedSearchesPath = [kSpotlightSavedSearchesPath stringByStandardizingPath];
   NSMutableArray *savedSearches = [NSMutableArray array];
   NSArray *files = [[NSFileManager defaultManager] directoryContentsAtPath:savedSearchesPath];
-  NSEnumerator *fileEnumerator = [files objectEnumerator];
-  NSString *filename = nil;
-  while ((filename = [fileEnumerator nextObject])) {
+  for (NSString* filename in files) {
     if ([[filename pathExtension] isEqualToString:kSpotlightSavedSearchesExtension])
       [savedSearches addObject:[filename stringByDeletingPathExtension]];
   }
@@ -153,9 +151,7 @@ static NSString *DecodePath(NSString *path) {
 //
 - (BOOL)isUserCreatedFolder:(NSString *)path {
   NSArray *folders = [self userCreatedFolders];
-  NSString *folder = nil;
-  NSEnumerator *folderEnumerator = [folders objectEnumerator];
-  while ((folder = [folderEnumerator nextObject])) {
+  for (NSString* folder in folders) {
     if ([folder isEqualToString:path])
       return YES;
     if ([[@"/" stringByAppendingPathComponent:folder] isEqualToString:path])
