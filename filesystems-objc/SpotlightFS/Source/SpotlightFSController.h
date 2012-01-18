@@ -21,11 +21,13 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "SpotlightFS.h"
 
 @class GMUserFileSystem;
 
 @interface SpotlightFSController : NSObject {
   GMUserFileSystem* fs_;
+  SpotlightFS* spotlightfs_;
 }
 
 @end
