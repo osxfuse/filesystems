@@ -33,6 +33,5 @@
   NSString* rootPath_;   // The local file-system path to mount.
 }
 - (id)initWithRootPath:(NSString *)rootPath;
-- (void)dealloc;
 
 @end
