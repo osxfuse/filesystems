@@ -42,7 +42,9 @@
   if ([path isEqualToString:@"/"]) {
     return [videos_ allKeys];
   }
-  *error = [NSError errorWithPOSIXCode:ENOENT];
+  if ( error ) {
+    *error = [NSError errorWithPOSIXCode:ENOENT];
+  }
   return nil;
 }
 

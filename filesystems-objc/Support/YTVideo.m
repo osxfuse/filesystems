@@ -88,9 +88,9 @@ static NSString* const kFeedURL =
                     @"Quit", nil, nil);
     exit(1);
   }
-  NSXMLDocument* doc = [[NSXMLDocument alloc] initWithData:data 
+  NSXMLDocument* doc = [[[NSXMLDocument alloc] initWithData:data 
                                                    options:0 
-                                                     error:&error];  
+                                                     error:&error] autorelease];  
   NSArray* xmlEntries = [[doc rootElement] nodesForXPath:@"./entry" 
                                                    error:&error];
   if ([xmlEntries count] == 0) {
