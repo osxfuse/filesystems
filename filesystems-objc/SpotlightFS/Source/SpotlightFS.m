@@ -459,7 +459,9 @@ static NSString *DecodePath(NSString *path) {
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
     if ( error ) {
-      *error = [NSError errorWithPOSIXCode:EINVAL];
+      if ( error ) {
+        *error = [NSError errorWithPOSIXCode:EINVAL];
+      }
     }
     return nil;
   }
