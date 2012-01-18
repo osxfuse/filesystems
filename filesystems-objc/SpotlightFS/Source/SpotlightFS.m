@@ -398,7 +398,7 @@ static NSString *DecodePath(NSString *path) {
 // By default, directories are not writeable, with the notable exceptions below:
 // - Slash is writable
 // - User created directories in slash are writable
-- (NSDictionary *)attributesOfItemAtPath:(NSString *)path error:(NSError **)error {
+- (NSDictionary *)attributesOfItemAtPath:(NSString *)path userData:(id)userData error:(NSError **)error {
   if (!path) {
     *error = [NSError errorWithPOSIXCode:EINVAL];
     return nil;
@@ -514,19 +514,27 @@ static NSString *DecodePath(NSString *path) {
   return YES;
 }
 
-- (NSString *)iconDataAtPath:(NSString *)path {
+- (NSDictionary *)finderAttributesAtPath:(NSString *)path 
+                                   error:(NSError **)error
+{
   NSString *lastComponent = [path lastPathComponent];
   NSBundle *mainBundle = [NSBundle mainBundle];
   NSString *iconPath = [mainBundle pathForResource:@"SmartFolderBlue" ofType:@"icns"];
   
   if ([path isEqualToString:@"/"])
     return nil;  // Custom volume icon is handled by options to filesystem mount.
-  else if ([path isEqualToString:[@"/" stringByAppendingPathComponent:kSmarterFolder]])
+  
+  if ([path isEqualToString:[@"/" stringByAppendingPathComponent:kSmarterFolder]])
     iconPath = [mainBundle pathForResource:@"DynamicFolderBlue" ofType:@"icns"];
   else if ([[self spotlightSavedSearches] containsObject:lastComponent])
     iconPath = [mainBundle pathForResource:@"SmartFolder" ofType:@"icns"];
   
-  return [NSData dataWithContentsOfFile:iconPath];
+  NSData* iconData = [NSData dataWithContentsOfFile:iconPath options:0 error:error];
+  
+  if ( iconData == nil )
+    return nil;
+  
+  return [NSDictionary dictionaryWithObjectsAndKeys:iconData, kGMUserFileSystemCustomIconDataKey, nil];
 }
 
 @end
