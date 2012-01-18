@@ -61,6 +61,7 @@
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
     }
+    return NO;
   }
   return YES;
 }
