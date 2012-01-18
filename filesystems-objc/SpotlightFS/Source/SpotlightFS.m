@@ -289,7 +289,9 @@ static NSString *DecodePath(NSString *path) {
 
 - (NSArray *)contentsOfDirectoryAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return nil;
   }
   
@@ -323,7 +325,9 @@ static NSString *DecodePath(NSString *path) {
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   
@@ -400,12 +404,16 @@ static NSString *DecodePath(NSString *path) {
 // - User created directories in slash are writable
 - (NSDictionary *)attributesOfItemAtPath:(NSString *)path userData:(id)userData error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return nil;
   }
   BOOL isDirectory;
   if (![self fileExistsAtPath:path isDirectory:&isDirectory]) {
-    *error = [NSError errorWithPOSIXCode:ENOENT];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:ENOENT];
+    }
     return nil;
   }
   
@@ -441,14 +449,18 @@ static NSString *DecodePath(NSString *path) {
     
   } 
   if (!attr) {
-    *error = [NSError errorWithPOSIXCode:ENOENT];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:ENOENT];
+    }
   }
   return attr;
 }
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return nil;
   }
   
@@ -457,13 +469,17 @@ static NSString *DecodePath(NSString *path) {
   if ([lastComponent hasPrefix:@":"])
     return DecodePath(lastComponent);
   
-  *error = [NSError errorWithPOSIXCode:ENOENT];
+  if ( error ) {
+    *error = [NSError errorWithPOSIXCode:ENOENT];
+  }
   return nil;
 }
 
 - (BOOL)moveItemAtPath:(NSString *)source toPath:(NSString *)destination error:(NSError **)error {  
   if (!source || !destination) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   
@@ -491,7 +507,9 @@ static NSString *DecodePath(NSString *path) {
 
 - (BOOL)removeItemAtPath:(NSString *)path error:(NSError **)error {
   if (!path) {
-    *error = [NSError errorWithPOSIXCode:EINVAL];
+    if ( error ) {
+      *error = [NSError errorWithPOSIXCode:EINVAL];
+    }
     return NO;
   }
   

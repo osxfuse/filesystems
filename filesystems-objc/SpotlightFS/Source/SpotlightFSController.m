@@ -21,7 +21,6 @@
 //
 
 #import "SpotlightFSController.h"
-#import "SpotlightFS.h"
 #import <OSXFUSE/OSXFUSE.h>
 
 @implementation SpotlightFSController
@@ -47,8 +46,8 @@
                  name:kGMUserFileSystemDidUnmount object:nil];
   
   NSString* mountPath = @"/Volumes/SpotlightFS";
-  SpotlightFS* spotlightfs = [[SpotlightFS alloc] init];
-  fs_ = [[GMUserFileSystem alloc] initWithDelegate:spotlightfs isThreadSafe:YES];
+  spotlightfs_ = [[SpotlightFS alloc] init];
+  fs_ = [[GMUserFileSystem alloc] initWithDelegate:spotlightfs_ isThreadSafe:YES];
   NSMutableArray* options = [NSMutableArray array];
   NSString* volArg = 
   [NSString stringWithFormat:@"volicon=%@", 
@@ -61,7 +60,8 @@
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [fs_ unmount];  // Just in case we need to unmount;
-  [[fs_ delegate] release];  // Clean up SpotlightFS
+  [fs_ setDelegate:nil];
+  [spotlightfs_ release];
   [fs_ release];
   return NSTerminateNow;
 }
