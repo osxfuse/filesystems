@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:filesystems-objc/YTFS/YTFS.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:filesystems-objc/SpotlightFS/SpotlightFS.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:filesystems-objc/LoopbackFS/LoopbackFS.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:filesystems-objc/HelloFS/HelloFS.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:filesystems-objc/AccessibilityFS/AccessibilityFS.xcodeproj">
+   </FileRef>
+</Workspace>
