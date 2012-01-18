@@ -535,6 +535,11 @@ static NSString *DecodePath(NSString *path) {
 - (NSDictionary *)finderAttributesAtPath:(NSString *)path 
                                    error:(NSError **)error
 {
+  return [self resourceAttributesAtPath:path error:error];
+}
+
+- (NSDictionary*)resourceAttributesAtPath:(NSString *)path error:(NSError **)error
+{
   NSString *lastComponent = [path lastPathComponent];
   NSBundle *mainBundle = [NSBundle mainBundle];
   NSString *iconPath = [mainBundle pathForResource:@"SmartFolderBlue" ofType:@"icns"];
