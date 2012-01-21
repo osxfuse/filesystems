@@ -2,3 +2,4 @@ GetPID.o
 windowfs
 windowfs.o
 windowfs_windows.o
+pcrelocation
