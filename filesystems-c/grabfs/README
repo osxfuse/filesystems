@@ -1,0 +1,10 @@
+*****************************************************************
+* grabfs
+* Browse screenshots of windows by process
+*****************************************************************
+
+* Building windowfs
+To build windowfs, use make. You'll need PCRE installed to either /opt/local or /usr/local. If you have PCRE installed in another location, edit the makefile and set CUSTOM_PCRE_PREFIX.
+
+* Building the WindowFS Xcode Project
+The WindowFS Xcode project adds an icon for the windowfs filesystem and also makes the mount point appear on the user's desktop. The Xcode project requires windowfs to be built first.
