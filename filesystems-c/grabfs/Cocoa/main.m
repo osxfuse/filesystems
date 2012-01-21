@@ -10,7 +10,7 @@ main(int argc, char *argv[])
 {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
-    NSString *bin = [[NSBundle mainBundle] pathForResource:@"grabfs"
+    NSString *bin = [[NSBundle mainBundle] pathForResource:@"windowfs"
                                                     ofType:NULL];
     NSString *icns = [[NSBundle mainBundle] pathForResource:@"GrabFSVolume"
                                                      ofType:@"icns"];
