@@ -4962,6 +4962,11 @@ main(int argc, char *argv[])
         procfs_ui = 1;
         extra_opts = def_opts_ui;
     }
+ 
+    if ( getuid() != 0 ) {
+        fprintf(stderr, "ERROR: You must run procfs as root.\n");
+        exit(1);
+    }
 
     argc++;
     new_argv = (char **)malloc(sizeof(char *) * argc);
