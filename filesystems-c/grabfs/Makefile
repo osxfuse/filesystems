@@ -33,7 +33,7 @@ pcrelocation:
 	( [ ! -z "$(CUSTOM_PCRE_PREFIX)" ] ) \
 	|| ( [ -f "/opt/local/include/pcrecpp.h" ] && echo "/opt/local" > pcrelocation ) \
 	|| ( [ -f "/usr/local/include/pcrecpp.h" ] && echo "/usr/local" > pcrelocation ) \
-	|| ( echo "ERROR: PCRE not found. Install with: sudo port install pcre" && exit 1 )
+	|| ( echo "ERROR: PCRE not found. Get it from http://www.pcre.org." && exit 1 )
 
 GetPID.o: GetPID.c
 	g++ -c -Wall $(CXXFLAGS) -o $@ $<
