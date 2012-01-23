@@ -28,6 +28,7 @@
 #include <mach/mach_vm.h>
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
+#include <mach/vm_map.h>
 
 #include <Carbon/Carbon.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -42,7 +43,10 @@
 #include "procfs_displays.h"
 #include "procfs_proc_info.h"
 #include "procfs_windows.h"
+
+#ifdef USE_CAMERA
 #include "sequencegrab/procfs_sequencegrab.h"
+#endif
 
 #if OSXFUSE_PROCFS_ENABLE_TPM
 #include "procfs_tpm.h"
@@ -66,10 +70,12 @@ static unsigned int sms_gIndex = 0;
 static IOItemCount  sms_gStructureInputSize = 0;
 static IOByteCount  sms_gStructureOutputSize = 0;
 
+#ifdef USE_CAMERA
 /* camera */
 static pthread_mutex_t  camera_lock;
 static int              camera_busy = 0;
 static CFMutableDataRef camera_tiff = (CFMutableDataRef)0;
+#endif
 
 /* display */
 static pthread_mutex_t  display_lock;
@@ -438,14 +444,18 @@ PROTO_OPEN_HANDLER(default_file);
 PROTO_OPEN_HANDLER(eisdir);
 PROTO_OPEN_HANDLER(proc__windows__identify);
 PROTO_OPEN_HANDLER(proc__windows__screenshots__window);
+#ifdef USE_CAMERA
 PROTO_OPEN_HANDLER(system__hardware__camera__screenshot);
+#endif
 PROTO_OPEN_HANDLER(system__hardware__displays__display__screenshot);
 
 PROTO_RELEASE_HANDLER(default_file);
 PROTO_RELEASE_HANDLER(eisdir);
 PROTO_RELEASE_HANDLER(proc__windows__identify);
 PROTO_RELEASE_HANDLER(proc__windows__screenshots__window);
+#ifdef USE_CAMERA
 PROTO_RELEASE_HANDLER(system__hardware__camera__screenshot);
+#endif
 PROTO_RELEASE_HANDLER(system__hardware__displays__display__screenshot);
 
 PROTO_OPENDIR_HANDLER(default_directory);
@@ -459,7 +469,9 @@ PROTO_GETATTR_HANDLER(default_file_finder_info);
 PROTO_GETATTR_HANDLER(default_directory);
 PROTO_GETATTR_HANDLER(default_link);
 PROTO_GETATTR_HANDLER(byname__name);
+#ifdef USE_CAMERA
 PROTO_GETATTR_HANDLER(system__hardware__camera__screenshot);
+#endif
 PROTO_GETATTR_HANDLER(system__hardware__displays__display);
 PROTO_GETATTR_HANDLER(system__hardware__displays__display__screenshot);
 #if OSXFUSE_PROCFS_ENABLE_TPM
@@ -498,7 +510,9 @@ PROTO_READ_HANDLER(proc__windows__generic);
 PROTO_READ_HANDLER(proc__windows__screenshots__window);
 PROTO_READ_HANDLER(proc__xcred);
 PROTO_READ_HANDLER(system__firmware__variables);
+#ifdef USE_CAMERA
 PROTO_READ_HANDLER(system__hardware__camera__screenshot);
+#endif
 PROTO_READ_HANDLER(system__hardware__cpus__cpu__data);
 PROTO_READ_HANDLER(system__hardware__displays__display__info);
 PROTO_READ_HANDLER(system__hardware__displays__display__screenshot);
@@ -574,6 +588,7 @@ procfs_file_table[] = {
         system__hardware__xsensor
     )
 
+#ifdef USE_CAMERA
     DECL_FILE(
         "/system/hardware/camera/screenshot.tiff",
         0,
@@ -582,6 +597,7 @@ procfs_file_table[] = {
         system__hardware__camera__screenshot,
         system__hardware__camera__screenshot
     )
+#endif
 
     DECL_FILE(
         "/system/hardware/cpus/(\\d+)/data",
@@ -899,12 +915,18 @@ procfs_directory_table[] = {
         { NULL },
 #if OSXFUSE_PROCFS_ENABLE_TPM
         {
-            "camera", "cpus", "displays", "lightsensor", "motionsensor",
+#ifdef USE_CAMERA
+            "camera",
+#endif
+            "cpus", "displays", "lightsensor", "motionsensor",
              "mouse", "tpm", NULL
         }
 #else
         {
-            "camera", "cpus", "displays", "lightsensor", "motionsensor",
+#ifdef USE_CAMERA
+            "camera",
+#endif
+            "cpus", "displays", "lightsensor", "motionsensor",
             "mouse", NULL
         }
 #endif /* OSXFUSE_PROCFS_ENABLE_TPM */
@@ -1299,6 +1321,7 @@ doread:
     return 0;
 }
 
+#ifdef USE_CAMERA
 OPEN_HANDLER(system__hardware__camera__screenshot)
 {
     pthread_mutex_lock(&camera_lock);
@@ -1314,6 +1337,7 @@ OPEN_HANDLER(system__hardware__camera__screenshot)
 
     return ret;
 }
+#endif
 
 OPEN_HANDLER(system__hardware__displays__display__screenshot)
 {
@@ -1401,6 +1425,7 @@ RELEASE_HANDLER(proc__windows__screenshots__window)
     return 0;
 }
 
+#ifdef USE_CAMERA
 RELEASE_HANDLER(system__hardware__camera__screenshot)
 {
     pthread_mutex_lock(&camera_lock);
@@ -1409,6 +1434,7 @@ RELEASE_HANDLER(system__hardware__camera__screenshot)
 
     return 0;
 }
+#endif
 
 RELEASE_HANDLER(system__hardware__displays__display__screenshot)
 {
@@ -1575,6 +1601,7 @@ GETATTR_HANDLER(system__hardware__displays__display)
     return 0;
 }
 
+#ifdef USE_CAMERA
 GETATTR_HANDLER(system__hardware__camera__screenshot)
 {
     time_t current_time = time(NULL);
@@ -1586,6 +1613,7 @@ GETATTR_HANDLER(system__hardware__camera__screenshot)
 
     return 0;
 }
+#endif
 
 GETATTR_HANDLER(system__hardware__displays__display__screenshot)
 {
@@ -2079,6 +2107,7 @@ READ_HANDLER(system__hardware__displays__display__info)
     return size;
 }
 
+#ifdef USE_CAMERA
 READ_HANDLER(system__hardware__camera__screenshot)
 {
     size_t max_len = PROCFS_GetTIFFSizeFromCamera();
@@ -2105,6 +2134,7 @@ READ_HANDLER(system__hardware__camera__screenshot)
 
     return size;
 }
+#endif
 
 READ_HANDLER(system__hardware__displays__display__screenshot)
 {
@@ -3389,8 +3419,13 @@ READ_HANDLER(proc__task__vmmap)
     do {
         flavor = VM_REGION_BASIC_INFO;
         info_count = VM_REGION_BASIC_INFO_COUNT;
+#ifdef __LP64__
+        kr = vm_region_64(the_task, &address, &vmsize, flavor,
+                       (vm_region_info_t)&info, &info_count, &object);
+#else
         kr = vm_region(the_task, &address, &vmsize, flavor,
                        (vm_region_info_t)&info, &info_count, &object);
+#endif
         if (kr == KERN_SUCCESS) {
             if (len >= MAX_VMMAP_SIZE) {
                 goto gotdata;
@@ -4436,11 +4471,16 @@ procfs_init(struct fuse_conn_info *conn)
         sizeof(procfs_directory_table)/sizeof(struct procfs_dispatcher_entry);
     total_link_patterns =
         sizeof(procfs_link_table)/sizeof(struct procfs_dispatcher_entry);
-   
+
+#ifdef USE_CAMERA   
     pthread_mutex_init(&camera_lock, NULL);
+#endif
+
     pthread_mutex_init(&display_lock, NULL);
 
+#ifdef USE_CAMERA
     camera_tiff = CFDataCreateMutable(kCFAllocatorDefault, (CFIndex)0);
+#endif
 
     return NULL;
 }
@@ -4451,10 +4491,14 @@ procfs_destroy(void *arg)
     (void)mach_port_deallocate(mach_task_self(), p_default_set);
     (void)mach_port_deallocate(mach_task_self(), p_default_set_control);
 
+#ifdef USE_CAMERA
     pthread_mutex_destroy(&camera_lock);
+#endif
     pthread_mutex_destroy(&display_lock);
 
+#ifdef USE_CAMERA
     CFRelease(camera_tiff);
+#endif
 }
 
 #define PROCFS_OPEN_RELEASE_COMMON()                                          \
