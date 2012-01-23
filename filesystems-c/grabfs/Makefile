@@ -5,18 +5,39 @@
 #
 # http://code.google.com/p/macfuse/
 
-CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -arch i386 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk
+# Build using the architecture of the build machine. If you want to build a universal binary, change ARCH to:
+# ARCH=-arch x86_64 -arch i386
+# If you do, make sure you also have a universal build of PCRE installed.
+ARCH=-arch $(shell uname -m)
+
+CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g $(ARCH) -isysroot /Developer/SDKs/MacOSX10.6.sdk
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon
 
-# Configure this depending on where you installed pcrecpp
-# http://www.pcre.org
-#
-PCRECPP_PREFIX=/usr/local
+# If you have PCRE installed in a location other than /usr/local or /opt/local, set CUSTOM_PCRE_PREFIX.
+# CUSTOM_PCRE_PREFIX=/your/custom/pcre/location
+ifdef CUSTOM_PCRE_PREFIX
+PCRECPP_PREFIX=$(CUSTOM_PCRE_PREFIX)
+else
+PCRECPP_PREFIX=$(shell cat pcrelocation)
+endif
 
 PCRECPP_CXXFLAGS=-I$(PCRECPP_PREFIX)/include
-PCRECPP_LDFLAGS=-arch i386 $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre.a
+PCRECPP_LDFLAGS=$(ARCH) $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre.a
 
-all: windowfs
+all: pcrelocation windowfs
+
+# pcrelocation tries to find PCRE using, in the following order:
+# 1. The CUSTOM_PCRE_PREFIX specified in this makefile, if one is given
+# 2. pcre-config --prefix, if pcre-config is in the PATH
+# 3. /opt/local
+# 4. /usr/local
+# Otherwise, an error message is printed and the build fails.
+pcrelocation:
+	( [ ! -z "$(CUSTOM_PCRE_PREFIX)" ] ) \
+	|| ( which pcre-config && pcre-config --prefix > pcrelocation ) \
+	|| ( [ -f "/opt/local/include/pcrecpp.h" ] && echo "/opt/local" > pcrelocation ) \
+	|| ( [ -f "/usr/local/include/pcrecpp.h" ] && echo "/usr/local" > pcrelocation ) \
+	|| ( echo "ERROR: PCRE not found. Get it from http://www.pcre.org." && exit 1 )
 
 GetPID.o: GetPID.c
 	g++ -c -Wall $(CXXFLAGS) -o $@ $<
@@ -36,4 +57,4 @@ install: windowfs
 	sudo mv windowfs /usr/local/bin/windowfs
 
 clean:
-	rm -f windowfs GetPID.o windowfs.o windowfs_windows.o
+	rm -f windowfs GetPID.o windowfs.o windowfs_windows.o pcrelocation
