@@ -26,11 +26,15 @@ PCRECPP_LDFLAGS=$(ARCH) $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib
 
 all: pcrelocation windowfs
 
-# pcrelocation looks for PCRE in common locations and prints an error message if none is found.
-# If one is found, it writes the location a file named pcrelocation, which is used by the PCRECPP_PREFIX
-# makefile variable.
+# pcrelocation tries to find PCRE using, in the following order:
+# 1. The CUSTOM_PCRE_PREFIX specified in this makefile, if one is given
+# 2. pcre-config --prefix, if pcre-config is in the PATH
+# 3. /opt/local
+# 4. /usr/local
+# Otherwise, an error message is printed and the build fails.
 pcrelocation:
 	( [ ! -z "$(CUSTOM_PCRE_PREFIX)" ] ) \
+	|| ( which pcre-config && pcre-config --prefix > pcrelocation ) \
 	|| ( [ -f "/opt/local/include/pcrecpp.h" ] && echo "/opt/local" > pcrelocation ) \
 	|| ( [ -f "/usr/local/include/pcrecpp.h" ] && echo "/usr/local" > pcrelocation ) \
 	|| ( echo "ERROR: PCRE not found. Get it from http://www.pcre.org." && exit 1 )
