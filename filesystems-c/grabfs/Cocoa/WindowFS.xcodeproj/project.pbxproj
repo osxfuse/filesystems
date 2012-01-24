@@ -3,12 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 44;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		5402AA480D0DFEC9007296BA /* GrabFSApplication.icns in Resources */ = {isa = PBXBuildFile; fileRef = 5402AA470D0DFEC9007296BA /* GrabFSApplication.icns */; };
-		542243AF0D0DC04C00139E01 /* grabfs in Resources */ = {isa = PBXBuildFile; fileRef = 542243AE0D0DC04C00139E01 /* grabfs */; };
+		542243AF0D0DC04C00139E01 /* windowfs in Resources */ = {isa = PBXBuildFile; fileRef = 542243AE0D0DC04C00139E01 /* windowfs */; };
 		542243B10D0DC09300139E01 /* GrabFSVolume.icns in Resources */ = {isa = PBXBuildFile; fileRef = 542243B00D0DC09300139E01 /* GrabFSVolume.icns */; };
 		8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 29B97318FDCFA39411CA2CEA /* MainMenu.nib */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
@@ -26,7 +26,7 @@
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* GrabFS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GrabFS_Prefix.pch; sourceTree = "<group>"; };
 		5402AA470D0DFEC9007296BA /* GrabFSApplication.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = GrabFSApplication.icns; sourceTree = "<group>"; };
-		542243AE0D0DC04C00139E01 /* grabfs */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = grabfs; sourceTree = "<group>"; };
+		542243AE0D0DC04C00139E01 /* windowfs */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = windowfs; path = ../windowfs; sourceTree = "<group>"; };
 		542243B00D0DC09300139E01 /* GrabFSVolume.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = GrabFSVolume.icns; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* GrabFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GrabFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -103,7 +103,7 @@
 			children = (
 				5402AA470D0DFEC9007296BA /* GrabFSApplication.icns */,
 				542243B00D0DC09300139E01 /* GrabFSVolume.icns */,
-				542243AE0D0DC04C00139E01 /* grabfs */,
+				542243AE0D0DC04C00139E01 /* windowfs */,
 				8D1107310486CEB800E47090 /* Info.plist */,
 				089C165CFE840E0CC02AAC07 /* InfoPlist.strings */,
 				29B97318FDCFA39411CA2CEA /* MainMenu.nib */,
@@ -147,8 +147,12 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "WindowFS" */;
-			compatibilityVersion = "Xcode 3.0";
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* GrabFS */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -165,7 +169,7 @@
 			files = (
 				8D11072A0486CEB800E47090 /* MainMenu.nib in Resources */,
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
-				542243AF0D0DC04C00139E01 /* grabfs in Resources */,
+				542243AF0D0DC04C00139E01 /* windowfs in Resources */,
 				542243B10D0DC09300139E01 /* GrabFSVolume.icns in Resources */,
 				5402AA480D0DFEC9007296BA /* GrabFSApplication.icns in Resources */,
 			);
@@ -210,7 +214,6 @@
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = GrabFS_Prefix.pch;
@@ -218,7 +221,6 @@
 				INSTALL_PATH = "$(HOME)/Applications";
 				PRODUCT_NAME = GrabFS;
 				WRAPPER_EXTENSION = app;
-				ZERO_LINK = YES;
 			};
 			name = Debug;
 		};
@@ -226,7 +228,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = GrabFS_Prefix.pch;
 				INFOPLIST_FILE = Info.plist;
@@ -239,24 +240,20 @@
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
+				SDKROOT = "";
 			};
 			name = Debug;
 		};
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
+				SDKROOT = "";
 			};
 			name = Release;
 		};
