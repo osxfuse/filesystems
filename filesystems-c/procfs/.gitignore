@@ -1,0 +1,7 @@
+*.dSYM/
+*.a
+*.dylib
+*.o
+
+.DS_Store
+procfs
