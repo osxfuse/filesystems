@@ -1,9 +1,6 @@
 # procfs as a OSXFUSE file system for Mac OS X
 #
-# Copyright Amit Singh. All Rights Reserved.
-# http://osxbook.com
-#
-# http://code.google.com/p/macfuse/
+# Copyright 2007 Amit Singh (osxbook.com). All Rights Reserved.
 
 CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -I/usr/local/include/osxfuse -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc

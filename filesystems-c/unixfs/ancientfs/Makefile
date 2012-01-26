@@ -1,7 +1,6 @@
+# Ancient Unix File Systems for Mac OS X
 #
-# Ancient Unix File Systems for OSXFUSE
-# Amit Singh
-# http://osxbook.com
+# Copyright 2008 Amit Singh (osxbook.com). All Rights Reserved.
 
 TARGETS = ancientfs
 
@@ -15,7 +14,6 @@ ifeq ($(OSNAME), Darwin)
 CC = gcc
 CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g
-ARCHS = -arch i386 -arch x86_64
 LIBS = -losxfuse
 endif
 
@@ -23,7 +21,6 @@ ifeq ($(OSNAME), FreeBSD)
 CC = gcc
 CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I/usr/local/include/fuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
-ARCHS =
 LIBS = -L/usr/local/lib -lfuse
 endif
 
@@ -31,7 +28,6 @@ ifeq ($(OSNAME), Linux)
 CC = gcc
 CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I$(COMMON) -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
-ARCHS =
 LIBS = -lfuse -ldl
 endif
 
@@ -41,12 +37,12 @@ OBJS = ancientfs_tap.o ancientfs_tp.o ancientfs_itp.o ancientfs_dtp.o ancientfs_
 OBJS_COMMON = $(UNIXFS)/unixfs.o $(UNIXFS)/unixfs_internal.o
 
 ancientfs: $(OBJS) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) $(ARCHS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) -o $@ $^ $(LIBS)
 
 -include $(OBJS:.o=.d)
 
 %.o: %.c
-	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) $(ARCHS) $*.c -c -o $*.o
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) $*.c -c -o $*.o
 	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) -MM $*.c > $*.d
 	@mv -f $*.d $*.d.tmp
 	@sed -e 's|.*:|$*.o:|' < $*.d.tmp > $*.d
