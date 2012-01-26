@@ -12,7 +12,7 @@ SEQUENCEGRAB_LDFLAGS=-framework AudioUnit -framework Cocoa -framework CoreAudioK
 # Configure this depending on where you installed pcrecpp
 # http://www.pcre.org
 #
-PCRECPP_PREFIX=/usr/local
+PCRECPP_PREFIX=$(shell pcre-config --prefix)
 
 PCRECPP_CXXFLAGS=-I$(PCRECPP_PREFIX)/include
 PCRECPP_LDFLAGS=-arch i386 $(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre.a
