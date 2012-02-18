@@ -23,6 +23,8 @@
 #import "LoopbackFS.h"
 #import <OSXFUSE/OSXFUSE.h>
 
+#import <AvailabilityMacros.h>
+
 @implementation LoopbackController
 
 - (void)mountFailed:(NSNotification *)notification {
@@ -56,15 +58,28 @@
   [panel setCanChooseFiles:NO];
   [panel setCanChooseDirectories:YES];
   [panel setAllowsMultipleSelection:NO];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+  [panel setDirectoryURL:[NSURL fileURLWithPath:@"/tmp"]];
+  int ret = [panel runModal];
+#else
   int ret = [panel runModalForDirectory:@"/tmp" file:nil types:nil];
+#endif
   if ( ret == NSCancelButton ) {
     exit(0);
   }
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+  NSArray* paths = [panel URLs];
+#else
   NSArray* paths = [panel filenames];
+#endif
   if ( [paths count] != 1 ) {
     exit(0);
   }
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+  NSString* rootPath = [[paths objectAtIndex:0] path];
+#else
   NSString* rootPath = [paths objectAtIndex:0];
+#endif
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
   [center addObserver:self selector:@selector(mountFailed:)
