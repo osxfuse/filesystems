@@ -597,10 +597,10 @@ loopback_setxattr(const char *path, const char *name, const char *value,
         memcpy(new_name, A_KAUTH_FILESEC_XATTR, sizeof(A_KAUTH_FILESEC_XATTR));
         memcpy(new_name, G_PREFIX, sizeof(G_PREFIX) - 1);
 
-        res = setxattr(path, new_name, value, size, position, flags);
+        res = setxattr(path, new_name, value, size, position, XATTR_NOFOLLOW);
 
     } else {
-        res = setxattr(path, name, value, size, position, flags);
+        res = setxattr(path, name, value, size, position, XATTR_NOFOLLOW);
     }
 
     if (res == -1) {
