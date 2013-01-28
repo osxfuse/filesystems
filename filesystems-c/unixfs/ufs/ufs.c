@@ -714,9 +714,11 @@ ufs2_read_inode(struct inode* inode, struct ufs2_inode* ufs2_inode)
     inode->I_atime.tv_sec  = fs64_to_cpu(sb, ufs2_inode->ui_atime);
     inode->I_ctime.tv_sec  = fs64_to_cpu(sb, ufs2_inode->ui_ctime);
     inode->I_mtime.tv_sec  = fs64_to_cpu(sb, ufs2_inode->ui_mtime);
+    inode->I_crtime.tv_sec = fs64_to_cpu(sb, ufs2_inode->ui_birthtime);
     inode->I_atime.tv_nsec = fs32_to_cpu(sb, ufs2_inode->ui_atimensec);
     inode->I_ctime.tv_nsec = fs32_to_cpu(sb, ufs2_inode->ui_ctimensec);
     inode->I_mtime.tv_nsec = fs32_to_cpu(sb, ufs2_inode->ui_mtimensec);
+    inode->I_crtime.tv_nsec= fs32_to_cpu(sb, ufs2_inode->ui_birthnsec);
     inode->I_blocks = fs64_to_cpu(sb, ufs2_inode->ui_blocks);
     inode->I_generation = fs32_to_cpu(sb, ufs2_inode->ui_gen);
     ufsi->i_flags = fs32_to_cpu(sb, ufs2_inode->ui_flags);
