@@ -173,7 +173,6 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
     }
 
     int err;
-    fs_endian_t mye, e = UNIXFS_FS_INVALID;
     struct stat stbuf;
     struct super_block* sb = (struct super_block*)0;
     struct filsys* fs = (struct filsys*)0;
@@ -229,8 +228,6 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
     /* not used */
     unixfs->s_endian = (fse == UNIXFS_FS_INVALID) ? UNIXFS_FS_LITTLE : fse;
 
-    if (e != mye)
-        fs->s_needsswap = 1;
     unixfs->s_fs_info = (void*)fs;
     unixfs->s_bdev = fd;
 
