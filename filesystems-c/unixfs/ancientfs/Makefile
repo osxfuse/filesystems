@@ -19,7 +19,7 @@ endif
 
 ifeq ($(OSNAME), FreeBSD)
 CC = gcc
-CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I/usr/local/include/fuse -I$(UNIXFS)
+CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
 LIBS = -L/usr/local/lib -lfuse
 endif
