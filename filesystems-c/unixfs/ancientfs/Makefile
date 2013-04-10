@@ -8,28 +8,28 @@ COMMON=../common
 OSNAME=$(shell uname)
 UNIXFS=$(COMMON)/unixfs
 
-CC = false
-
 ifeq ($(OSNAME), Darwin)
-CC = gcc
+CC ?= gcc
 CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse -I$(UNIXFS)
-CFLAGS_EXTRA = -Wall -Werror -g
+CFLAGS_EXTRA = -Wall -Werror -g $(CFLAGS)
 LIBS = -losxfuse
 endif
 
 ifeq ($(OSNAME), FreeBSD)
-CC = gcc
+CC ?= gcc
 CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include -I$(UNIXFS)
-CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
+CFLAGS_EXTRA = -Wall -Werror -g -rdynamic $(CFLAGS)
 LIBS = -L/usr/local/lib -lfuse
 endif
 
 ifeq ($(OSNAME), Linux)
-CC = gcc
+CC ?= gcc
 CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I$(COMMON) -I$(UNIXFS)
-CFLAGS_EXTRA = -Wall -Werror -g -rdynamic
+CFLAGS_EXTRA = -Wall -Werror -g -rdynamic $(CFLAGS)
 LIBS = -lfuse -ldl
 endif
+
+CC ?= false
 
 all: $(TARGETS)
 
