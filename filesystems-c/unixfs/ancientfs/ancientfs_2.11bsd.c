@@ -54,7 +54,6 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
 
     fs = malloc(DEV_BSIZE);
     if (!fs) {
-        free(sb);
         err = ENOMEM;
         goto out;
     }

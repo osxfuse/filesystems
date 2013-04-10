@@ -218,7 +218,7 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
     char* magic = (((union hblock*)hb)->dbuf).magic;
     if (memcmp(magic, TMAGIC, TMAGLEN - 1) == 0) {
         flags |= ANCIENTFS_USTAR;
-        if (magic[6] == ' ')
+        if (magic[5] == ' ')
             fprintf(stderr, "*** warning: pre-POSIX ustar archive\n");
     } else {
         flags |= ANCIENTFS_V7TAR;

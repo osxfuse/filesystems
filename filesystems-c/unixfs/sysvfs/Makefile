@@ -9,9 +9,9 @@ UNIXFS=$(COMMON)/unixfs
 LINUX=$(COMMON)/linux
 LINUX_KERNEL=$(LINUX)/kernel
 
-CC = gcc
-CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse/fuse -I$(UNIXFS) -I$(LINUX)
-CFLAGS_EXTRA = -Wall -Werror -g
+CC ?= gcc
+CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse -I$(UNIXFS) -I$(LINUX)
+CFLAGS_EXTRA = -Wall -Werror -g $(CFLAGS)
 LIBS = -losxfuse
 
 all: $(TARGETS)

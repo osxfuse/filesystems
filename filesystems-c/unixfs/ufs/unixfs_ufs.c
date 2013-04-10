@@ -81,6 +81,7 @@ out:
             close(fd);
         if (sb)
             free(sb);
+        return NULL;
     }
 
     return sb;
