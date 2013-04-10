@@ -600,8 +600,8 @@ ufs_getfrag_block(struct inode* inode, sector_t fragment,
         if (phys64) {
             bh_result->b_blocknr = phys64; /* map_bh */
             bh_result->b_size = sb->s_blocksize; /* map_bh */
+            return 0;
         }
-        return 0;
     }
 
     return -1;
