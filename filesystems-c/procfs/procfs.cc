@@ -1883,6 +1883,7 @@ getproccmdline(pid_t pid, char *cmdlinebuf, int len)
         tlen += thislen;
         rlen -= thislen;
     }
+    free(target_argv);
     return tlen;
 }
 

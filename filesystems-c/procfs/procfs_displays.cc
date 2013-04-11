@@ -145,6 +145,7 @@ CreatePNGDataFromXRGB32Raster(void *raster, int width, int height,
     colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
     context = CGBitmapContextCreate(raster, width, height, 8, bytesPerRow,
                                     colorSpace, kCGImageAlphaNoneSkipFirst);
+    CGColorSpaceRelease(colorSpace);
 
     if (context) {
         image = CGBitmapContextCreateImage(context);
@@ -167,7 +168,6 @@ CreatePNGDataFromXRGB32Raster(void *raster, int width, int height,
     }
   
     CGImageRelease(image);
-    CGColorSpaceRelease(colorSpace);
   
     return data;
 }
