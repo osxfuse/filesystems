@@ -649,10 +649,6 @@ READ_HANDLER(proc__window)
     len = max_len;
 
     const UInt8 *tmpbuf = CFDataGetBytePtr(window_tiff);
-        
-    if (len < 0) {
-        return -EIO; 
-    }
 
     if (offset < len) {
         if (offset + size > len)

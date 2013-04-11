@@ -2065,10 +2065,6 @@ READ_HANDLER(system__hardware__displays__display__info)
         return -EIO;
     }
 
-    if (len < 0) {
-        return -EIO;
-    }   
-            
     if (offset < len) {
         if (offset + size > len)
             size = len - offset;
@@ -2082,7 +2078,7 @@ READ_HANDLER(system__hardware__displays__display__info)
 READ_HANDLER(system__hardware__camera__screenshot)
 {
     size_t max_len = PROCFS_GetTIFFSizeFromCamera();
-    size_t len = (size_t)CFDataGetLength(camera_tiff);
+    CFIndex len = CFDataGetLength(camera_tiff);
 
     if (len > max_len) {
         return -EIO;
@@ -2124,7 +2120,7 @@ READ_HANDLER(system__hardware__displays__display__screenshot)
     pthread_mutex_unlock(&display_lock);
 
     size_t max_len = PROCFS_GetPNGSizeForDisplayAtIndex(index);
-    size_t len = (size_t)CFDataGetLength(display_png);
+    CFIndex len = (size_t)CFDataGetLength(display_png);
 
     if (len > max_len) {
         pthread_mutex_lock(&display_lock);
@@ -3749,10 +3745,6 @@ READ_HANDLER(proc__windows__screenshots__window)
     len = max_len;
 
     const UInt8 *tmpbuf = CFDataGetBytePtr(window_png);
-        
-    if (len < 0) {
-        return -EIO; 
-    }
 
     if (offset < len) {
         if (offset + size > len)

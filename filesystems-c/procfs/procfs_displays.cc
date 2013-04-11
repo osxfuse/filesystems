@@ -186,7 +186,7 @@ PROCFS_GetDisplayIDForDisplayAtIndex(unsigned int index)
         displayCount = 0;
     }
 
-    if ((index < 0) || (index > (displayCount - 1))) {
+    if (index > (displayCount - 1)) {
         return 0;
     }
 
