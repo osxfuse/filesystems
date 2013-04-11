@@ -98,7 +98,7 @@ typedef int (*windowfs_readlink_handler_t)(windowfs_dispatcher_entry_t e,
                                            char                       *buf,
                                            size_t                     size);
 
-typedef struct windowfs_dispatcher_entry {
+struct windowfs_dispatcher_entry {
     int                           flag;
     const char                   *pattern;
     pcrecpp::RE                  *compiled_pattern;

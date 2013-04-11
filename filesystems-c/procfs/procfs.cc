@@ -236,7 +236,7 @@ typedef int (*procfs_readlink_handler_t)(procfs_dispatcher_entry_t  e,
                                          char                      *buf,
                                          size_t                    size);
 
-typedef struct procfs_dispatcher_entry {
+struct procfs_dispatcher_entry {
     int                         flag;
     const char                 *pattern;
     pcrecpp::RE                *compiled_pattern;
@@ -2191,7 +2191,7 @@ READ_HANDLER(system__hardware__xsensor)
         kr = IOConnectCallScalarMethod(lightsensor_port, gIndex, NULL, 0, 
                                        scalarOutputValues, &scalarOutputCount);
         if (kr == KERN_SUCCESS) {
-            len = snprintf(tmpbuf, 4096, "%ld %ld\n", 
+            len = snprintf(tmpbuf, 4096, "%llu %llu\n", 
                            scalarOutputValues[0], scalarOutputValues[1]);
         } else if (kr == kIOReturnBusy) {
             len = snprintf(tmpbuf, 4096, "busy\n");
@@ -3127,7 +3127,7 @@ READ_HANDLER(proc__task__threads__thread__states__float)
 #if defined(__i386__)
     const char *whichfile = argv[2];
 
-    x86_float_state_t state = { 0 };
+    x86_float_state_t state = {{0}};
     unsigned int count = x86_FLOAT_STATE_COUNT;
     kr = thread_get_state(the_thread, x86_FLOAT_STATE, (thread_state_t)&state,
                           &count);
@@ -3215,7 +3215,7 @@ READ_HANDLER(proc__task__threads__thread__states__float)
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c2);
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c3);
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(busy);
-        len += snprintf(tmpbuf + len, 4096 - len, "tos=%hhx\n",
+        len += snprintf(tmpbuf + len, 4096 - len, "tos=%hx\n",
                         state.ufs.fs32.__fpu_fsw.__tos);
         goto gotdata;
     }
@@ -3254,7 +3254,7 @@ READ_HANDLER(proc__task__threads__thread__states__thread)
 
     const char *whichfile = argv[2];
 
-    x86_thread_state_t state = { 0 };
+    x86_thread_state_t state = {{0}};
     unsigned int count = x86_THREAD_STATE_COUNT;
     kr = thread_get_state(the_thread, x86_THREAD_STATE, (thread_state_t)&state,
                           &count);
