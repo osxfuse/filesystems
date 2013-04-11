@@ -22,7 +22,7 @@ procfs_sequencegrab.o: procfs_sequencegrab.mm
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 libprocfs_sequencegrab.dylib: $(OBJECTS)
-	$(CXX) -dynamiclib -install_name /tmp/libprocfs_sequencegrab.dylib $(CXXFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(CXX) -dynamiclib -install_name /usr/local/lib/libprocfs_sequencegrab.dylib $(CXXFLAGS) -o $@ $(OBJECTS) $(LDFLAGS)
 
 libprocfs_sequencegrab.a: $(OBJECTS)
 	libtool -static -o libprocfs_sequencegrab.a $(OBJECTS)
