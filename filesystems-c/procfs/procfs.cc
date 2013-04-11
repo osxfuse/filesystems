@@ -4962,9 +4962,9 @@ main(int argc, char *argv[])
     for (i = 0; i < (argc - 1); i++) {
         new_argv[i] = argv[i];
     }
-    argv[i] = extra_opts;
+    new_argv[i] = extra_opts;
 
     procfs_oper_populate(&procfs_oper);
 
-    return fuse_main(argc, argv, &procfs_oper, NULL);
+    return fuse_main(argc, new_argv, &procfs_oper, NULL);
 }
