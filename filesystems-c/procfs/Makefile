@@ -40,7 +40,7 @@ procfs: procfs.o procfs_displays.o procfs_proc_info.o procfs_tpm.o procfs_window
 	$(CXX) $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -o $@ $^ $(LDFLAGS) $(PCRECPP_LDFLAGS) $(SEQUENCEGRAB_LDFLAGS)
 
 sequencegrab/libprocfs_sequencegrab.a:
-	(cd sequencegrab && make)
+	$(MAKE) -C sequencegrab
 
 install: procfs
 	sudo chown root:wheel procfs
@@ -49,4 +49,4 @@ install: procfs
 
 clean:
 	rm -f procfs procfs.o procfs_displays.o procfs_proc_info.o procfs_tpm.o procfs_windows.o
-	(cd sequencegrab && make clean)
+	$(MAKE) -C sequencegrab clean
