@@ -1265,6 +1265,9 @@ OPEN_HANDLER(proc__windows__screenshots__window)
 
     err = CGSGetWindowList(_CGSDefaultConnection(), conn, MAX_WINDOWS,
                            windowIDs, &windowCount);
+   if (err != kCGErrorSuccess) {
+       return -ENOENT;
+   }
 
     for (i = 0; i < windowCount; i++) {
         if (windowIDs[i] == target) {
@@ -1506,7 +1509,7 @@ GETATTR_HANDLER(byname__name)
     OSErr osErr = noErr;
     OSStatus status;
     CFStringRef Pname;
-    pid_t Pid;
+    pid_t Pid = 0;
 
     psn.highLongOfPSN = kNoProcess;
     psn.lowLongOfPSN  = kNoProcess;
@@ -4295,7 +4298,7 @@ READLINK_HANDLER(byname__name)
     OSErr osErr = noErr;
     OSStatus status;
     CFStringRef Pname;
-    pid_t Pid;
+    pid_t Pid = 0;
 
     psn.highLongOfPSN = kNoProcess;
     psn.lowLongOfPSN  = kNoProcess;

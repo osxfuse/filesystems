@@ -441,6 +441,7 @@ doread:
         (struct WINDOWFSWindowData *)malloc(sizeof(struct WINDOWFSWindowData));
     if (!pwd) {
         CFRelease(window_tiff);
+        return -ENOMEM;
     }
 
     pwd->window_tiff = window_tiff;
