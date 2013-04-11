@@ -238,7 +238,7 @@ typedef int (*procfs_readlink_handler_t)(procfs_dispatcher_entry_t  e,
 
 typedef struct procfs_dispatcher_entry {
     int                         flag;
-    char                       *pattern;
+    const char                 *pattern;
     pcrecpp::RE                *compiled_pattern;
     int                         argc;
     procfs_open_handler_t       open;
@@ -3461,10 +3461,10 @@ M_get_vmmap_entries(task_t task)
 
 #define CAST_DOWN(type, addr) (((type)((uintptr_t)(addr))))
 
-static char *
+static const char *
 get_user_tag_description(unsigned int user_tag)
 {
-    char *description = "unknown";
+    const char *description = "unknown";
 
     switch (user_tag) {
     
@@ -4940,8 +4940,8 @@ procfs_oper_populate(struct fuse_operations *oper)
     oper->readlink   = procfs_readlink;
 }
 
-static char *def_opts = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
-static char *def_opts_ui = "-oallow_other,local,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char def_opts[] = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char def_opts_ui[] = "-oallow_other,local,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
 
 int
 main(int argc, char *argv[])

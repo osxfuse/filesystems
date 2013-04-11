@@ -100,7 +100,7 @@ typedef int (*windowfs_readlink_handler_t)(windowfs_dispatcher_entry_t e,
 
 typedef struct windowfs_dispatcher_entry {
     int                           flag;
-    char                         *pattern;
+    const char                   *pattern;
     pcrecpp::RE                  *compiled_pattern;
     int                           argc;
     windowfs_open_handler_t       open;
@@ -1363,7 +1363,7 @@ windowfs_oper_populate(struct fuse_operations *oper)
     oper->readlink   = windowfs_readlink;
 }
 
-static char *def_opts = "-odirect_io,iosize=2097152,local,noappledouble,nolocalcaches,ro,fsname=GrabFS,volname=GrabFS Volume";
+static char def_opts[] = "-odirect_io,iosize=2097152,local,noappledouble,nolocalcaches,ro,fsname=GrabFS,volname=GrabFS Volume";
 
 int
 main(int argc, char *argv[])

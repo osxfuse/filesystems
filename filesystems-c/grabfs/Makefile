@@ -25,7 +25,7 @@ GetPID.o: GetPID.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 windowfs.o: windowfs.cc
-	$(CXX) -c $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -fwritable-strings -o $@ $<
 
 windowfs_windows.o: windowfs_windows.cc windowfs_windows.h
 	$(CXX) -c $(CXXFLAGS) -o $@ $<
