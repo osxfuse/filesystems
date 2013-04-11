@@ -341,7 +341,6 @@ sysv_fill_super(int fd, void* args, int silent)
     sb->s_fs_info = sbi;
     sbi->s_sb = sb;
     sbi->s_block_base = 0;
-    sb->s_fs_info = sbi;
 
     sb->s_blocksize = BLOCK_SIZE;
     sb->s_blocksize_bits = BLOCK_SIZE_BITS;
@@ -729,7 +728,7 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
 
     struct super_block* sb = (struct super_block*)inode->I_sb;
 
-    int err = 0, byte_count = 0;
+    int byte_count = 0;
     char *p = pagebuf;
 
     do {
@@ -744,7 +743,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
                 p += blocksize;
                 byte_count += blocksize;
             } else {
-                err = EIO;
                 fprintf(stderr, "*** fatal error: I/O error\n");
                 abort();
             }
@@ -753,7 +751,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
             p += blocksize;
             byte_count += blocksize;
         } else {
-            err = EIO;
             fprintf(stderr, "*** fatal error: block mapping failed\n");
             abort();
         }
@@ -764,9 +761,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
             break;
 
     } while (1);
-
-    if (err)
-        return -1;
 
     return 0;
 }

@@ -417,7 +417,6 @@ out_no_bitmap:
     goto out_release;
 
 out_no_map:
-    ret = -ENOMEM;
     if (!silent)
         printk("MINIX-fs: can't allocate map\n");
     goto out_release;
@@ -557,17 +556,13 @@ minixfs_get_page(struct inode* inode, sector_t index, char* pagebuf)
 {
     sector_t iblock, lblock;
     unsigned int blocksize;
-    int nr, i;
 
     blocksize = 1 << inode->I_blkbits;
 
     iblock = index << (PAGE_CACHE_SHIFT - inode->I_blkbits);
     lblock = (inode->I_size + blocksize - 1) >> inode->I_blkbits;
 
-    nr = 0;
-    i = 0;
-
-    int bytes = 0, err = 0;
+    int bytes = 0;
     struct super_block* sb = inode->I_sb;
     struct buffer_head _bh;
     char* p = pagebuf;
@@ -584,17 +579,14 @@ minixfs_get_page(struct inode* inode, sector_t index, char* pagebuf)
                 bytes += blocksize;
                 brelse(bh); 
             } else {
-                err = EIO;
                 fprintf(stderr, "*** fatal error: I/O error reading page\n");
                 abort();
-                exit(10);
             }
         } else if (ret == 0) { /* zero fill */
             memset(p, 0, blocksize);
             p += blocksize;
             bytes += blocksize;
         } else {
-            err = EIO;
             fprintf(stderr, "*** fatal error: block mapping failed\n");
             abort();
         }
@@ -605,9 +597,6 @@ minixfs_get_page(struct inode* inode, sector_t index, char* pagebuf)
             break;
 
     } while (1);
-
-    if (err)
-        return -1;
 
     /* check page? */
 

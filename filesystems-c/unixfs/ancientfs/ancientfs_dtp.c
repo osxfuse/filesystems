@@ -138,8 +138,6 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
             di = (struct dinode_dtp*)((char*)tapeblock + 128);
             inopb--;
         } else if ((i * BSIZE) >= fs->s_dataoffset) {
-            i = tapedir_end_block;
-            j = inopb;
             break;
         }
         

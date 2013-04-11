@@ -41,7 +41,6 @@ struct buffer_head* ufs_bread(struct inode* inode, unsigned fragment,
 static int ufs1_read_inode(struct inode* inode, struct ufs_inode* ufs_inode);
 static int ufs2_read_inode(struct inode* inode, struct ufs2_inode* ufs2_inode);
 static unsigned ufs_last_byte(struct inode* inode, unsigned long page_nr);
-static int ufs_get_dirpage(struct inode* inode, sector_t index, char* pagebuf);
 static ino_t ufs_find_entry_s(struct inode* dir, const char* name);
 
 #define UFS_USED __attribute__((used))
@@ -862,8 +861,6 @@ bad_entry:
     goto fail;
 
 Eend:
-    p = (struct ufs_dir_entry *)(kaddr + offs);
-
     fprintf(stderr, "entry in directory #%llu spans the page boundary"
            "offset=%llu", dir->I_ino, (index << PAGE_CACHE_SHIFT) + offs);
 fail:
@@ -1645,15 +1642,11 @@ U_ufs_get_page(struct inode* inode, sector_t index, char* pagebuf)
 {
     sector_t iblock, lblock;
     unsigned int blocksize;
-    int nr, i;
 
     blocksize = 1 << inode->I_blkbits;
 
     iblock = index << (PAGE_CACHE_SHIFT - inode->I_blkbits);
     lblock = (inode->I_size + blocksize - 1) >> inode->I_blkbits;
-
-    nr = 0;
-    i = 0;
 
     int bytes = 0, err = 0;
     struct super_block* sb = inode->I_sb;
@@ -1671,10 +1664,8 @@ U_ufs_get_page(struct inode* inode, sector_t index, char* pagebuf)
                 bytes += blocksize;
                 brelse(bh); 
             } else {
-                err = EIO;
                 fprintf(stderr, "*** fatal error: I/O error reading page\n");
                 abort();
-                exit(10);
             }
         } else { /* zero fill */
             memset(p, 0, blocksize);
