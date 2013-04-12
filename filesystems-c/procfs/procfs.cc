@@ -236,9 +236,9 @@ typedef int (*procfs_readlink_handler_t)(procfs_dispatcher_entry_t  e,
                                          char                      *buf,
                                          size_t                    size);
 
-typedef struct procfs_dispatcher_entry {
+struct procfs_dispatcher_entry {
     int                         flag;
-    char                       *pattern;
+    const char                 *pattern;
     pcrecpp::RE                *compiled_pattern;
     int                         argc;
     procfs_open_handler_t       open;
@@ -1265,6 +1265,9 @@ OPEN_HANDLER(proc__windows__screenshots__window)
 
     err = CGSGetWindowList(_CGSDefaultConnection(), conn, MAX_WINDOWS,
                            windowIDs, &windowCount);
+   if (err != kCGErrorSuccess) {
+       return -ENOENT;
+   }
 
     for (i = 0; i < windowCount; i++) {
         if (windowIDs[i] == target) {
@@ -1506,7 +1509,7 @@ GETATTR_HANDLER(byname__name)
     OSErr osErr = noErr;
     OSStatus status;
     CFStringRef Pname;
-    pid_t Pid;
+    pid_t Pid = 0;
 
     psn.highLongOfPSN = kNoProcess;
     psn.lowLongOfPSN  = kNoProcess;
@@ -1880,6 +1883,7 @@ getproccmdline(pid_t pid, char *cmdlinebuf, int len)
         tlen += thislen;
         rlen -= thislen;
     }
+    free(target_argv);
     return tlen;
 }
 
@@ -2065,10 +2069,6 @@ READ_HANDLER(system__hardware__displays__display__info)
         return -EIO;
     }
 
-    if (len < 0) {
-        return -EIO;
-    }   
-            
     if (offset < len) {
         if (offset + size > len)
             size = len - offset;
@@ -2082,7 +2082,7 @@ READ_HANDLER(system__hardware__displays__display__info)
 READ_HANDLER(system__hardware__camera__screenshot)
 {
     size_t max_len = PROCFS_GetTIFFSizeFromCamera();
-    size_t len = (size_t)CFDataGetLength(camera_tiff);
+    CFIndex len = CFDataGetLength(camera_tiff);
 
     if (len > max_len) {
         return -EIO;
@@ -2124,7 +2124,7 @@ READ_HANDLER(system__hardware__displays__display__screenshot)
     pthread_mutex_unlock(&display_lock);
 
     size_t max_len = PROCFS_GetPNGSizeForDisplayAtIndex(index);
-    size_t len = (size_t)CFDataGetLength(display_png);
+    CFIndex len = (size_t)CFDataGetLength(display_png);
 
     if (len > max_len) {
         pthread_mutex_lock(&display_lock);
@@ -2195,7 +2195,7 @@ READ_HANDLER(system__hardware__xsensor)
         kr = IOConnectCallScalarMethod(lightsensor_port, gIndex, NULL, 0, 
                                        scalarOutputValues, &scalarOutputCount);
         if (kr == KERN_SUCCESS) {
-            len = snprintf(tmpbuf, 4096, "%ld %ld\n", 
+            len = snprintf(tmpbuf, 4096, "%llu %llu\n", 
                            scalarOutputValues[0], scalarOutputValues[1]);
         } else if (kr == kIOReturnBusy) {
             len = snprintf(tmpbuf, 4096, "busy\n");
@@ -3131,7 +3131,7 @@ READ_HANDLER(proc__task__threads__thread__states__float)
 #if defined(__i386__)
     const char *whichfile = argv[2];
 
-    x86_float_state_t state = { 0 };
+    x86_float_state_t state = {{0}};
     unsigned int count = x86_FLOAT_STATE_COUNT;
     kr = thread_get_state(the_thread, x86_FLOAT_STATE, (thread_state_t)&state,
                           &count);
@@ -3219,7 +3219,7 @@ READ_HANDLER(proc__task__threads__thread__states__float)
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c2);
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(c3);
         HANDLE_x86_FLOAT_STATE_ITEM_STATUS_BIT(busy);
-        len += snprintf(tmpbuf + len, 4096 - len, "tos=%hhx\n",
+        len += snprintf(tmpbuf + len, 4096 - len, "tos=%hx\n",
                         state.ufs.fs32.__fpu_fsw.__tos);
         goto gotdata;
     }
@@ -3258,7 +3258,7 @@ READ_HANDLER(proc__task__threads__thread__states__thread)
 
     const char *whichfile = argv[2];
 
-    x86_thread_state_t state = { 0 };
+    x86_thread_state_t state = {{0}};
     unsigned int count = x86_THREAD_STATE_COUNT;
     kr = thread_get_state(the_thread, x86_THREAD_STATE, (thread_state_t)&state,
                           &count);
@@ -3465,10 +3465,10 @@ M_get_vmmap_entries(task_t task)
 
 #define CAST_DOWN(type, addr) (((type)((uintptr_t)(addr))))
 
-static char *
+static const char *
 get_user_tag_description(unsigned int user_tag)
 {
-    char *description = "unknown";
+    const char *description = "unknown";
 
     switch (user_tag) {
     
@@ -3749,10 +3749,6 @@ READ_HANDLER(proc__windows__screenshots__window)
     len = max_len;
 
     const UInt8 *tmpbuf = CFDataGetBytePtr(window_png);
-        
-    if (len < 0) {
-        return -EIO; 
-    }
 
     if (offset < len) {
         if (offset + size > len)
@@ -4303,7 +4299,7 @@ READLINK_HANDLER(byname__name)
     OSErr osErr = noErr;
     OSStatus status;
     CFStringRef Pname;
-    pid_t Pid;
+    pid_t Pid = 0;
 
     psn.highLongOfPSN = kNoProcess;
     psn.lowLongOfPSN  = kNoProcess;
@@ -4948,8 +4944,8 @@ procfs_oper_populate(struct fuse_operations *oper)
     oper->readlink   = procfs_readlink;
 }
 
-static char *def_opts = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
-static char *def_opts_ui = "-oallow_other,local,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char def_opts[] = "-oallow_other,direct_io,nobrowse,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
+static char def_opts_ui[] = "-oallow_other,local,nolocalcaches,ro,iosize=1048576,volname=ProcFS";
 
 int
 main(int argc, char *argv[])
@@ -4970,9 +4966,9 @@ main(int argc, char *argv[])
     for (i = 0; i < (argc - 1); i++) {
         new_argv[i] = argv[i];
     }
-    argv[i] = extra_opts;
+    new_argv[i] = extra_opts;
 
     procfs_oper_populate(&procfs_oper);
 
-    return fuse_main(argc, argv, &procfs_oper, NULL);
+    return fuse_main(argc, new_argv, &procfs_oper, NULL);
 }

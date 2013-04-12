@@ -26,7 +26,7 @@ extern int proc_pidinfo(int32_t pid, uint32_t flavor, uint64_t arg,
 extern int proc_pidfdinfo(int32_t pid, uint32_t flavor, uint32_t arg,
                           caddr_t buffer, int32_t buffersize);
 
-static char *
+static const char *
 fd_type_string(uint32_t proc_fdtype)
 {
     switch (proc_fdtype) {

@@ -341,36 +341,39 @@ sysv_fill_super(int fd, void* args, int silent)
     sb->s_fs_info = sbi;
     sbi->s_sb = sb;
     sbi->s_block_base = 0;
-    sb->s_fs_info = sbi;
 
     sb->s_blocksize = BLOCK_SIZE;
     sb->s_blocksize_bits = BLOCK_SIZE_BITS;
 
     if ((bh = malloc(sizeof(struct buffer_head))) == NULL)
-        goto failed;
+        goto failed_errno;
 
     for (i = 0; i < ARRAY_SIZE(flavours) && !size; i++) {
         blocknr = flavours[i].block;
         if ((ret = pread(fd, bh->b_data, BLOCK_SIZE,
-                        (off_t)(flavours[i].block * BLOCK_SIZE))) != BLOCK_SIZE)
+                        (off_t)(flavours[i].block * BLOCK_SIZE))) < 0)
+            goto failed_errno;
+        else if (ret != BLOCK_SIZE)
             continue;
         size = flavours[i].test(SYSV_SB(sb), bh);
     }
 
-    if (!size)
-        goto Eunknown;
-
     switch (size) {
+        case 0:
+            if (!silent)
+                printk("VFS: unable to find oldfs superblock\n");
+            goto failed;
+
         case 1:
             blocknr = blocknr << 1;
             sb->s_blocksize = 512;
             sb->s_blocksize_bits = blksize_bits(512);
-            if ((bh1 = malloc(sizeof(struct buffer_head))) == NULL) {
-                brelse(bh);
-                goto failed;
-            }
-            ret = pread(fd, bh1->b_data, 512, (off_t)(blocknr * 512));
-            ret = pread(fd, bh->b_data, 512, (off_t)((blocknr + 1) * 512));
+            if ((bh1 = malloc(sizeof(struct buffer_head))) == NULL)
+                goto failed_errno;
+            if (pread(fd, bh1->b_data, 512, (off_t)(blocknr * 512)) < 0)
+                goto failed_errno;
+            if (pread(fd, bh->b_data, 512, (off_t)((blocknr + 1) * 512)) < 0)
+                goto failed_errno;
             break;
 
         case 2:
@@ -381,12 +384,15 @@ sysv_fill_super(int fd, void* args, int silent)
             blocknr = blocknr >> 1;
             sb->s_blocksize = 2048;
             sb->s_blocksize_bits = blksize_bits(2048);
-            ret = pread(fd, bh->b_data, 2048, (off_t)(blocknr * 2048));
+            if (pread(fd, bh->b_data, 2048, (off_t)(blocknr * 2048)) < 0)
+                goto failed_errno;
             bh1 = bh;
             break;
 
         default:
-            goto Ebadsize;
+            if (!silent)
+                printk("VFS: oldfs: unsupported block size (%dKb)\n", 1<<(size-2));
+            goto failed;
     }
 
     if (bh && bh1) {
@@ -403,31 +409,16 @@ sysv_fill_super(int fd, void* args, int silent)
     printk("oldfs: cannot read superblock\n");
 
 failed:
+    if (bh && bh != bh1)
+        brelse(bh);
+    if (bh1)
+        brelse(bh1);
     free(sbi);
     return NULL;
 
-Eunknown:
-    if (bh) {
-        if (bh1 == bh)
-            bh1 = NULL;
-        brelse(bh);
-    }
-    if (bh1)
-        brelse(bh1);
-    if (!silent)
-        printk("VFS: unable to find oldfs superblock\n");
-    goto failed;
-
-Ebadsize:
-    if (bh) {
-        if (bh1 == bh)
-            bh1 = NULL;
-        brelse(bh);
-    }
-    if (bh1)
-        brelse(bh1);
-    if (!silent)
-        printk("VFS: oldfs: unsupported block size (%dKb)\n", 1<<(size-2));
+failed_errno:
+    if(!silent)
+        printk("VFS: oldfs: error reading superblock: '%s'", strerror(errno));
     goto failed;
 }
 
@@ -729,7 +720,7 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
 
     struct super_block* sb = (struct super_block*)inode->I_sb;
 
-    int err = 0, byte_count = 0;
+    int byte_count = 0;
     char *p = pagebuf;
 
     do {
@@ -744,7 +735,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
                 p += blocksize;
                 byte_count += blocksize;
             } else {
-                err = EIO;
                 fprintf(stderr, "*** fatal error: I/O error\n");
                 abort();
             }
@@ -753,7 +743,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
             p += blocksize;
             byte_count += blocksize;
         } else {
-            err = EIO;
             fprintf(stderr, "*** fatal error: block mapping failed\n");
             abort();
         }
@@ -764,9 +753,6 @@ sysv_get_page(struct inode* inode, sector_t index, char* pagebuf)
             break;
 
     } while (1);
-
-    if (err)
-        return -1;
 
     return 0;
 }

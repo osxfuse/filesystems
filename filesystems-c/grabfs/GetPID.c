@@ -56,7 +56,7 @@ GetAllPIDsForProcessName(const char*        ProcessName,
     SuccessfullyGotProcessInformation = FALSE;
     
     while (SuccessfullyGotProcessInformation == FALSE) {
-        error = sysctl(mib, 3, NULL, &sizeOfBufferRequired, NULL, NULL);
+        error = sysctl(mib, 3, NULL, &sizeOfBufferRequired, NULL, 0);
         if (error != 0) {
             if (SysctlError != NULL) {
                 *SysctlError = errno;
@@ -76,7 +76,7 @@ GetAllPIDsForProcessName(const char*        ProcessName,
         }
     
         error = sysctl(mib, 3, BSDProcessInformationStructure,
-                       &sizeOfBufferRequired, NULL, NULL);
+                       &sizeOfBufferRequired, NULL, 0);
     
         if (error == 0) {
             SuccessfullyGotProcessInformation = TRUE;

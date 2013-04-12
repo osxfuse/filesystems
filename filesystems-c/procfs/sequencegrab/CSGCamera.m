@@ -59,7 +59,7 @@ pascal OSErr CSGCameraSGDataProc(SGChannel channel, Ptr data, long dataLength, l
     // Initialize movie toolbox
     theErr = EnterMovies();
     if (theErr != noErr) {
-        NSLog(@"EnterMovies() returned %ld", theErr);
+        NSLog(@"EnterMovies() returned %hd", theErr);
         return NO;
     }
     
@@ -73,21 +73,21 @@ pascal OSErr CSGCameraSGDataProc(SGChannel channel, Ptr data, long dataLength, l
     // Initialize sequence grabber component
     theErr = SGInitialize(component);
     if (theErr != noErr) {
-        NSLog(@"SGInitialize() returned %ld", theErr);
+        NSLog(@"SGInitialize() returned %hd", theErr);
         return NO;
     }
     
     // Don't make movie
     theErr = SGSetDataRef(component, 0, 0, seqGrabDontMakeMovie);
     if (theErr != noErr) {
-        NSLog(@"SGSetDataRef() returned %ld", theErr);
+        NSLog(@"SGSetDataRef() returned %hd", theErr);
         return NO;
     }
     
     // Create sequence grabber video channel
     theErr = SGNewChannel(component, VideoMediaType, &channel);
     if (theErr != noErr) {
-        NSLog(@"SGNewChannel() returned %ld", theErr);
+        NSLog(@"SGNewChannel() returned %hd", theErr);
         return NO;
     }
     
@@ -104,7 +104,7 @@ pascal OSErr CSGCameraSGDataProc(SGChannel channel, Ptr data, long dataLength, l
     // Create the GWorld
     theErr = QTNewGWorld(&gWorld, k32ARGBPixelFormat, &boundsRect, 0, NULL, 0);
     if (theErr != noErr) {
-        NSLog(@"QTNewGWorld() returned %ld", theErr);
+        NSLog(@"QTNewGWorld() returned %hd", theErr);
         return NO;
     }
     
@@ -117,42 +117,42 @@ pascal OSErr CSGCameraSGDataProc(SGChannel channel, Ptr data, long dataLength, l
     // Set GWorld
     theErr = SGSetGWorld(component, gWorld, GetMainDevice());
     if (theErr != noErr) {
-        NSLog(@"SGSetGWorld() returned %ld", theErr);
+        NSLog(@"SGSetGWorld() returned %hd", theErr);
         return NO;
     }
     
     // Set the channel's bounds
     theErr = SGSetChannelBounds(channel, &boundsRect);
     if (theErr != noErr) {
-        NSLog(@"SGSetChannelBounds(2) returned %ld", theErr);
+        NSLog(@"SGSetChannelBounds(2) returned %hd", theErr);
         return NO;
     }
     
     // Set the channel usage to record
     theErr = SGSetChannelUsage(channel, seqGrabRecord);
     if (theErr != noErr) {
-        NSLog(@"SGSetChannelUsage() returned %ld", theErr);
+        NSLog(@"SGSetChannelUsage() returned %hd", theErr);
         return NO;
     }
     
     // Set data proc
     theErr = SGSetDataProc(component, NewSGDataUPP(&CSGCameraSGDataProc), (long)self);
     if (theErr != noErr) {
-        NSLog(@"SGSetDataProc() returned %ld", theErr);
+        NSLog(@"SGSetDataProc() returned %hd", theErr);
         return NO;
     }
     
     // Prepare
     theErr = SGPrepare(component, false, true);
     if (theErr != noErr) {
-        NSLog(@"SGPrepare() returned %ld", theErr);
+        NSLog(@"SGPrepare() returned %hd", theErr);
         return NO;
     }
     
     // Start recording
     theErr = SGStartRecord(component);
     if (theErr != noErr) {
-        NSLog(@"SGStartRecord() returned %ld", theErr);
+        NSLog(@"SGStartRecord() returned %hd", theErr);
         return NO;
     }
 
@@ -223,7 +223,7 @@ pascal OSErr CSGCameraSGDataProc(SGChannel channel, Ptr data, long dataLength, l
     
     theErr = SGIdle(component);
     if (theErr != noErr) {
-        NSLog(@"SGIdle returned %ld", theErr);
+        NSLog(@"SGIdle returned %hd", theErr);
         return;
     }
 }

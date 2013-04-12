@@ -98,9 +98,9 @@ typedef int (*windowfs_readlink_handler_t)(windowfs_dispatcher_entry_t e,
                                            char                       *buf,
                                            size_t                     size);
 
-typedef struct windowfs_dispatcher_entry {
+struct windowfs_dispatcher_entry {
     int                           flag;
-    char                         *pattern;
+    const char                   *pattern;
     pcrecpp::RE                  *compiled_pattern;
     int                           argc;
     windowfs_open_handler_t       open;
@@ -441,6 +441,7 @@ doread:
         (struct WINDOWFSWindowData *)malloc(sizeof(struct WINDOWFSWindowData));
     if (!pwd) {
         CFRelease(window_tiff);
+        return -ENOMEM;
     }
 
     pwd->window_tiff = window_tiff;
@@ -649,10 +650,6 @@ READ_HANDLER(proc__window)
     len = max_len;
 
     const UInt8 *tmpbuf = CFDataGetBytePtr(window_tiff);
-        
-    if (len < 0) {
-        return -EIO; 
-    }
 
     if (offset < len) {
         if (offset + size > len)
@@ -1367,7 +1364,7 @@ windowfs_oper_populate(struct fuse_operations *oper)
     oper->readlink   = windowfs_readlink;
 }
 
-static char *def_opts = "-odirect_io,iosize=2097152,local,noappledouble,nolocalcaches,ro,fsname=GrabFS,volname=GrabFS Volume";
+static char def_opts[] = "-odirect_io,iosize=2097152,local,noappledouble,nolocalcaches,ro,fsname=GrabFS,volname=GrabFS Volume";
 
 int
 main(int argc, char *argv[])

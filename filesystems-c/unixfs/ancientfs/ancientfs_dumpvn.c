@@ -598,14 +598,12 @@ unixfs_internal_nextdirentry(struct inode* dp, struct unixfs_dirbuf* dirbuf,
             ANCIENTFS_211BSD_DIRBLKSIZ - (entryoffsetinblock &
                 (ANCIENTFS_211BSD_DIRBLKSIZ - 1));
         ni_offset += i;
-        entryoffsetinblock += i;
         dent->ino = 0;
     } else {
         dent->ino = (ino_t)ep->d_ino;
         memcpy(dent->name, ep->d_name, ep->d_namlen);
         dent->name[ep->d_namlen] = '\0';
         ni_offset += ep->d_reclen;
-        entryoffsetinblock += ep->d_reclen;
     }
 
     *offset = ni_offset;

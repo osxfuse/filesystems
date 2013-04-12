@@ -122,6 +122,13 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
 
     for (i = tapedir_begin_block; i < tapedir_end_block; i++) {
 
+        if (i >= last_block) {
+            fprintf(stderr,
+                    "*** fatal error: directory continues past end of tape\n");
+            err = EIO;
+            goto out;
+        }
+
         if (pread(fd, tapeblock, BSIZE, (off_t)(i * BSIZE)) != BSIZE) {
             fprintf(stderr, "*** fatal error: cannot read tape block %llu\n",
                     (off_t)i);
@@ -138,8 +145,6 @@ unixfs_internal_init(const char* dmg, uint32_t flags, fs_endian_t fse,
             di = (struct dinode_dtp*)((char*)tapeblock + 128);
             inopb--;
         } else if ((i * BSIZE) >= fs->s_dataoffset) {
-            i = tapedir_end_block;
-            j = inopb;
             break;
         }
         

@@ -3,7 +3,12 @@
 # Copyright 2012 Benjamin Fleischer. All Rights Reserved.
 # Copyright 2007-2008 Amit Singh (osxbook.com). All Rights Reserved.
 
-CXXFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -I/usr/local/include/osxfuse -O -g
+CC  ?= gcc
+CXX ?= g++
+
+OSXFUSE_CFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -I/usr/local/include/osxfuse -O -g -Wall
+CFLAGS  := $(OSXFUSE_CFLAGS) $(CFLAGS)
+CXXFLAGS:= $(OSXFUSE_CFLAGS) $(CXXFLAGS)
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon
 
 # Configure this depending on where you installed pcrecpp
@@ -17,16 +22,16 @@ PCRECPP_LDFLAGS=$(PCRECPP_PREFIX)/lib/libpcrecpp.a $(PCRECPP_PREFIX)/lib/libpcre
 all: windowfs
 
 GetPID.o: GetPID.c
-	g++ -c -Wall $(CXXFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<
 
 windowfs.o: windowfs.cc
-	g++ -c -Wall $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -fwritable-strings -o $@ $<
 
 windowfs_windows.o: windowfs_windows.cc windowfs_windows.h
-	g++ -c -Wall $(CXXFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 windowfs: windowfs.o windowfs_windows.o GetPID.o
-	g++ -Wall $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -o $@ $^ $(LDFLAGS) $(PCRECPP_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(PCRECPP_CXXFLAGS) -o $@ $^ $(LDFLAGS) $(PCRECPP_LDFLAGS)
 
 install: windowfs
 	sudo chown root:wheel windowfs
