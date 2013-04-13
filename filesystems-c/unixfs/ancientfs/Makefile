@@ -10,7 +10,7 @@ UNIXFS=$(COMMON)/unixfs
 
 ifeq ($(OSNAME), Darwin)
 CC ?= gcc
-CFLAGS_OSXFUSE = -D__FreeBSD__=10 -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse -I$(UNIXFS)
+CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse -I$(UNIXFS)
 CFLAGS_EXTRA = -Wall -Werror -g $(CFLAGS)
 LIBS = -losxfuse
 endif

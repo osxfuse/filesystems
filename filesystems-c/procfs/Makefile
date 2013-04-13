@@ -5,7 +5,7 @@
 CC  ?= gcc
 CXX ?= g++
 
-CFLAGS_OSXFUSE=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -O -g -I/usr/local/include/osxfuse -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wall
+CFLAGS_OSXFUSE=-D_FILE_OFFSET_BITS=64 -O -g -I/usr/local/include/osxfuse -arch i386 -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wall
 CFLAGS  :=$(CFLAGS_OSXFUSE) $(CFLAGS)
 CXXFLAGS:=$(CFLAGS_OSXFUSE) $(CXXFLAGS)
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon -framework IOKit -framework ApplicationServices -framework Accelerate -framework OpenGL -weak-lproc

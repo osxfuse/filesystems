@@ -6,7 +6,7 @@
 CC  ?= gcc
 CXX ?= g++
 
-OSXFUSE_CFLAGS=-D_FILE_OFFSET_BITS=64 -D__FreeBSD__=10 -I/usr/local/include/osxfuse -O -g -Wall
+OSXFUSE_CFLAGS=-D_FILE_OFFSET_BITS=64 -I/usr/local/include/osxfuse -O -g -Wall
 CFLAGS  := $(OSXFUSE_CFLAGS) $(CFLAGS)
 CXXFLAGS:= $(OSXFUSE_CFLAGS) $(CXXFLAGS)
 LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon
