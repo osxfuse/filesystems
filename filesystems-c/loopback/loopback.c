@@ -35,6 +35,7 @@
 #include <sys/xattr.h>
 #include <sys/attr.h>
 #include <sys/param.h>
+#include <sys/vnode.h>
 
 #if defined(_POSIX_C_SOURCE)
 typedef unsigned char  u_char;
@@ -644,7 +645,7 @@ loopback_listxattr(const char *path, char *list, size_t size)
         if (list) {
             size_t len = 0;
             char *curr = list;
-            do { 
+            do {
                 size_t thislen = strlen(curr) + 1;
                 if (strcmp(curr, G_KAUTH_FILESEC_XATTR) == 0) {
                     memmove(curr, curr + thislen, res - len - thislen);
@@ -697,6 +698,44 @@ loopback_removexattr(const char *path, const char *name)
     return 0;
 }
 
+#if FUSE_VERSION >= 29
+
+static int
+loopback_fallocate(const char *path, int mode, off_t offset, off_t length,
+                   struct fuse_file_info *fi)
+{
+    fstore_t fstore;
+
+    if (!(mode & PREALLOCATE)) {
+        return -ENOTSUP;
+    }
+
+    fstore.fst_flags = 0;
+    if (mode & ALLOCATECONTIG) {
+        fstore.fst_flags |= F_ALLOCATECONTIG;
+    }
+    if (mode & ALLOCATEALL) {
+        fstore.fst_flags |= F_ALLOCATEALL;
+    }
+
+    if (mode & ALLOCATEFROMPEOF) {
+        fstore.fst_posmode = F_PEOFPOSMODE;
+    } else if (mode & ALLOCATEFROMVOL) {
+        fstore.fst_posmode = F_VOLPOSMODE;
+    }
+
+    fstore.fst_offset = offset;
+    fstore.fst_length = length;
+
+    if (fcntl(fi->fh, F_PREALLOCATE, &fstore) == -1) {
+        return -errno;
+    } else {
+        return 0;
+    }
+}
+
+#endif /* FUSE_VERSION >= 29 */
+
 void *
 loopback_init(struct fuse_conn_info *conn)
 {
@@ -745,6 +784,9 @@ static struct fuse_operations loopback_oper = {
     .getxtimes   = loopback_getxtimes,
     .setattr_x   = loopback_setattr_x,
     .fsetattr_x  = loopback_fsetattr_x,
+#if FUSE_VERSION >= 29
+    .fallocate   = loopback_fallocate,
+#endif
 };
 
 int
