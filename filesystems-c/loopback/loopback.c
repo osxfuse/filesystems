@@ -25,6 +25,7 @@
 
 #include <fuse.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -49,6 +50,12 @@ typedef unsigned long  u_long;
 #define A_PREFIX                       "com"
 #define A_KAUTH_FILESEC_XATTR A_PREFIX ".apple.system.Security"
 #define XATTR_APPLE_PREFIX             "com.apple."
+
+struct loopback {
+	int case_insensitive;
+};
+
+static struct loopback loopback;
 
 static int
 loopback_getattr(const char *path, struct stat *stbuf)
@@ -736,11 +743,23 @@ loopback_fallocate(const char *path, int mode, off_t offset, off_t length,
 
 #endif /* FUSE_VERSION >= 29 */
 
+static int
+loopback_setvolname(const char *name)
+{
+    return 0;
+}
+
 void *
 loopback_init(struct fuse_conn_info *conn)
 {
     FUSE_ENABLE_SETVOLNAME(conn);
     FUSE_ENABLE_XTIMES(conn);
+
+#ifdef FUSE_ENABLE_CASE_INSENSITIVE
+    if (loopback.case_insensitive) {
+        FUSE_ENABLE_CASE_INSENSITIVE(conn);
+    }
+#endif
 
     return NULL;
 }
@@ -787,12 +806,28 @@ static struct fuse_operations loopback_oper = {
 #if FUSE_VERSION >= 29
     .fallocate   = loopback_fallocate,
 #endif
+    .setvolname  = loopback_setvolname,
+};
+
+static const struct fuse_opt loopback_opts[] = {
+	{ "case_insensitive", offsetof(struct loopback, case_insensitive), 1 },
+	FUSE_OPT_END
 };
 
 int
 main(int argc, char *argv[])
 {
-    umask(0);
+    int res = 0;
+    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 
-    return fuse_main(argc, argv, &loopback_oper, NULL);
+    loopback.case_insensitive = 0;
+    if (fuse_opt_parse(&args, &loopback, loopback_opts, NULL) == -1) {
+		exit(1);
+    }
+
+    umask(0);
+    res = fuse_main(args.argc, args.argv, &loopback_oper, NULL);
+
+    fuse_opt_free_args(&args);
+    return res;
 }
