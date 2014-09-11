@@ -33,7 +33,7 @@
   NSDictionary* userInfo = [notification userInfo];
   NSError* error = [userInfo objectForKey:kGMUserFileSystemErrorKey];
   NSLog(@"kGMUserFileSystem Error: %@, userInfo=%@", error, [error userInfo]);  
-  NSRunAlertPanel(@"Mount Failed", [error localizedDescription], nil, nil, nil);
+  NSRunAlertPanel(@"Mount Failed", @"%@", nil, nil, nil, [error localizedDescription]);
   [[NSApplication sharedApplication] terminate:nil];
 }
 

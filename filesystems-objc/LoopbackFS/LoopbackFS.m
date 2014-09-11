@@ -145,10 +145,9 @@
              withDestinationPath:(NSString *)otherPath
                            error:(NSError **)error {
   NSString* p_src = [rootPath_ stringByAppendingString:path];
-  NSString* p_dst = [rootPath_ stringByAppendingString:otherPath];
   return [[NSFileManager defaultManager] createSymbolicLinkAtPath:p_src
-                                              withDestinationPath:p_dst
-                                                            error:error];  
+                                              withDestinationPath:otherPath
+                                                            error:error];
 }
 
 - (NSString *)destinationOfSymbolicLinkAtPath:(NSString *)path
@@ -303,7 +302,7 @@
 - (NSArray *)extendedAttributesOfItemAtPath:(NSString *)path error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   
-  ssize_t size = listxattr([p UTF8String], nil, 0, 0);
+  ssize_t size = listxattr([p UTF8String], nil, 0, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -311,7 +310,7 @@
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
-  size = listxattr([p UTF8String], [data mutableBytes], [data length], 0);
+  size = listxattr([p UTF8String], [data mutableBytes], [data length], XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -335,7 +334,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
 
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
-                         position, 0);
+                         position, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -345,7 +344,7 @@
   NSMutableData* data = [NSMutableData dataWithLength:size];
   size = getxattr([p UTF8String], [name UTF8String], 
                   [data mutableBytes], [data length],
-                  position, 0);
+                  position, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -369,7 +368,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = setxattr([p UTF8String], [name UTF8String], 
                      [value bytes], [value length], 
-                     position, options);
+                     position, options | XATTR_NOFOLLOW);
   if ( ret < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -383,7 +382,7 @@
                    ofItemAtPath:(NSString *)path
                           error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
-  int ret = removexattr([p UTF8String], [name UTF8String], 0);
+  int ret = removexattr([p UTF8String], [name UTF8String], XATTR_NOFOLLOW);
   if ( ret < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
