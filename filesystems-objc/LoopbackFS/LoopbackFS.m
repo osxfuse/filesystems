@@ -259,6 +259,18 @@
     NSMutableDictionary* attribs = [NSMutableDictionary dictionaryWithDictionary:d];
     [attribs setObject:[NSNumber numberWithBool:YES]
                 forKey:kGMUserFileSystemVolumeSupportsExtendedDatesKey];
+    
+    NSURL *URL = [NSURL fileURLWithPath:p isDirectory:YES];
+    NSNumber *supportsCaseSensitiveNames = nil;
+    [URL getResourceValue:&supportsCaseSensitiveNames
+                   forKey:NSURLVolumeSupportsCaseSensitiveNamesKey
+                        error:NULL];
+    if (supportsCaseSensitiveNames == nil) {
+      supportsCaseSensitiveNames = [NSNumber numberWithBool:YES];
+    }
+    [attribs setObject:supportsCaseSensitiveNames
+                forKey:kGMUserFileSystemVolumeSupportsCaseSensitiveNamesKey];
+    
     return attribs;
   }
   return nil;
