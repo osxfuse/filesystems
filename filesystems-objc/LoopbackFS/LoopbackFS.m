@@ -29,6 +29,7 @@
 
 #import <sys/xattr.h>
 #import <sys/stat.h>
+#import <sys/vnode.h>
 #import "LoopbackFS.h"
 #import <OSXFUSE/OSXFUSE.h>
 #import "NSError+POSIX.h"
@@ -215,6 +216,41 @@
     return -1;
   }
   return ret;
+}
+
+- (BOOL)preallocateFileAtPath:(NSString *)path
+                     userData:(id)userData
+                      options:(int)options
+                       offset:(off_t)offset
+                       length:(off_t)length
+                        error:(NSError **)error {
+  NSNumber* num = (NSNumber *)userData;
+  int fd = [num longValue];
+  
+  fstore_t fstore;
+  
+  fstore.fst_flags = 0;
+  if ( options & ALLOCATECONTIG ) {
+    fstore.fst_flags |= F_ALLOCATECONTIG;
+  }
+  if ( options & ALLOCATEALL ) {
+    fstore.fst_flags |= F_ALLOCATEALL;
+  }
+  
+  if ( options & ALLOCATEFROMPEOF ) {
+    fstore.fst_posmode = F_PEOFPOSMODE;
+  } else if ( options & ALLOCATEFROMVOL ) {
+    fstore.fst_posmode = F_VOLPOSMODE;
+  }
+  
+  fstore.fst_offset = offset;
+  fstore.fst_length = length;
+  
+  if ( fcntl(fd, F_PREALLOCATE, &fstore) == -1 ) {
+    *error = [NSError errorWithPOSIXCode:errno];
+    return NO;
+  }
+  return YES;
 }
 
 - (BOOL)exchangeDataOfItemAtPath:(NSString *)path1
