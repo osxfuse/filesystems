@@ -309,6 +309,125 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
     gid_t gid = -1;
 
     if (SETATTR_WANTS_MODE(attr)) {
+        res = fchmod(fi->fh, attr->mode);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_UID(attr)) {
+        uid = attr->uid;
+    }
+
+    if (SETATTR_WANTS_GID(attr)) {
+        gid = attr->gid;
+    }
+
+    if ((uid != -1) || (gid != -1)) {
+        res = fchown(fi->fh, uid, gid);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_SIZE(attr)) {
+        res = ftruncate(fi->fh, attr->size);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_MODTIME(attr)) {
+        struct timeval tv[2];
+        if (!SETATTR_WANTS_ACCTIME(attr)) {
+            gettimeofday(&tv[0], NULL);
+        } else {
+            tv[0].tv_sec = attr->acctime.tv_sec;
+            tv[0].tv_usec = attr->acctime.tv_nsec / 1000;
+        }
+        tv[1].tv_sec = attr->modtime.tv_sec;
+        tv[1].tv_usec = attr->modtime.tv_nsec / 1000;
+        res = futimes(fi->fh, tv);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_CRTIME(attr)) {
+        struct attrlist attributes;
+
+        attributes.bitmapcount = ATTR_BIT_MAP_COUNT;
+        attributes.reserved = 0;
+        attributes.commonattr = ATTR_CMN_CRTIME;
+        attributes.dirattr = 0;
+        attributes.fileattr = 0;
+        attributes.forkattr = 0;
+        attributes.volattr = 0;
+
+        res = fsetattrlist(fi->fh, &attributes, &attr->crtime,
+                           sizeof(struct timespec), FSOPT_NOFOLLOW);
+
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_CHGTIME(attr)) {
+        struct attrlist attributes;
+
+        attributes.bitmapcount = ATTR_BIT_MAP_COUNT;
+        attributes.reserved = 0;
+        attributes.commonattr = ATTR_CMN_CHGTIME;
+        attributes.dirattr = 0;
+        attributes.fileattr = 0;
+        attributes.forkattr = 0;
+        attributes.volattr = 0;
+
+        res = fsetattrlist(fi->fh, &attributes, &attr->chgtime,
+                           sizeof(struct timespec), FSOPT_NOFOLLOW);
+
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_BKUPTIME(attr)) {
+        struct attrlist attributes;
+
+        attributes.bitmapcount = ATTR_BIT_MAP_COUNT;
+        attributes.reserved = 0;
+        attributes.commonattr = ATTR_CMN_BKUPTIME;
+        attributes.dirattr = 0;
+        attributes.fileattr = 0;
+        attributes.forkattr = 0;
+        attributes.volattr = 0;
+
+        res = fsetattrlist(fi->fh, &attributes, &attr->bkuptime,
+                           sizeof(struct timespec), FSOPT_NOFOLLOW);
+
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    if (SETATTR_WANTS_FLAGS(attr)) {
+        res = fchflags(fi->fh, attr->flags);
+        if (res == -1) {
+            return -errno;
+        }
+    }
+
+    return 0;
+}
+
+static int
+loopback_setattr_x(const char *path, struct setattr_x *attr)
+{
+    int res;
+    uid_t uid = -1;
+    gid_t gid = -1;
+
+    if (SETATTR_WANTS_MODE(attr)) {
         res = lchmod(path, attr->mode);
         if (res == -1) {
             return -errno;
@@ -331,11 +450,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
     }
 
     if (SETATTR_WANTS_SIZE(attr)) {
-        if (fi) {
-            res = ftruncate(fi->fh, attr->size);
-        } else {
-            res = truncate(path, attr->size);
-        }
+        res = truncate(path, attr->size);
         if (res == -1) {
             return -errno;
         }
@@ -369,7 +484,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
         attributes.volattr = 0;
 
         res = setattrlist(path, &attributes, &attr->crtime,
-                  sizeof(struct timespec), FSOPT_NOFOLLOW);
+                          sizeof(struct timespec), FSOPT_NOFOLLOW);
 
         if (res == -1) {
             return -errno;
@@ -388,7 +503,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
         attributes.volattr = 0;
 
         res = setattrlist(path, &attributes, &attr->chgtime,
-                  sizeof(struct timespec), FSOPT_NOFOLLOW);
+                          sizeof(struct timespec), FSOPT_NOFOLLOW);
 
         if (res == -1) {
             return -errno;
@@ -407,7 +522,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
         attributes.volattr = 0;
 
         res = setattrlist(path, &attributes, &attr->bkuptime,
-                  sizeof(struct timespec), FSOPT_NOFOLLOW);
+                          sizeof(struct timespec), FSOPT_NOFOLLOW);
 
         if (res == -1) {
             return -errno;
@@ -422,12 +537,6 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
     }
 
     return 0;
-}
-
-static int
-loopback_setattr_x(const char *path, struct setattr_x *attr)
-{
-    return loopback_fsetattr_x(path, attr, (struct fuse_file_info *)0);
 }
 
 static int
@@ -807,6 +916,11 @@ static struct fuse_operations loopback_oper = {
     .fallocate   = loopback_fallocate,
 #endif
     .setvolname  = loopback_setvolname,
+
+#if FUSE_VERSION >= 29
+    .flag_nullpath_ok = 1,
+    .flag_nopath = 1,
+#endif
 };
 
 static const struct fuse_opt loopback_opts[] = {
