@@ -63,6 +63,16 @@ loopback_getattr(const char *path, struct stat *stbuf)
     int res;
 
     res = lstat(path, stbuf);
+
+#if FUSE_VERSION >= 29
+    /*
+     * The optimal I/O size can be set on a per-file basis. Setting st_blksize
+     * to zero will cause the kernel extension to fall back on the global I/O
+     * size which can be specified at mount-time (option iosize).
+     */
+    stbuf->st_blksize = 0;
+#endif
+
     if (res == -1) {
         return -errno;
     }
@@ -79,6 +89,12 @@ loopback_fgetattr(const char *path, struct stat *stbuf,
     (void)path;
 
     res = fstat(fi->fh, stbuf);
+
+#if FUSE_VERSION >= 29
+    // Fall back to global I/O size. See loopback_getattr().
+    stbuf->st_blksize = 0;
+#endif
+
     if (res == -1) {
         return -errno;
     }
