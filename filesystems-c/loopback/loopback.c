@@ -15,7 +15,7 @@
 
 #include <AvailabilityMacros.h>
 
-#if !defined(AVAILABLE_MAC_OS_X_VERSION_10_5_AND_LATER)
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
 #error "This file system requires Leopard and above."
 #endif
 
@@ -316,6 +316,8 @@ loopback_link(const char *from, const char *to)
     return 0;
 }
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+
 static int
 loopback_fsetattr_x(const char *path, struct setattr_x *attr,
                     struct fuse_file_info *fi)
@@ -435,6 +437,8 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
 
     return 0;
 }
+
+#endif /* MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 */
 
 static int
 loopback_setattr_x(const char *path, struct setattr_x *attr)
@@ -927,7 +931,9 @@ static struct fuse_operations loopback_oper = {
     .exchange    = loopback_exchange,
     .getxtimes   = loopback_getxtimes,
     .setattr_x   = loopback_setattr_x,
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
     .fsetattr_x  = loopback_fsetattr_x,
+#endif
 #if FUSE_VERSION >= 29
     .fallocate   = loopback_fallocate,
 #endif
