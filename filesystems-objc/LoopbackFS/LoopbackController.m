@@ -1,12 +1,12 @@
 // ================================================================
 // Copyright (C) 2007 Google Inc.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //      http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,13 @@
 
   NSDictionary* userInfo = [notification userInfo];
   NSError* error = [userInfo objectForKey:kGMUserFileSystemErrorKey];
-  NSLog(@"kGMUserFileSystem Error: %@, userInfo=%@", error, [error userInfo]);  
-  NSRunAlertPanel(@"Mount Failed", @"%@", nil, nil, nil, [error localizedDescription]);
+  NSLog(@"kGMUserFileSystem Error: %@, userInfo=%@", error, [error userInfo]);
+
+  NSAlert* alert = [[NSAlert alloc] init];
+  [alert setMessageText:@"Mount Failed"];
+  [alert setInformativeText:[error localizedDescription] ?: @"Unknown error"];
+  [alert runModal];
+
   [[NSApplication sharedApplication] terminate:nil];
 }
 
@@ -49,7 +54,7 @@
 
 - (void)didUnmount:(NSNotification*)notification {
   NSLog(@"Got didUnmount notification.");
-  
+
   [[NSApplication sharedApplication] terminate:nil];
 }
 
@@ -58,27 +63,34 @@
   [panel setCanChooseFiles:NO];
   [panel setCanChooseDirectories:YES];
   [panel setAllowsMultipleSelection:NO];
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-  [panel setDirectoryURL:[NSURL fileURLWithPath:@"/tmp"]];
-  int ret = [panel runModal];
+  int ret = 0;
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+  ret = [panel runModalForDirectory:@"/tmp" file:nil types:nil];
 #else
-  int ret = [panel runModalForDirectory:@"/tmp" file:nil types:nil];
+  [panel setDirectoryURL:[NSURL fileURLWithPath:@"/tmp"]];
+  ret = [panel runModal];
 #endif
-  if ( ret == NSCancelButton ) {
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
+  if ( ret == NSCancelButton )
+#else
+  if ( ret == NSModalResponseCancel )
+#endif
+  {
     exit(0);
   }
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-  NSArray* paths = [panel URLs];
-#else
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
   NSArray* paths = [panel filenames];
+#else
+  NSArray* paths = [panel URLs];
 #endif
   if ( [paths count] != 1 ) {
     exit(0);
   }
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
-  NSString* rootPath = [[paths objectAtIndex:0] path];
+  NSString* rootPath = nil;
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+  rootPath = [paths objectAtIndex:0];
 #else
-  NSString* rootPath = [paths objectAtIndex:0];
+  rootPath = [[paths objectAtIndex:0] path];
 #endif
 
   NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
@@ -88,15 +100,16 @@
                  name:kGMUserFileSystemDidMount object:nil];
   [center addObserver:self selector:@selector(didUnmount:)
                  name:kGMUserFileSystemDidUnmount object:nil];
-  
+
   NSString* mountPath = @"/Volumes/loop";
   loop_ = [[LoopbackFS alloc] initWithRootPath:rootPath];
 
   fs_ = [[GMUserFileSystem alloc] initWithDelegate:loop_ isThreadSafe:NO];
-  
+
   NSMutableArray* options = [NSMutableArray array];
-  NSString* volArg = 
-  [NSString stringWithFormat:@"volicon=%@", 
+
+  NSString* volArg =
+  [NSString stringWithFormat:@"volicon=%@",
    [[NSBundle mainBundle] pathForResource:@"LoopbackFS" ofType:@"icns"]];
   [options addObject:volArg];
 
@@ -107,10 +120,9 @@
   [options addObject:@"native_xattr"];
 
   [options addObject:@"volname=LoopbackFS"];
-  [fs_ mountAtPath:mountPath 
+  [fs_ mountAtPath:mountPath
        withOptions:options];
 }
-
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
   [[NSNotificationCenter defaultCenter] removeObserver:self];

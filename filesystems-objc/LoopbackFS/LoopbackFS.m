@@ -1,12 +1,12 @@
 // ================================================================
 // Copyright (C) 2007 Google Inc.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-// 
+//
 //      http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,12 @@
 //
 //  Created by ted on 12/12/07.
 //
-// This is a simple but complete example filesystem that mounts a local 
+// This is a simple but complete example filesystem that mounts a local
 // directory. You can modify this to see how the Finder reacts to returning
 // specific error codes or not implementing a particular GMUserFileSystem
 // operation.
 //
-// For example, you can mount "/tmp" in /Volumes/loop. Note: It is 
+// For example, you can mount "/tmp" in /Volumes/loop. Note: It is
 // probably not a good idea to mount "/" through this filesystem.
 
 #import <sys/xattr.h>
@@ -50,10 +50,10 @@
 
 #pragma mark Moving an Item
 
-- (BOOL)moveItemAtPath:(NSString *)source 
+- (BOOL)moveItemAtPath:(NSString *)source
                 toPath:(NSString *)destination
                  error:(NSError **)error {
-  // We use rename directly here since NSFileManager can sometimes fail to 
+  // We use rename directly here since NSFileManager can sometimes fail to
   // rename and return non-posix error codes.
   NSString* p_src = [rootPath_ stringByAppendingString:source];
   NSString* p_dst = [rootPath_ stringByAppendingString:destination];
@@ -70,7 +70,7 @@
 #pragma mark Removing an Item
 
 - (BOOL)removeDirectoryAtPath:(NSString *)path error:(NSError **)error {
-  // We need to special-case directories here and use the bsd API since 
+  // We need to special-case directories here and use the bsd API since
   // NSFileManager will happily do a recursive remove :-(
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = rmdir([p UTF8String]);
@@ -93,22 +93,22 @@
 
 #pragma mark Creating an Item
 
-- (BOOL)createDirectoryAtPath:(NSString *)path 
+- (BOOL)createDirectoryAtPath:(NSString *)path
                    attributes:(NSDictionary *)attributes
                         error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
-  return [[NSFileManager defaultManager] createDirectoryAtPath:p 
+  return [[NSFileManager defaultManager] createDirectoryAtPath:p
                                    withIntermediateDirectories:NO
                                                     attributes:attributes
                                                         error:error];
 }
 
-- (BOOL)createFileAtPath:(NSString *)path 
+- (BOOL)createFileAtPath:(NSString *)path
               attributes:(NSDictionary *)attributes
                 userData:(id *)userData
                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
-  mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];  
+  mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];
   int fd = creat([p UTF8String], mode);
   if ( fd < 0 ) {
     if ( error ) {
@@ -142,7 +142,7 @@
 
 #pragma mark Symbolic Links
 
-- (BOOL)createSymbolicLinkAtPath:(NSString *)path 
+- (BOOL)createSymbolicLinkAtPath:(NSString *)path
              withDestinationPath:(NSString *)otherPath
                            error:(NSError **)error {
   NSString* p_src = [rootPath_ stringByAppendingString:path];
@@ -160,7 +160,7 @@
 
 #pragma mark File Contents
 
-- (BOOL)openFileAtPath:(NSString *)path 
+- (BOOL)openFileAtPath:(NSString *)path
                   mode:(int)mode
               userData:(id *)userData
                  error:(NSError **)error {
@@ -182,10 +182,10 @@
   close(fd);
 }
 
-- (int)readFileAtPath:(NSString *)path 
+- (int)readFileAtPath:(NSString *)path
              userData:(id)userData
-               buffer:(char *)buffer 
-                 size:(size_t)size 
+               buffer:(char *)buffer
+                 size:(size_t)size
                offset:(off_t)offset
                 error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
@@ -200,10 +200,10 @@
   return ret;
 }
 
-- (int)writeFileAtPath:(NSString *)path 
+- (int)writeFileAtPath:(NSString *)path
               userData:(id)userData
                 buffer:(const char *)buffer
-                  size:(size_t)size 
+                  size:(size_t)size
                 offset:(off_t)offset
                  error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
@@ -226,9 +226,9 @@
                         error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
   int fd = [num longValue];
-  
+
   fstore_t fstore;
-  
+
   fstore.fst_flags = 0;
   if ( options & ALLOCATECONTIG ) {
     fstore.fst_flags |= F_ALLOCATECONTIG;
@@ -236,16 +236,16 @@
   if ( options & ALLOCATEALL ) {
     fstore.fst_flags |= F_ALLOCATEALL;
   }
-  
+
   if ( options & ALLOCATEFROMPEOF ) {
     fstore.fst_posmode = F_PEOFPOSMODE;
   } else if ( options & ALLOCATEFROMVOL ) {
     fstore.fst_posmode = F_VOLPOSMODE;
   }
-  
+
   fstore.fst_offset = offset;
   fstore.fst_length = length;
-  
+
   if ( fcntl(fd, F_PREALLOCATE, &fstore) == -1 ) {
     *error = [NSError errorWithPOSIXCode:errno];
     return NO;
@@ -263,9 +263,9 @@
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
     }
-    return NO;    
+    return NO;
   }
-  return YES;  
+  return YES;
 }
 
 #pragma mark Directory Contents
@@ -281,7 +281,7 @@
                                 userData:(id)userData
                                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
-  NSDictionary* attribs = 
+  NSDictionary* attribs =
     [[NSFileManager defaultManager] attributesOfItemAtPath:p error:error];
   return attribs;
 }
@@ -295,7 +295,7 @@
     NSMutableDictionary* attribs = [NSMutableDictionary dictionaryWithDictionary:d];
     [attribs setObject:[NSNumber numberWithBool:YES]
                 forKey:kGMUserFileSystemVolumeSupportsExtendedDatesKey];
-    
+
     NSURL *URL = [NSURL fileURLWithPath:p isDirectory:YES];
     NSNumber *supportsCaseSensitiveNames = nil;
     [URL getResourceValue:&supportsCaseSensitiveNames
@@ -306,20 +306,20 @@
     }
     [attribs setObject:supportsCaseSensitiveNames
                 forKey:kGMUserFileSystemVolumeSupportsCaseSensitiveNamesKey];
-    
+
     return attribs;
   }
   return nil;
 }
 
-- (BOOL)setAttributes:(NSDictionary *)attributes 
+- (BOOL)setAttributes:(NSDictionary *)attributes
          ofItemAtPath:(NSString *)path
              userData:(id)userData
                 error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
 
   // TODO: Handle other keys not handled by NSFileManager setAttributes call.
-  
+
   NSNumber* offset = [attributes objectForKey:NSFileSize];
   if ( offset ) {
     int ret = truncate([p UTF8String], [offset longLongValue]);
@@ -327,7 +327,7 @@
       if ( error ) {
         *error = [NSError errorWithPOSIXCode:errno];
       }
-      return NO;    
+      return NO;
     }
   }
   NSNumber* flags = [attributes objectForKey:kGMUserFileSystemFileFlagsKey];
@@ -349,7 +349,7 @@
 
 - (NSArray *)extendedAttributesOfItemAtPath:(NSString *)path error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
-  
+
   ssize_t size = listxattr([p UTF8String], nil, 0, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
@@ -375,10 +375,10 @@
   return contents;
 }
 
-- (NSData *)valueOfExtendedAttribute:(NSString *)name 
+- (NSData *)valueOfExtendedAttribute:(NSString *)name
                         ofItemAtPath:(NSString *)path
                             position:(off_t)position
-                               error:(NSError **)error {  
+                               error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
 
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
@@ -390,7 +390,7 @@
     return nil;
   }
   NSMutableData* data = [NSMutableData dataWithLength:size];
-  size = getxattr([p UTF8String], [name UTF8String], 
+  size = getxattr([p UTF8String], [name UTF8String],
                   [data mutableBytes], [data length],
                   position, XATTR_NOFOLLOW);
   if ( size < 0 ) {
@@ -398,24 +398,24 @@
       *error = [NSError errorWithPOSIXCode:errno];
     }
     return nil;
-  }  
+  }
   return data;
 }
 
-- (BOOL)setExtendedAttribute:(NSString *)name 
-                ofItemAtPath:(NSString *)path 
+- (BOOL)setExtendedAttribute:(NSString *)name
+                ofItemAtPath:(NSString *)path
                        value:(NSData *)value
                     position:(off_t)position
                        options:(int)options
                        error:(NSError **)error {
-  // Setting com.apple.FinderInfo happens in the kernel, so security related 
+  // Setting com.apple.FinderInfo happens in the kernel, so security related
   // bits are set in the options. We need to explicitly remove them or the call
   // to setxattr will fail.
   // TODO: Why is this necessary?
   options &= ~(XATTR_NOSECURITY | XATTR_NODEFAULT);
   NSString* p = [rootPath_ stringByAppendingString:path];
-  int ret = setxattr([p UTF8String], [name UTF8String], 
-                     [value bytes], [value length], 
+  int ret = setxattr([p UTF8String], [name UTF8String],
+                     [value bytes], [value length],
                      position, options | XATTR_NOFOLLOW);
   if ( ret < 0 ) {
     if ( error ) {
