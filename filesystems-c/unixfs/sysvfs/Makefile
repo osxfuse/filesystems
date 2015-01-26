@@ -4,14 +4,28 @@
 
 TARGETS = sysvfs
 
+# Root for OSXFUSE includes and libraries
+OSXFUSE_ROOT = /usr/local
+#OSXFUSE_ROOT = /opt/local
+
+INCLUDE_DIR = $(OSXFUSE_ROOT)/include/osxfuse
+LIBRARY_DIR = $(OSXFUSE_ROOT)/lib
+
 COMMON=../common
 UNIXFS=$(COMMON)/unixfs
 LINUX=$(COMMON)/linux
 LINUX_KERNEL=$(LINUX)/kernel
 
 CC ?= gcc
-CFLAGS_OSXFUSE = -D_FILE_OFFSET_BITS=64 -DFUSE_USE_VERSION=27 -I/usr/local/include/osxfuse -I$(UNIXFS) -I$(LINUX)
+
+CFLAGS_OSXFUSE = -I$(INCLUDE_DIR)
+CFLAGS_OSXFUSE += -I$(UNIXFS) -I$(LINUX)
+CFLAGS_OSXFUSE += -DFUSE_USE_VERSION=27
+CFLAGS_OSXFUSE += -D_FILE_OFFSET_BITS=64
+CFLAGS_OSXFUSE += -D_DARWIN_USE_64_BIT_INODE
+
 CFLAGS_EXTRA = -Wall -Werror -g $(CFLAGS)
+
 LIBS = -losxfuse
 
 all: $(TARGETS)
@@ -20,7 +34,7 @@ OBJS = unixfs_sysvfs.o sysvfs.o sysvfs_mainx.o
 OBJS_COMMON = $(UNIXFS)/unixfs.o $(UNIXFS)/unixfs_internal.o $(LINUX)/linux.o
 
 sysvfs: $(OBJS) $(OBJS_COMMON)
-	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS_OSXFUSE) $(CFLAGS_EXTRA) -o $@ $^ -L$(LIBRARY_DIR) $(LIBS)
 
 -include $(OBJS:.o=.d)
 

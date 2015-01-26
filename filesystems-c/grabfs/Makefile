@@ -3,13 +3,24 @@
 # Copyright 2012 Benjamin Fleischer. All Rights Reserved.
 # Copyright 2007-2008 Amit Singh (osxbook.com). All Rights Reserved.
 
+# Root for OSXFUSE includes and libraries
+OSXFUSE_ROOT = /usr/local
+#OSXFUSE_ROOT = /opt/local
+
+INCLUDE_DIR = $(OSXFUSE_ROOT)/include/osxfuse/fuse
+LIBRARY_DIR = $(OSXFUSE_ROOT)/lib
+
 CC  ?= gcc
 CXX ?= g++
 
-OSXFUSE_CFLAGS=-D_FILE_OFFSET_BITS=64 -I/usr/local/include/osxfuse -O -g -Wall
+OSXFUSE_CFLAGS = -I$(INCLUDE_DIR)
+OSXFUSE_CFLAGS += -D_FILE_OFFSET_BITS=64
+OSXFUSE_CFLAGS += -D_DARWIN_USE_64_BIT_INODE
+OSXFUSE_CFLAGS += -O -g -Wall
+
 CFLAGS  := $(OSXFUSE_CFLAGS) $(CFLAGS)
 CXXFLAGS:= $(OSXFUSE_CFLAGS) $(CXXFLAGS)
-LDFLAGS=-L/usr/local/lib -losxfuse -framework Carbon
+LDFLAGS=-L$(LIBRARY_DIR) -losxfuse -framework Carbon
 
 # Configure this depending on where you installed pcrecpp
 # http://www.pcre.org
