@@ -22,10 +22,12 @@ static inline unsigned long block_to_cpu(block_t n)
     return n;
 }
 
+#if 0 /* unused */
 static inline block_t cpu_to_block(unsigned long n)
 {
     return n;
 }
+#endif /* 0 */
 
 static inline block_t* i_data(struct inode* inode)
 {

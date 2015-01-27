@@ -755,6 +755,7 @@ ufs_next_entry(struct super_block* sb, struct ufs_dir_entry* p)
     return (struct ufs_dir_entry*)((char*)p + fs16_to_cpu(sb, p->d_reclen));
 }
 
+#if 0 /* unused */
 static inline unsigned
 ufs_validate_entry(struct super_block* sb, char* base, unsigned offset,
                    unsigned mask)
@@ -770,6 +771,7 @@ ufs_validate_entry(struct super_block* sb, char* base, unsigned offset,
 
     return (char*)p - base;
 }
+#endif /* 0 */
 
 static inline unsigned long
 ufs_dir_pages(struct inode *inode)
