@@ -109,7 +109,7 @@
                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];
-  int fd = open([p UTF8String], O_CREAT | O_RDWR, mode);
+  int fd = open([p UTF8String], O_CREAT | O_TRUNC | O_RDWR, mode);
   if ( fd < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
