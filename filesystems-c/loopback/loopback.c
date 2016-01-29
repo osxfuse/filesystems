@@ -486,7 +486,7 @@ loopback_setattr_x(const char *path, struct setattr_x *attr)
         }
         tv[1].tv_sec = attr->modtime.tv_sec;
         tv[1].tv_usec = attr->modtime.tv_nsec / 1000;
-        res = utimes(path, tv);
+        res = lutimes(path, tv);
         if (res == -1) {
             return -errno;
         }
