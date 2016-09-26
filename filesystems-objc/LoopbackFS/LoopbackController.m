@@ -34,12 +34,14 @@
   NSError* error = [userInfo objectForKey:kGMUserFileSystemErrorKey];
   NSLog(@"kGMUserFileSystem Error: %@, userInfo=%@", error, [error userInfo]);
 
-  NSAlert* alert = [[NSAlert alloc] init];
-  [alert setMessageText:@"Mount Failed"];
-  [alert setInformativeText:[error localizedDescription] ?: @"Unknown error"];
-  [alert runModal];
-
-  [[NSApplication sharedApplication] terminate:nil];
+  [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+    NSAlert* alert = [[NSAlert alloc] init];
+    [alert setMessageText:@"Mount Failed"];
+    [alert setInformativeText:[error localizedDescription] ?: @"Unknown error"];
+    [alert runModal];
+    
+    [[NSApplication sharedApplication] terminate:nil];
+  }];
 }
 
 - (void)didMount:(NSNotification *)notification {

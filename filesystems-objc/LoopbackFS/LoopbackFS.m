@@ -105,11 +105,12 @@
 
 - (BOOL)createFileAtPath:(NSString *)path
               attributes:(NSDictionary *)attributes
+                   flags:(int)flags
                 userData:(id *)userData
                    error:(NSError **)error {
   NSString* p = [rootPath_ stringByAppendingString:path];
   mode_t mode = [[attributes objectForKey:NSFilePosixPermissions] longValue];
-  int fd = open([p UTF8String], O_RDWR | O_CREAT | O_EXCL, mode);
+  int fd = open([p UTF8String], flags, mode);
   if ( fd < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -118,6 +119,17 @@
   }
   *userData = [NSNumber numberWithLong:fd];
   return YES;
+}
+
+- (BOOL)createFileAtPath:(NSString *)path
+              attributes:(NSDictionary *)attributes
+                userData:(id *)userData
+                   error:(NSError **)error {
+  return [self createFileAtPath:path
+                     attributes:attributes
+                          flags:(O_RDWR | O_CREAT | O_EXCL)
+                       userData:userData
+                          error:error];
 }
 
 #pragma mark Linking an Item
