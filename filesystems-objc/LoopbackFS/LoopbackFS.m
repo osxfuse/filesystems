@@ -190,7 +190,7 @@
 
 - (void)releaseFileAtPath:(NSString *)path userData:(id)userData {
   NSNumber* num = (NSNumber *)userData;
-  int fd = [num longValue];
+  int fd = [num intValue];
   close(fd);
 }
 
@@ -201,8 +201,8 @@
                offset:(off_t)offset
                 error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
-  int fd = [num longValue];
-  int ret = pread(fd, buffer, size, offset);
+  int fd = [num intValue];
+  int ret = (int)pread(fd, buffer, size, offset);
   if ( ret < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -219,8 +219,8 @@
                 offset:(off_t)offset
                  error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
-  int fd = [num longValue];
-  int ret = pwrite(fd, buffer, size, offset);
+  int fd = [num intValue];
+  int ret = (int)pwrite(fd, buffer, size, offset);
   if ( ret < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -237,7 +237,7 @@
                        length:(off_t)length
                         error:(NSError **)error {
   NSNumber* num = (NSNumber *)userData;
-  int fd = [num longValue];
+  int fd = [num intValue];
 
   fstore_t fstore;
 
@@ -259,7 +259,8 @@
   fstore.fst_length = length;
 
   if ( fcntl(fd, F_PREALLOCATE, &fstore) == -1 ) {
-    *error = [NSError errorWithPOSIXCode:errno];
+    if (error != NULL)
+      *error = [NSError errorWithPOSIXCode:errno];
     return NO;
   }
   return YES;
@@ -394,7 +395,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
 
   ssize_t size = getxattr([p UTF8String], [name UTF8String], nil, 0,
-                         position, XATTR_NOFOLLOW);
+                         (unsigned int)position, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -404,7 +405,7 @@
   NSMutableData* data = [NSMutableData dataWithLength:size];
   size = getxattr([p UTF8String], [name UTF8String],
                   [data mutableBytes], [data length],
-                  position, XATTR_NOFOLLOW);
+                  (unsigned int)position, XATTR_NOFOLLOW);
   if ( size < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
@@ -428,7 +429,7 @@
   NSString* p = [rootPath_ stringByAppendingString:path];
   int ret = setxattr([p UTF8String], [name UTF8String],
                      [value bytes], [value length],
-                     position, options | XATTR_NOFOLLOW);
+                     (unsigned int)position, options | XATTR_NOFOLLOW);
   if ( ret < 0 ) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
