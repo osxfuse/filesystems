@@ -19,6 +19,12 @@
 #error "This file system requires Leopard and above."
 #endif
 
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#define HAVE_FSETATTR_X 0
+#else
+#define HAVE_FSETATTR_X 1
+#endif
+
 #define FUSE_USE_VERSION 26
 
 #define _GNU_SOURCE
@@ -316,7 +322,7 @@ loopback_link(const char *from, const char *to)
     return 0;
 }
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+#if HAVE_FSETATTR_X
 
 static int
 loopback_fsetattr_x(const char *path, struct setattr_x *attr,
@@ -438,7 +444,7 @@ loopback_fsetattr_x(const char *path, struct setattr_x *attr,
     return 0;
 }
 
-#endif /* MAC_OS_X_VERSION_MIN_REQUIRED >= 1060 */
+#endif /* HAVE_FSETATTR_X */
 
 static int
 loopback_setattr_x(const char *path, struct setattr_x *attr)
@@ -574,13 +580,10 @@ loopback_getxtimes(const char *path, struct timespec *bkuptime,
     attributes.forkattr    = 0;
     attributes.volattr     = 0;
 
-
-
     struct xtimeattrbuf {
         uint32_t size;
         struct timespec xtime;
     } __attribute__ ((packed));
-
 
     struct xtimeattrbuf buf;
 
@@ -931,7 +934,7 @@ static struct fuse_operations loopback_oper = {
     .exchange    = loopback_exchange,
     .getxtimes   = loopback_getxtimes,
     .setattr_x   = loopback_setattr_x,
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
+#if HAVE_FSETATTR_X
     .fsetattr_x  = loopback_fsetattr_x,
 #endif
 #if FUSE_VERSION >= 29
@@ -940,9 +943,14 @@ static struct fuse_operations loopback_oper = {
     .setvolname  = loopback_setvolname,
 
 #if FUSE_VERSION >= 29
+#if HAVE_FSETATTR_X
     .flag_nullpath_ok = 1,
     .flag_nopath = 1,
+#else
+    .flag_nullpath_ok = 0,
+    .flag_nopath = 0,
 #endif
+#endif /* FUSE_VERSION >= 29 */
 };
 
 static const struct fuse_opt loopback_opts[] = {
