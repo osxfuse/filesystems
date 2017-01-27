@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F48D00F31E3B6EC000FE033E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48D00F21E3B6EC000FE033E /* AppDelegate.swift */; };
+		F48D00F51E3B6EC000FE033E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F48D00F41E3B6EC000FE033E /* Assets.xcassets */; };
+		F48D00F81E3B6EC000FE033E /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = F48D00F61E3B6EC000FE033E /* MainMenu.xib */; };
+		F48D01011E3B6F1100FE033E /* LoopbackFS.icns in Resources */ = {isa = PBXBuildFile; fileRef = F48D01001E3B6F1100FE033E /* LoopbackFS.icns */; };
+		F48D01041E3B6FC500FE033E /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F48D01031E3B6FC500FE033E /* OSXFUSE.framework */; };
+		F48D01071E3B74F900FE033E /* LoopbackFS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48D01061E3B74F900FE033E /* LoopbackFS.swift */; };
+		F48D01091E3B7DA500FE033E /* NSError+POSIX.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48D01081E3B7DA500FE033E /* NSError+POSIX.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F48D00EF1E3B6EC000FE033E /* LoopbackFS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LoopbackFS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F48D00F21E3B6EC000FE033E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		F48D00F41E3B6EC000FE033E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F48D00F71E3B6EC000FE033E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		F48D00F91E3B6EC000FE033E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F48D01001E3B6F1100FE033E /* LoopbackFS.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = LoopbackFS.icns; sourceTree = "<group>"; };
+		F48D01031E3B6FC500FE033E /* OSXFUSE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OSXFUSE.framework; path = ../../../../../../../../Library/Frameworks/OSXFUSE.framework; sourceTree = "<group>"; };
+		F48D01051E3B716E00FE033E /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
+		F48D01061E3B74F900FE033E /* LoopbackFS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoopbackFS.swift; sourceTree = "<group>"; };
+		F48D01081E3B7DA500FE033E /* NSError+POSIX.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSError+POSIX.swift"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F48D00EC1E3B6EC000FE033E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F48D01041E3B6FC500FE033E /* OSXFUSE.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F48D00E61E3B6EC000FE033E = {
+			isa = PBXGroup;
+			children = (
+				F48D00F11E3B6EC000FE033E /* LoopbackFS */,
+				F48D00F01E3B6EC000FE033E /* Products */,
+				F48D01021E3B6FC400FE033E /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		F48D00F01E3B6EC000FE033E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F48D00EF1E3B6EC000FE033E /* LoopbackFS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F48D00F11E3B6EC000FE033E /* LoopbackFS */ = {
+			isa = PBXGroup;
+			children = (
+				F48D00F21E3B6EC000FE033E /* AppDelegate.swift */,
+				F48D01061E3B74F900FE033E /* LoopbackFS.swift */,
+				F48D01051E3B716E00FE033E /* Bridging-Header.h */,
+				F48D00F41E3B6EC000FE033E /* Assets.xcassets */,
+				F48D00F61E3B6EC000FE033E /* MainMenu.xib */,
+				F48D00F91E3B6EC000FE033E /* Info.plist */,
+				F48D00FF1E3B6F1100FE033E /* Resources */,
+				F48D01081E3B7DA500FE033E /* NSError+POSIX.swift */,
+			);
+			path = LoopbackFS;
+			sourceTree = "<group>";
+		};
+		F48D00FF1E3B6F1100FE033E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F48D01001E3B6F1100FE033E /* LoopbackFS.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		F48D01021E3B6FC400FE033E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F48D01031E3B6FC500FE033E /* OSXFUSE.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F48D00EE1E3B6EC000FE033E /* LoopbackFS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F48D00FC1E3B6EC000FE033E /* Build configuration list for PBXNativeTarget "LoopbackFS" */;
+			buildPhases = (
+				F48D00EB1E3B6EC000FE033E /* Sources */,
+				F48D00EC1E3B6EC000FE033E /* Frameworks */,
+				F48D00ED1E3B6EC000FE033E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LoopbackFS;
+			productName = LoopbackFS;
+			productReference = F48D00EF1E3B6EC000FE033E /* LoopbackFS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F48D00E71E3B6EC000FE033E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0820;
+				LastUpgradeCheck = 0820;
+				ORGANIZATIONNAME = "KF Interactive GmbH";
+				TargetAttributes = {
+					F48D00EE1E3B6EC000FE033E = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = 8AWC3WT8C3;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F48D00EA1E3B6EC000FE033E /* Build configuration list for PBXProject "LoopbackFS" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F48D00E61E3B6EC000FE033E;
+			productRefGroup = F48D00F01E3B6EC000FE033E /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F48D00EE1E3B6EC000FE033E /* LoopbackFS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F48D00ED1E3B6EC000FE033E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F48D00F51E3B6EC000FE033E /* Assets.xcassets in Resources */,
+				F48D00F81E3B6EC000FE033E /* MainMenu.xib in Resources */,
+				F48D01011E3B6F1100FE033E /* LoopbackFS.icns in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F48D00EB1E3B6EC000FE033E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F48D00F31E3B6EC000FE033E /* AppDelegate.swift in Sources */,
+				F48D01091E3B7DA500FE033E /* NSError+POSIX.swift in Sources */,
+				F48D01071E3B74F900FE033E /* LoopbackFS.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		F48D00F61E3B6EC000FE033E /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F48D00F71E3B6EC000FE033E /* Base */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		F48D00FA1E3B6EC000FE033E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F48D00FB1E3B6EC000FE033E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+			};
+			name = Release;
+		};
+		F48D00FD1E3B6EC000FE033E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 8AWC3WT8C3;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				INFOPLIST_FILE = LoopbackFS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kf-interactive.LoopbackFS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "LoopbackFS/Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		F48D00FE1E3B6EC000FE033E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 8AWC3WT8C3;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
+				INFOPLIST_FILE = LoopbackFS/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.kf-interactive.LoopbackFS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "LoopbackFS/Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F48D00EA1E3B6EC000FE033E /* Build configuration list for PBXProject "LoopbackFS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F48D00FA1E3B6EC000FE033E /* Debug */,
+				F48D00FB1E3B6EC000FE033E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F48D00FC1E3B6EC000FE033E /* Build configuration list for PBXNativeTarget "LoopbackFS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F48D00FD1E3B6EC000FE033E /* Debug */,
+				F48D00FE1E3B6EC000FE033E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F48D00E71E3B6EC000FE033E /* Project object */;
+}
