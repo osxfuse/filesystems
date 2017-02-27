@@ -77,18 +77,28 @@ final class LoopbackFS: NSObject {
 
     // MARK: - Linking an Item
 
-//    override func linkItem(atPath path: String!, toPath otherPath: String!) throws {
-//        <#code#>
-//    }
+    override func linkItem(atPath path: String!, toPath otherPath: String!) throws {
+        let originalPath = (rootPath.appending(path) as NSString).utf8String!
+        let originalOtherPath = (rootPath.appending(otherPath) as NSString).utf8String!
+
+        // We use link rather than the NSFileManager equivalent because it will copy
+        // the file rather than hard link if part of the root path is a symlink.
+        if link(originalPath, originalOtherPath) < 0 {
+            throw NSError(posixErrorCode: errno)
+        }
+    }
+
     // MARK: - Symbolic Links
 
-//    override func createSymbolicLink(atPath path: String!, withDestinationPath otherPath: String!) throws {
-//        <#code#>
-//    }
-//
-//    override func destinationOfSymbolicLink(atPath path: String!) throws -> String {
-//        <#code#>
-//    }
+    override func createSymbolicLink(atPath path: String!, withDestinationPath otherPath: String!) throws {
+        let sourcePath = rootPath.appending(path)
+        try FileManager.default.createSymbolicLink(atPath: sourcePath, withDestinationPath: otherPath)
+    }
+
+    override func destinationOfSymbolicLink(atPath path: String!) throws -> String {
+        let sourcePath = rootPath.appending(path)
+        return try FileManager.default.destinationOfSymbolicLink(atPath: sourcePath)
+    }
 
     // MARK: - File Contents
 
