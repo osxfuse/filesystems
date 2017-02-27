@@ -50,7 +50,7 @@ final class LoopbackFS: NSObject {
 
     // MARK: - Creating an Item
 
-    public override func createDirectory(atPath path: String!, attributes: [AnyHashable : Any]! = [:]) throws {
+    override func createDirectory(atPath path: String!, attributes: [AnyHashable : Any]! = [:]) throws {
         guard let attributes = attributes as? [String: Any] else { throw NSError(posixErrorCode: EPERM) }
 
         let originalPath = rootPath.appending(path)
@@ -58,7 +58,7 @@ final class LoopbackFS: NSObject {
         try FileManager.default.createDirectory(atPath: originalPath, withIntermediateDirectories: false, attributes: attributes)
     }
 
-    public override func createFile(atPath path: String!, attributes: [AnyHashable : Any]! = [:], flags: Int32, userData: AutoreleasingUnsafeMutablePointer<AnyObject?>!) throws {
+    override func createFile(atPath path: String!, attributes: [AnyHashable : Any]! = [:], flags: Int32, userData: AutoreleasingUnsafeMutablePointer<AnyObject?>!) throws {
 
         guard let mode = attributes[FileAttributeKey.posixPermissions] as? mode_t else {
             throw NSError(posixErrorCode: EPERM)
