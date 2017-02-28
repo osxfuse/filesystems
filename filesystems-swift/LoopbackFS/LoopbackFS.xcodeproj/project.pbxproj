@@ -14,6 +14,7 @@
 		F48D01041E3B6FC500FE033E /* OSXFUSE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F48D01031E3B6FC500FE033E /* OSXFUSE.framework */; };
 		F48D01071E3B74F900FE033E /* LoopbackFS.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48D01061E3B74F900FE033E /* LoopbackFS.swift */; };
 		F48D01091E3B7DA500FE033E /* NSError+POSIX.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48D01081E3B7DA500FE033E /* NSError+POSIX.swift */; };
+		F4D7409B1E65585B007D6E11 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = F4D7409A1E65585B007D6E11 /* LICENSE */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		F48D01051E3B716E00FE033E /* Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Bridging-Header.h"; sourceTree = "<group>"; };
 		F48D01061E3B74F900FE033E /* LoopbackFS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoopbackFS.swift; sourceTree = "<group>"; };
 		F48D01081E3B7DA500FE033E /* NSError+POSIX.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSError+POSIX.swift"; sourceTree = "<group>"; };
+		F4D7409A1E65585B007D6E11 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +46,7 @@
 		F48D00E61E3B6EC000FE033E = {
 			isa = PBXGroup;
 			children = (
+				F4D7409A1E65585B007D6E11 /* LICENSE */,
 				F48D00F11E3B6EC000FE033E /* LoopbackFS */,
 				F48D00F01E3B6EC000FE033E /* Products */,
 				F48D01021E3B6FC400FE033E /* Frameworks */,
@@ -151,6 +154,7 @@
 			files = (
 				F48D00F51E3B6EC000FE033E /* Assets.xcassets in Resources */,
 				F48D00F81E3B6EC000FE033E /* MainMenu.xib in Resources */,
+				F4D7409B1E65585B007D6E11 /* LICENSE in Resources */,
 				F48D01011E3B6F1100FE033E /* LoopbackFS.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -329,6 +333,7 @@
 				F48D00FE1E3B6EC000FE033E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
