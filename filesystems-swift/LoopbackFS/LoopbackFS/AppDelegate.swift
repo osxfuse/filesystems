@@ -52,7 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func addNotifications() {
-        let failedObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemDidMount), object: nil, queue: nil) { notification in
+        let mountObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemDidMount), object: nil, queue: nil) { notification in
             print("Got didMount notification.")
 
             guard let userInfo = notification.userInfo, let mountPath = userInfo[kGMUserFileSystemMountPathKey] as? String else { return }
@@ -61,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared().selectFile(mountPath, inFileViewerRootedAtPath: parentPath)
         }
 
-        let mountObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemMountFailed), object: nil, queue: .main) { notification in
+        let failedObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemMountFailed), object: nil, queue: .main) { notification in
             print("Got mountFailed notification.")
 
             guard let userInfo = notification.userInfo, let error = userInfo[kGMUserFileSystemErrorKey] as? NSError else { return }
@@ -81,7 +81,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApplication.shared().terminate(nil)
         }
 
-        self.notificationObservers = [failedObserver, mountObserver, unmountObserver]
+        self.notificationObservers = [mountObserver, failedObserver, unmountObserver]
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplicationTerminateReply {
