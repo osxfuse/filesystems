@@ -39,6 +39,7 @@
     [alert setMessageText:@"Mount Failed"];
     [alert setInformativeText:[error localizedDescription] ?: @"Unknown error"];
     [alert runModal];
+    [alert release];
     
     [[NSApplication sharedApplication] terminate:nil];
   }];
@@ -70,7 +71,7 @@
   ret = [panel runModalForDirectory:@"/tmp" file:nil types:nil];
 #else
   [panel setDirectoryURL:[NSURL fileURLWithPath:@"/tmp"]];
-  ret = [panel runModal];
+  ret = (int)[panel runModal];
 #endif
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1090
   if ( ret == NSCancelButton )
