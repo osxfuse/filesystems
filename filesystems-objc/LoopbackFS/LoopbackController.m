@@ -57,7 +57,9 @@
 - (void)didUnmount:(NSNotification*)notification {
   NSLog(@"Got didUnmount notification.");
 
-  [[NSApplication sharedApplication] terminate:nil];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[NSApplication sharedApplication] terminate:nil];
+  });
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {

@@ -270,8 +270,13 @@
                            error:(NSError **)error {
   NSString* p1 = [rootPath_ stringByAppendingString:path1];
   NSString* p2 = [rootPath_ stringByAppendingString:path2];
-  int ret = exchangedata([p1 UTF8String], [p2 UTF8String], 0);
-  if ( ret < 0 ) {
+  int ret = 0;
+  if (renamex_np) {
+    ret = renamex_np([p1 UTF8String], [p2 UTF8String], RENAME_SWAP);
+  } else {
+    ret = exchangedata([p1 UTF8String], [p2 UTF8String], 0);
+  }
+  if (ret < 0) {
     if ( error ) {
       *error = [NSError errorWithPOSIXCode:errno];
     }
