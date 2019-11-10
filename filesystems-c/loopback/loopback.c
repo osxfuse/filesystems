@@ -168,7 +168,11 @@ loopback_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     (void)path;
 
-    if (offset != d->offset) {
+    if (offset == 0) {
+        rewinddir(d->dp);
+        d->entry = NULL;
+        d->offset = 0;
+    } else if (offset != d->offset) {
         seekdir(d->dp, offset);
         d->entry = NULL;
         d->offset = offset;
@@ -301,7 +305,19 @@ loopback_exchange(const char *path1, const char *path2, unsigned long options)
 {
     int res;
 
-    res = exchangedata(path1, path2, options);
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101200
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101200
+    if (renamex_np) {
+        res = renamex_np(path1, path2, RENAME_SWAP);
+    } else
+#endif
+    {
+        res = exchangedata(path1, path2, options);
+    }
+#else
+    res = renamex_np(path1, path2, RENAME_SWAP);
+#endif
+
     if (res == -1) {
         return -errno;
     }
