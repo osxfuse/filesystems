@@ -162,9 +162,11 @@ int main(int argc, char *argv[])
 	struct fuse_chan *ch;
 	char *mountpoint;
 	int err = -1;
+	int multithreaded, foreground;
 
-	if (fuse_parse_cmdline(&args, &mountpoint, NULL, NULL) != -1 &&
-	    (ch = fuse_mount(mountpoint, &args)) != NULL) {
+	if (fuse_parse_cmdline(&args, &mountpoint,
+	                       &multithreaded, &foreground) != -1
+	    && (ch = fuse_mount(mountpoint, &args)) != NULL) {
 		struct fuse_session *se;
 
 		se = fuse_lowlevel_new(&args, &hello_ll_oper,
@@ -172,7 +174,21 @@ int main(int argc, char *argv[])
 		if (se != NULL) {
 			if (fuse_set_signal_handlers(se) != -1) {
 				fuse_session_add_chan(se, ch);
-				err = fuse_session_loop(se);
+				/*
+				 * NOTE: neither the daemonize call nor the use
+				 * of the multithreaded loop (nor the related
+				 * variables) are required, but they are included
+				 * here partly as an example and partly for
+				 * consistency with hello.c and with the usage
+				 * text.
+				 */
+				if (!(err = fuse_daemonize(foreground))) {
+					if (multithreaded) {
+						err = fuse_session_loop_mt(se);
+					} else {
+						err = fuse_session_loop(se);
+					}
+				}
 				fuse_remove_signal_handlers(se);
 				fuse_session_remove_chan(ch);
 			}
