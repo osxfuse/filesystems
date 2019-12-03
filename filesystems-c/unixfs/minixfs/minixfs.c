@@ -22,12 +22,12 @@
 #include <sys/stat.h>
 
 static unsigned long count_free(struct buffer_head*[], unsigned, __u32);
-static unsigned long minix_count_free_blocks(struct minix_sb_info*);
+static unsigned long minix_count_free_blocks(struct super_block *sb);
 static struct minix_inode*  minix_V1_raw_inode(struct super_block*, ino_t,
                                                struct buffer_head**);
 static struct minix2_inode* minix_V2_raw_inode(struct super_block*, ino_t,
                                                struct buffer_head**);
-static unsigned long minix_count_free_inodes(struct minix_sb_info*);
+static unsigned long minix_count_free_inodes(struct super_block *sb);
 static int           minix_iget_v1(struct super_block*, struct inode*);
 static int           minix_iget_v2(struct super_block*, struct inode*);
 static unsigned      minix_last_byte(struct inode*, unsigned long);
@@ -37,45 +37,51 @@ static ino_t         minix_find_entry(struct inode*, const char*);
 extern int           minix_get_block_v1(struct inode*, sector_t, off_t*);
 extern int           minix_get_block_v2(struct inode*, sector_t, off_t*);
 
-static const int nibblemap[] = { 4,3,3,2,3,2,2,1,3,2,2,1,2,1,1,0 };
+// static const int nibblemap[] = { 4,3,3,2,3,2,2,1,3,2,2,1,2,1,1,0 };
+
+#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+
+#define __const_hweight8(w)		\
+	((unsigned int)			\
+	 ((!!((w) & (1ULL << 0))) +	\
+	  (!!((w) & (1ULL << 1))) +	\
+	  (!!((w) & (1ULL << 2))) +	\
+	  (!!((w) & (1ULL << 3))) +	\
+	  (!!((w) & (1ULL << 4))) +	\
+	  (!!((w) & (1ULL << 5))) +	\
+	  (!!((w) & (1ULL << 6))) +	\
+	  (!!((w) & (1ULL << 7)))))
+
+#define __const_hweight16(w) (__const_hweight8(w)  + __const_hweight8((w)  >> 8 ))
+
+#define hweight16(w) __const_hweight16(w)
 
 static unsigned long
-count_free(struct buffer_head* map[], unsigned numblocks, __u32 numbits)
+count_free(struct buffer_head *map[], unsigned blocksize, __u32 numbits)
 {
-    unsigned i, j, sum = 0;
-    struct buffer_head* bh;
-  
-    for (i = 0; i < numblocks - 1; i++) {
-        if (!(bh = map[i])) 
-            return 0;
-        for (j = 0; j < bh->b_size; j++)
-            sum += nibblemap[bh->b_data[j] & 0xf]
-                + nibblemap[(bh->b_data[j] >> 4) & 0xf];
-    }
+	unsigned long sum = 0;
+	unsigned blocks = DIV_ROUND_UP(numbits, blocksize * 8);
 
-    if (numblocks == 0 || !(bh = map[numblocks - 1]))
-        return 0;
+	while (blocks--) {
+		unsigned words = blocksize / 2;
+		__u16 *p = (__u16 *)(*map++)->b_data;
+		while (words--) {
+			__u16 pv = *p++;
+			sum += 16 - hweight16(pv);
+		}
+	}
 
-    i = ((numbits - (numblocks - 1) * bh->b_size * 8) / 16) * 2;
-    for (j = 0; j < i; j++) {
-        sum += nibblemap[bh->b_data[j] & 0xf]
-            + nibblemap[(bh->b_data[j] >> 4) & 0xf];
-    }
-
-    i = numbits % 16;
-    if (i != 0) {
-        i = *(__u16*)(&bh->b_data[j]) | ~((1 << i) - 1);
-        sum += nibblemap[i & 0xf] + nibblemap[(i >> 4) & 0xf];
-        sum += nibblemap[(i >> 8) & 0xf] + nibblemap[(i >> 12) & 0xf];
-    }
-    return(sum);
+	return sum;
 }
 
 static unsigned long
-minix_count_free_blocks(struct minix_sb_info* sbi)
+minix_count_free_blocks(struct super_block* sb)
 {
-    return (count_free(sbi->s_zmap, sbi->s_zmap_blocks,
-            sbi->s_nzones - sbi->s_firstdatazone + 1) << sbi->s_log_zone_size);
+	struct minix_sb_info *sbi = minix_sb(sb);
+	u32 bits = sbi->s_nzones - sbi->s_firstdatazone + 1;
+
+	return (count_free(sbi->s_zmap, sb->s_blocksize, bits)
+		<< sbi->s_log_zone_size);
 }
 
 struct minix_inode*
@@ -129,9 +135,12 @@ minix_V2_raw_inode(struct super_block* sb, ino_t ino, struct buffer_head** bh)
 }
 
 static unsigned long
-minix_count_free_inodes(struct minix_sb_info* sbi)
+minix_count_free_inodes(struct super_block *sb)
 {
-    return count_free(sbi->s_imap, sbi->s_imap_blocks, sbi->s_ninodes + 1);
+	struct minix_sb_info *sbi = minix_sb(sb);
+	u32 bits = sbi->s_ninodes + 1;
+
+	return count_free(sbi->s_imap, sb->s_blocksize, bits);
 }
 
 static int
@@ -461,10 +470,10 @@ minixfs_statvfs(struct super_block* sb, struct statvfs* buf)
     buf->f_frsize  = sb->s_blocksize;
     buf->f_blocks  =
         (sbi->s_nzones - sbi->s_firstdatazone) << sbi->s_log_zone_size;
-    buf->f_bfree   = minix_count_free_blocks(sbi);
+    buf->f_bfree   = minix_count_free_blocks(sb);
     buf->f_bavail  = buf->f_bfree;
     buf->f_files   = sbi->s_ninodes;
-    buf->f_ffree   = minix_count_free_inodes(sbi);
+    buf->f_ffree   = minix_count_free_inodes(sb);
     buf->f_namemax = sbi->s_namelen;
 
     return 0;

@@ -32,7 +32,7 @@ sb_getblk(struct super_block* sb, sector_t block)
         abort();
     }
     bh->b_flags.dynamic = 1;
-    bh->b_size = PAGE_SIZE;
+    bh->b_size = sb->s_blocksize;
     bh->b_blocknr = block;
     return bh;
 }
