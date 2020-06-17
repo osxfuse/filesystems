@@ -34,25 +34,30 @@ int main(int argc, char* argv[]) {
   NSUserDefaults *args = [NSUserDefaults standardUserDefaults];
   NSString* rootPath = [args stringForKey:@"rootPath"];
   NSString* mountPath = [args stringForKey:@"mountPath"];
+  NSString* opts = [args stringForKey:@"o"];
   if (!mountPath || [mountPath isEqualToString:@""]) {
     mountPath = [NSString stringWithUTF8String:DEFAULT_MOUNT_PATH];
   }
   if (!rootPath) {
-    printf("\nUsage: %s -rootPath <path> [-mountPath <path>]\n", argv[0]);
+    printf("\nUsage: %s -rootPath <path> [-mountPath <path>] [-o options]\n", argv[0]);
     printf("  -rootPath: Local directory path to mount, ex: /tmp\n");
     printf("  -mountPath: Mount point to use. [Default='%s']\n",
            DEFAULT_MOUNT_PATH);
-    printf("Ex: %s -rootPath /tmp -mountPath %s\n\n", argv[0], 
+    printf("  -o: comma-separted list of options\n");
+    printf("Ex: %s -rootPath /tmp -mountPath %s -o local,auto_xattr\n\n", argv[0],
            DEFAULT_MOUNT_PATH);
     return 0;
   }
 
   LoopbackFS* loop = [[LoopbackFS alloc] initWithRootPath:rootPath];
-  GMUserFileSystem* userFS = [[GMUserFileSystem alloc] initWithDelegate:loop 
+  GMUserFileSystem* userFS = [[GMUserFileSystem alloc] initWithDelegate:loop
                                                            isThreadSafe:YES];
 
   NSMutableArray* options = [NSMutableArray array];
   [options addObject:@"debug"];
+  if (opts) {
+    [options addObjectsFromArray:[opts componentsSeparatedByString:@","]];
+  }
   [userFS mountAtPath:mountPath 
           withOptions:options 
      shouldForeground:YES 
