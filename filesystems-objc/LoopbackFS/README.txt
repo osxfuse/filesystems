@@ -11,7 +11,7 @@ probably not a good idea to mount "/" through this filesystem.
 You can build a .app version from LoopbackFS.xcodeproj and a standalone 
 command line version using:
 
-gcc -o loop ../Support/NSError+POSIX.m LoopbackFS.m loop.m -I../Support \
-    -framework MacFUSE -framework Foundation
+clang -o loop ../Support/NSError+POSIX.m LoopbackFS.m loop.m -I../Support \
+      -F/Library/Frameworks -framework OSXFUSE -framework Foundation
 
 This will create a binary called "loop" in the current directory.
