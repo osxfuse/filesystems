@@ -20,10 +20,10 @@
 //  Created by ted on 12/30/07.
 //
 // This is a cmdline version of LoopbackFS. Compile as follows:
-//  gcc -o loop LoopbackFS.m loop.m -framework MacFUSE -framework Foundation
+//  clang -o loop LoopbackFS.m loop.m -framework OSXFUSE -framework Foundation
 //
 #import <Foundation/Foundation.h>
-#import <MacFUSE/GMUserFileSystem.h>
+#import <OSXFUSE/GMUserFileSystem.h>
 #import "LoopbackFS.h"
 
 #define DEFAULT_MOUNT_PATH "/Volumes/loop"
