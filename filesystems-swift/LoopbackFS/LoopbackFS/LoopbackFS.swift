@@ -51,7 +51,7 @@ final class LoopbackFS: NSObject {
     // MARK: - Creating an Item
 
     override func createDirectory(atPath path: String!, attributes: [AnyHashable : Any]! = [:]) throws {
-        guard let attributes = attributes as? [String: Any] else { throw NSError(posixErrorCode: EPERM) }
+        guard let attributes = attributes as? [FileAttributeKey: Any] else { throw NSError(posixErrorCode: EPERM) }
 
         let originalPath = rootPath.appending(path)
 
@@ -260,7 +260,7 @@ final class LoopbackFS: NSObject {
 
             // Retrieve attribute list:
             let result = data.withUnsafeMutableBytes {
-                listxattr(fileSystemPath, $0, data.count, XATTR_NOFOLLOW)
+                listxattr(fileSystemPath, $0, length, XATTR_NOFOLLOW)
             }
             guard result >= 0 else { throw NSError(posixErrorCode: errno) }
 
@@ -288,7 +288,7 @@ final class LoopbackFS: NSObject {
 
             // Retrieve attribute:
             let result =  data.withUnsafeMutableBytes {
-                getxattr(fileSystemPath, name, $0, data.count, UInt32(position), XATTR_NOFOLLOW)
+                getxattr(fileSystemPath, name, $0, length, UInt32(position), XATTR_NOFOLLOW)
             }
             guard result >= 0 else {
                 throw NSError(posixErrorCode: errno)

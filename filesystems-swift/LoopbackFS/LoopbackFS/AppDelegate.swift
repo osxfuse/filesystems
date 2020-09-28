@@ -32,7 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.directoryURL = URL(fileURLWithPath: "/tmp")
         let returnValue = panel.runModal()
 
-        guard returnValue != NSFileHandlingPanelCancelButton, let rootPath = panel.urls.first?.path else { exit(0) }
+        guard returnValue != NSApplication.ModalResponse.cancel, let rootPath = panel.urls.first?.path else { exit(0) }
 
         addNotifications()
 
@@ -58,7 +58,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let userInfo = notification.userInfo, let mountPath = userInfo[kGMUserFileSystemMountPathKey] as? String else { return }
 
             let parentPath = (mountPath as NSString).deletingLastPathComponent
-            NSWorkspace.shared().selectFile(mountPath, inFileViewerRootedAtPath: parentPath)
+            NSWorkspace.shared.selectFile(mountPath, inFileViewerRootedAtPath: parentPath)
         }
 
         let failedObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemMountFailed), object: nil, queue: .main) { notification in
@@ -72,19 +72,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             alert.informativeText = error.localizedDescription
             alert.runModal()
 
-            NSApplication.shared().terminate(nil)
+            NSApplication.shared.terminate(nil)
         }
 
         let unmountObserver = NotificationCenter.default.addObserver(forName: NSNotification.Name(kGMUserFileSystemDidUnmount), object: nil, queue: nil) { notification in
             print("Got didUnmount notification.")
 
-            NSApplication.shared().terminate(nil)
+            NSApplication.shared.terminate(nil)
         }
 
         self.notificationObservers = [mountObserver, failedObserver, unmountObserver]
     }
 
-    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplicationTerminateReply {
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         notificationObservers.forEach {
             NotificationCenter.default.removeObserver($0)
         }
