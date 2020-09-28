@@ -256,17 +256,19 @@ final class LoopbackFS: NSObject {
             guard length >= 0 else { throw NSError(posixErrorCode: errno) }
 
             // Create buffer with required size:
-            var data = Data(count: length)
+            var data = Array<CChar>(repeating: 0, count: length)
 
             // Retrieve attribute list:
-            let result = data.withUnsafeMutableBytes {
-                listxattr(fileSystemPath, $0, length, XATTR_NOFOLLOW)
-            }
+            let result = listxattr(fileSystemPath, &data, length, XATTR_NOFOLLOW)
             guard result >= 0 else { throw NSError(posixErrorCode: errno) }
 
             // Extract attribute names:
-            let list = data.split(separator: 0).flatMap {
-                String(data: Data($0), encoding: .utf8)
+            let list = data.split(separator: 0).compactMap {
+                $0.withUnsafeBufferPointer {
+                    $0.withMemoryRebound(to: UInt8.self) {
+                        String(bytes: $0, encoding: .utf8)
+                    }
+                }
             }
             return list
         }
@@ -288,7 +290,7 @@ final class LoopbackFS: NSObject {
 
             // Retrieve attribute:
             let result =  data.withUnsafeMutableBytes {
-                getxattr(fileSystemPath, name, $0, length, UInt32(position), XATTR_NOFOLLOW)
+                getxattr(fileSystemPath, name, $0.baseAddress, length, UInt32(position), XATTR_NOFOLLOW)
             }
             guard result >= 0 else {
                 throw NSError(posixErrorCode: errno)
@@ -308,7 +310,7 @@ final class LoopbackFS: NSObject {
             let newOptions = options & ~(XATTR_NOSECURITY | XATTR_NODEFAULT)
 
             let result = value.withUnsafeBytes {
-                setxattr(fileSystemPath, name, $0, value.count, UInt32(position), newOptions | XATTR_NOFOLLOW)
+                setxattr(fileSystemPath, name, $0.baseAddress, value.count, UInt32(position), newOptions | XATTR_NOFOLLOW)
             }
             guard result >= 0 else { throw NSError(posixErrorCode: errno) }
         }
