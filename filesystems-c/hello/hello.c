@@ -3,7 +3,9 @@
 #include <string.h>
 #include <fuse.h>
 
-static const char  *file_path      = "/hello.txt";
+#define SZ_FNAME 80
+
+static       char   file_path[SZ_FNAME] = "/hello.txt";
 static const char   file_content[] = "Hello World!\n";
 static const size_t file_size      = sizeof(file_content)/sizeof(char) - 1;
 
@@ -13,7 +15,7 @@ hello_getattr(const char *path, struct stat *stbuf)
     memset(stbuf, 0, sizeof(struct stat));
 
     if (strcmp(path, "/") == 0) { /* The root directory of our file system. */
-        stbuf->st_mode = S_IFDIR | 0755;
+        stbuf->st_mode = S_IFDIR | 0777;
         stbuf->st_nlink = 3;
     } else if (strcmp(path, file_path) == 0) { /* The only file we have. */
         stbuf->st_mode = S_IFREG | 0444;
@@ -22,6 +24,19 @@ hello_getattr(const char *path, struct stat *stbuf)
     } else /* We reject everything else. */
         return -ENOENT;
 
+    return 0;
+}
+
+static int
+hello_rename(const char *old_name, const char *new_name)
+{
+    if (strcmp(old_name, file_path+1) == 0)
+        return -ENOENT;
+
+    if (strlen(new_name) >= SZ_FNAME)
+        return -1;
+
+    strcpy(file_path, new_name);
     return 0;
 }
 
@@ -74,6 +89,7 @@ static struct fuse_operations hello_filesystem_operations = {
     .open    = hello_open,    /* To enforce read-only access.       */
     .read    = hello_read,    /* To provide file content.           */
     .readdir = hello_readdir, /* To provide directory listing.      */
+    .rename  = hello_rename,  /* To provide file rename.            */
 };
 
 int
