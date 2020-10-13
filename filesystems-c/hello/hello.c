@@ -28,15 +28,15 @@ hello_getattr(const char *path, struct stat *stbuf)
 }
 
 static int
-hello_rename(const char *old_name, const char *new_name)
+hello_rename(const char *old_path, const char *new_path)
 {
-    if (strcmp(old_name, file_path+1) == 0)
+    if (strcmp(old_path, file_path) != 0)   /* Not our file */
         return -ENOENT;
 
-    if (strlen(new_name) >= SZ_FNAME)
+    if (strlen(new_path) >= SZ_FNAME)       /* New name too big */
         return -1;
 
-    strcpy(file_path, new_name);
+    strcpy(file_path, new_path);
     return 0;
 }
 
